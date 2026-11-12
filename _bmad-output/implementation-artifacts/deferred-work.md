@@ -14,7 +14,8 @@ Swap the ear test's built-in spatializer for the Nexus Resonance plugin (Steam A
 
 ### DW-2: Export ear-test builds for outside testers
 
-status: open
+status: done
+resolved: 2026-11-12 (export_presets.cfg; Windows + Linux release builds verified)
 source: gds-quick-dev planning, 2026-11-12 (spec-ear-test-prototype)
 severity: medium
 

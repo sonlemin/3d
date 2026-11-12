@@ -29,6 +29,23 @@ Then run the test with `godot --path game`, or open `game/` in the editor and pr
 The placeholder script refuses any level folder that already holds a real clip (a `.wav` not
 named `placeholder_*`) unless you pass `--force`, so it never mixes placeholders into real clips.
 
+## Builds (no Godot needed on the test machine)
+
+`game/export_presets.cfg` has a **Windows** and a **Linux** preset (x86_64, game data embedded,
+tests left out). They need the Godot 4.7.2 export templates installed. From the repo root:
+
+```
+godot --headless --path game --import
+godot --headless --path game --export-release "Windows" ../builds/ear-test-windows/ear_test.exe
+godot --headless --path game --export-release "Linux"   ../builds/ear-test-linux/ear_test.x86_64
+```
+
+Each build is a single file in `builds/` (git-ignored). **Rebuild after every clip change:** the
+clips are packed into the file, so a build made with the placeholders keeps playing placeholders.
+The Windows build isn't code-signed, so SmartScreen may warn on first launch ("More info" →
+"Run anyway"). On Linux, keep the file executable (`chmod +x`). A build saves its CSVs to the
+same per-OS folders listed under "Where the CSVs are".
+
 ## Running a session
 
 1. **Room.** Use a quiet room: no music, fans or open windows. Use the same machine and the same
