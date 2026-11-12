@@ -1,0 +1,15 @@
+# Godot 4
+.godot/
+*.translation
+export_credentials.cfg
+
+# Exported builds
+/builds/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+*.swp
