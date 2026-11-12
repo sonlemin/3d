@@ -1,0 +1,131 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ear_test.gd" id="1_ear_test"]
+[ext_resource type="Script" path="res://scripts/listener.gd" id="2_listener"]
+
+[sub_resource type="Environment" id="Environment_night"]
+background_mode = 1
+background_color = Color(0.02, 0.025, 0.04, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.35, 0.38, 0.46, 1)
+ambient_light_energy = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Material_stone"]
+albedo_color = Color(0.46, 0.46, 0.48, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_dark"]
+albedo_color = Color(0.2, 0.2, 0.23, 1)
+
+[sub_resource type="StandardMaterial3D" id="Material_lamp"]
+albedo_color = Color(1, 0.8, 0.5, 1)
+emission_enabled = true
+emission = Color(1, 0.7, 0.35, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxMesh" id="Mesh_deck"]
+material = SubResource("Material_stone")
+size = Vector3(4, 0.6, 80)
+
+[sub_resource type="BoxMesh" id="Mesh_parapet"]
+material = SubResource("Material_stone")
+size = Vector3(0.3, 1.2, 80)
+
+[sub_resource type="BoxMesh" id="Mesh_pier"]
+material = SubResource("Material_dark")
+size = Vector3(3, 60, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_bank"]
+material = SubResource("Material_dark")
+size = Vector3(40, 12, 14)
+
+[sub_resource type="BoxMesh" id="Mesh_house"]
+material = SubResource("Material_dark")
+size = Vector3(3, 3, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_window"]
+material = SubResource("Material_lamp")
+size = Vector3(1, 1, 0.2)
+
+[node name="EarTest" type="Node3D"]
+script = ExtResource("1_ear_test")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_night")
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, 0.25, -0.433013, 0, 0.866025, 0.5, 0.5, -0.433013, 0.75, 0, 20, 0)
+light_color = Color(0.62, 0.7, 0.88, 1)
+light_energy = 0.35
+
+[node name="Span" type="Node3D" parent="."]
+
+[node name="Deck" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("Mesh_deck")
+
+[node name="ParapetLeft" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.85, 0.6, 0)
+mesh = SubResource("Mesh_parapet")
+
+[node name="ParapetRight" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.85, 0.6, 0)
+mesh = SubResource("Mesh_parapet")
+
+[node name="PierTownSide" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30.6, 20)
+mesh = SubResource("Mesh_pier")
+
+[node name="PierFarSide" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30.6, -20)
+mesh = SubResource("Mesh_pier")
+
+[node name="FarBank" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.6, -47)
+mesh = SubResource("Mesh_bank")
+
+[node name="TownBank" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.6, 47)
+mesh = SubResource("Mesh_bank")
+
+[node name="Town" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 46)
+
+[node name="HouseA" type="MeshInstance3D" parent="Town"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 0)
+mesh = SubResource("Mesh_house")
+
+[node name="WindowA" type="MeshInstance3D" parent="Town/HouseA"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -1.55)
+mesh = SubResource("Mesh_window")
+
+[node name="HouseB" type="MeshInstance3D" parent="Town"]
+transform = Transform3D(1, 0, 0, 0, 1.6, 0, 0, 0, 1, 4.5, 2.4, 2)
+mesh = SubResource("Mesh_house")
+
+[node name="WindowB" type="MeshInstance3D" parent="Town/HouseB"]
+transform = Transform3D(1, 0, 0, 0, 0.625, 0, 0, 0, 1, 0, 0.3, -1.55)
+mesh = SubResource("Mesh_window")
+
+[node name="HouseC" type="MeshInstance3D" parent="Town"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1.5, -1)
+mesh = SubResource("Mesh_house")
+
+[node name="WindowC" type="MeshInstance3D" parent="Town/HouseC"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -1.55)
+mesh = SubResource("Mesh_window")
+
+[node name="TownGlow" type="OmniLight3D" parent="Town"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -4)
+light_color = Color(1, 0.72, 0.4, 1)
+light_energy = 2.0
+omni_range = 18.0
+
+[node name="Listener" type="Node3D" parent="."]
+script = ExtResource("2_listener")
+
+[node name="Camera3D" type="Camera3D" parent="Listener"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+current = true
+fov = 75.0
+
+[node name="Emitter" type="AudioStreamPlayer3D" parent="."]
