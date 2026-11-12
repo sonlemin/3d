@@ -30,6 +30,10 @@ size = Vector3(4, 0.6, 80)
 material = SubResource("Material_stone")
 size = Vector3(0.3, 1.2, 80)
 
+[sub_resource type="BoxMesh" id="Mesh_pylon"]
+material = SubResource("Material_stone")
+size = Vector3(0.4, 1.9, 0.6)
+
 [sub_resource type="BoxMesh" id="Mesh_pier"]
 material = SubResource("Material_dark")
 size = Vector3(3, 60, 3)
@@ -70,6 +74,14 @@ mesh = SubResource("Mesh_parapet")
 [node name="ParapetRight" type="MeshInstance3D" parent="Span"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.85, 0.6, 0)
 mesh = SubResource("Mesh_parapet")
+
+[node name="PylonLeft" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.85, 0.95, 0)
+mesh = SubResource("Mesh_pylon")
+
+[node name="PylonRight" type="MeshInstance3D" parent="Span"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.85, 0.95, 0)
+mesh = SubResource("Mesh_pylon")
 
 [node name="PierTownSide" type="MeshInstance3D" parent="Span"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30.6, 20)

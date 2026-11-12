@@ -1,9 +1,13 @@
 ## Finds the cry clips for each level under res://audio/cries/<level>/ at runtime.
 ## Only `.wav` files are used. Other audio files are skipped with a warning; everything
-## else (CREDITS.md, .import files, sub-folders) is ignored.
+## else (CREDITS.md, .import files, sub-folders) is ignored. Every listed `.wav` is loaded
+## once here, so a level never offers a clip that would play as silence.
 ##
-## ResourceLoader.list_directory() only lists files Godot has imported, so a freshly
-## dropped clip shows up after `godot --headless --path game --import` (or opening the editor).
+## ResourceLoader.list_directory() only lists files Godot has imported, so outside exported
+## builds the raw files in each folder are compared with it: a `.wav` dropped in but not
+## imported is reported, as is a listed clip that doesn't load (a fresh clone that was never
+## imported). Both are `problems`, which keep Start disabled until
+## `godot --headless --path game --import` (or opening the editor) fixes them.
 extends RefCounted
 
 const TrialPlan := preload("res://scripts/trial_plan.gd")
@@ -11,11 +15,27 @@ const TrialPlan := preload("res://scripts/trial_plan.gd")
 const DEFAULT_ROOT: String = "res://audio/cries"
 ## Audio formats that are reported (not used) when found beside the clips.
 const OTHER_AUDIO_EXTENSIONS: Array[String] = ["ogg", "mp3", "flac", "aif", "aiff", "opus", "m4a", "wma"]
+## Synthesized stand-ins written by tools/make_placeholder_cries.py.
+const PLACEHOLDER_PREFIX: String = "placeholder_"
+const IMPORT_COMMAND: String = "godot --headless --path game --import"
 
 var root: String = DEFAULT_ROOT
-## Warnings from the last discover(), already printed with push_warning().
+## Non-blocking notes from the last discover() (skipped audio, mixed placeholders).
+## Already printed with push_warning().
 var warnings: PackedStringArray = []
+## Clips that aren't imported or don't load, from the last discover(). Any problem keeps
+## Start disabled. Already printed with push_warning().
+var problems: PackedStringArray = []
+## Compare the raw files with the imported ones (exported builds have no raw files).
+var check_raw_files: bool = not OS.has_feature("template")
+## Lists one folder like ResourceLoader.list_directory(). The tests swap in fakes.
+var list_folder: Callable = ResourceLoader.list_directory
+## Lists the raw file names in one folder. Empty means DirAccess.get_files_at(); tests swap it.
+var list_raw_files: Callable = Callable()
+## Loads one clip path. Empty means load(); the tests swap in fakes.
+var load_clip: Callable = Callable()
 var _clips: Dictionary = {}  # level -> PackedStringArray of resource paths
+var _streams: Dictionary = {}  # resource path -> AudioStream (only clips that loaded)
 
 
 ## Splits one directory listing into usable clips and skipped audio files.
@@ -35,6 +55,15 @@ static func filter_clip_names(names: PackedStringArray) -> Dictionary:
 	return {"clips": clips, "skipped_audio": skipped}
 
 
+## True when a folder's clip names mix placeholder_*.wav with real clips.
+static func mixes_placeholders(clip_names: PackedStringArray) -> bool:
+	var placeholders: int = 0
+	for file_name: String in clip_names:
+		if file_name.to_lower().begins_with(PLACEHOLDER_PREFIX):
+			placeholders += 1
+	return placeholders > 0 and placeholders < clip_names.size()
+
+
 ## Levels (in TrialPlan.LEVELS order) whose clip list is missing or empty.
 static func find_empty_levels(clips_by_level: Dictionary) -> PackedStringArray:
 	var empty: PackedStringArray = []
@@ -48,18 +77,41 @@ static func find_empty_levels(clips_by_level: Dictionary) -> PackedStringArray:
 func discover(cries_root: String = DEFAULT_ROOT) -> void:
 	root = cries_root
 	warnings.clear()
+	problems.clear()
 	_clips.clear()
+	_streams.clear()
 	for level: String in TrialPlan.LEVELS:
 		var folder: String = folder_for(level)
-		var split: Dictionary = filter_clip_names(ResourceLoader.list_directory(folder))
+		var listing: PackedStringArray = list_folder.call(folder)
+		var split: Dictionary = filter_clip_names(listing)
+		var clip_names: PackedStringArray = split["clips"]
 		var paths: PackedStringArray = []
-		for file_name: String in split["clips"]:
-			paths.append(folder.path_join(file_name))
+		var unloadable: PackedStringArray = []
+		for file_name: String in clip_names:
+			var path: String = folder.path_join(file_name)
+			var loaded: Variant = load_clip.call(path) if load_clip.is_valid() else load(path)
+			if loaded is AudioStream:
+				paths.append(path)
+				_streams[path] = loaded
+			else:
+				unloadable.append(file_name)
 		_clips[level] = paths
+		var not_imported: PackedStringArray = []
+		if check_raw_files:
+			for raw_name: String in filter_clip_names(_raw_files(folder))["clips"]:
+				if not clip_names.has(raw_name):
+					not_imported.append(raw_name)
 		for file_name: String in split["skipped_audio"]:
-			var message: String = "Ear test: skipped %s (only .wav clips are used)" % folder.path_join(file_name)
-			warnings.append(message)
-			push_warning(message)
+			_warn("skipped %s (only .wav clips are used)" % folder.path_join(file_name))
+		if not not_imported.is_empty():
+			_problem("not imported yet: %s in %s. Run  %s  and restart."
+					% [", ".join(not_imported), folder, IMPORT_COMMAND])
+		if not unloadable.is_empty():
+			_problem("could not load %s in %s. Run  %s  and restart."
+					% [", ".join(unloadable), folder, IMPORT_COMMAND])
+		if mixes_placeholders(clip_names + not_imported):
+			_warn("placeholders mixed with real clips in %s: delete the %s*.wav files there."
+					% [folder, PLACEHOLDER_PREFIX])
 
 
 func folder_for(level: String) -> String:
@@ -74,9 +126,34 @@ func empty_levels() -> PackedStringArray:
 	return find_empty_levels(_clips)
 
 
+## The stream loaded for `clip_path` by discover(), or null if it has none.
+func stream_for(clip_path: String) -> AudioStream:
+	return _streams.get(clip_path, null) as AudioStream
+
+
 ## One random clip for `level`, or "" if the level has none.
 func pick(level: String, rng: RandomNumberGenerator) -> String:
 	var clips: PackedStringArray = clips_for(level)
 	if clips.is_empty():
 		return ""
 	return clips[rng.randi_range(0, clips.size() - 1)]
+
+
+func _raw_files(folder: String) -> PackedStringArray:
+	if list_raw_files.is_valid():
+		return list_raw_files.call(folder)
+	if not DirAccess.dir_exists_absolute(folder):
+		return PackedStringArray()
+	return DirAccess.get_files_at(folder)
+
+
+func _warn(text: String) -> void:
+	var message: String = "Ear test: " + text
+	warnings.append(message)
+	push_warning(message)
+
+
+func _problem(text: String) -> void:
+	var message: String = "Ear test: " + text
+	problems.append(message)
+	push_warning(message)

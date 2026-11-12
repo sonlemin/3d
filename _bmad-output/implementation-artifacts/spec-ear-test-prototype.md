@@ -2,7 +2,7 @@
 title: 'Ear test prototype: can players place a cry by ear?'
 type: 'feature'
 created: '2026-11-12'
-status: 'in-review'
+status: 'done'
 baseline_commit: '459a388ec1b9a2b3086c25c531a990c3c762ce09'
 context:
   - '{project-root}/_bmad-output/planning-artifacts/briefs/brief-3d_game-2026-11-12/addendum.md'
@@ -40,8 +40,8 @@ context:
 | Practice feedback | Any practice answer | Shows "Correct" or the true combination for 2 s; logged as round=practice; excluded from score | N/A |
 | Empty level folder | No `.wav` in `audio/cries/inside/` | Setup screen names the empty folder; Start disabled | No crash |
 | Non-WAV files | `CREDITS.md`, `.ogg` beside clips | Only `.wav` used | Skipped audio files printed as a warning |
-| Bad tester ID | Empty, or `ann/../x` | Empty → Start disabled; otherwise characters other than letters, digits, `-` and `_` become `_` in the filename | N/A |
-| Pause | Esc mid-trial | Mouse released, cry stops; on resume the same trial replays from its start | N/A |
+| Bad tester ID | Empty or spaces only, `ann/../x`, `Sơn` | Empty → Start disabled. Spaces at the ends are trimmed. In the filename, characters other than letters (any script), digits, `-` and `_` become `_`; the CSV `tester_id` keeps the trimmed ID as typed | N/A |
+| Pause | Esc or focus loss mid-trial (silence, cry, answer grid, practice feedback) | Mouse released, cry stops. Paused in the silence or the first 1 s of the cry: resume replays the trial from its start. Paused later in the cry or at the answer grid: resume goes to the grid, no replay. Paused in feedback: resume goes to the next trial. Every pause counts in a CSV `pauses` column | N/A |
 | Write failure | `user://` not writable | Results still shown, plus the error and the attempted path | No crash |
 
 </frozen-after-approval>
@@ -68,6 +68,12 @@ Greenfield: no game code yet. The addendum (in `context`) holds the Godot audio 
 - Given any seed, when the plan builds a scored order, then each combination appears exactly twice and never twice in a row.
 - Given a cry from the left rail, when the tester turns to face it, then it pans toward center.
 
+## Spec Change Log
+
+- **2026-11-12, human renegotiation (Sonlm), frozen Pause row.** Trigger: the build replayed the cry when a tester resumed from a pause taken at the answer grid, giving a free second listen that inflates scores. Amended: a pause at the answer grid now resumes to the grid with no replay; pauses in the silence or the cry still replay the trial. Known-bad state avoided: testers pausing on purpose to hear a cry twice. KEEP: pause on Esc and on focus loss; replay from the start when paused before the answer grid.
+- **2026-11-12, human renegotiation (Sonlm) after step-4 review, frozen Pause row.** Trigger: all three reviewers found that a pause late in the cry still replayed the whole trial, so repeated pauses gave unlimited listens, invisible in the CSV. Amended: replay only if paused in the silence or the first 1 s of the cry; a later pause resumes at the grid; feedback pauses resume to the next trial; a `pauses` CSV column counts every pause. Known-bad state avoided: unlimited, unrecorded re-listens. KEEP: no replay from the grid; pause time excluded from response time.
+- **2026-11-12, human renegotiation (Sonlm) after step-4 review, frozen Bad tester ID row.** Trigger: ASCII-only sanitizing merged distinct Vietnamese names (`Sơn`, `Sân` → `S_n`) in the CSV, and edge-space trimming wasn't in the row. Amended: letters of any script stay in the filename, ends are trimmed, and the CSV keeps the ID as typed. Known-bad state avoided: different testers' rows sharing an ID.
+
 ## Design Notes
 
 Starting values, tuned by ear:
@@ -75,10 +81,11 @@ Starting values, tuned by ear:
 | Level | Position (horizontal 6 m along the direction unless noted) | Bus FX |
 |---|---|---|
 | above | y +5 m | HighPass 400 Hz; Reverb room 0.4, damping 0.1, wet 0.2 (open air) |
-| inside | ear height, in the parapet (L/R at 2 m) or the deck (town/far bank, y −0.5 m) | LowPass 900 Hz; Reverb room 0.15, damping 0.8, wet 0.35 (boxy, muffled) |
+| inside | ear height, in a parapet pylon (L/R at 1.85 m) or the deck (town/far bank, y −0.5 m) | LowPass 900 Hz; Reverb room 0.15, damping 0.8, wet 0.35 (boxy, muffled) |
 | below | y −6 m, in the abyss | LowPass 2500 Hz; Reverb room 0.9, damping 0.3, wet 0.45 (cavernous) |
 
 Emitter: `attenuation_filter_db` = 0, so distance filtering doesn't blur the level filters. Listen window: 1 s of silence, then 4 s of cry (looped if shorter), then the grid appears; response time is measured from cry start.
+Review fixes: the emitter uses `ATTENUATION_DISABLED` (no distance loudness cue), the cry fades out over the last 50 ms of the window, and the inside-rail sources sit at ear height in a 1.9 m parapet pylon at x = ±1.85 m (the rest of the parapet stays 1.2 m).
 
 ## Verification
 
@@ -90,3 +97,69 @@ Emitter: `attenuation_filter_db` = 0, so distance filtering doesn't blur the lev
 
 **Manual checks:**
 - `godot --path game`: one practice round on headphones. The levels sound distinct, panning follows head turns, and the CSV is written.
+
+## Suggested Review Order
+
+**Session flow and the pause rules (start here)**
+
+- The state machine every trial walks; pause/resume rules live in one place.
+  [`ear_test.gd:15`](../../game/scripts/ear_test.gd#L15)
+
+- Pause records where it stopped; early-cry pauses replay, later ones go to the grid.
+  [`ear_test.gd:281`](../../game/scripts/ear_test.gd#L281)
+
+- Resume applies the decision and keeps paused time out of response_ms.
+  [`ear_test.gd:307`](../../game/scripts/ear_test.gd#L307)
+
+- Look is enabled only at cry start, after facing resets to the far bank.
+  [`ear_test.gd:373`](../../game/scripts/ear_test.gd#L373)
+
+- Practice rows land after feedback (so feedback pauses count); scored rows immediately.
+  [`ear_test.gd:262`](../../game/scripts/ear_test.gd#L262)
+
+**Trial plan: the single home for every tunable**
+
+- Replay window, fade, attenuation and bus FX constants: tune by ear here only.
+  [`trial_plan.gd:67`](../../game/scripts/trial_plan.gd#L67)
+
+- Scored order by rejection sampling: uniform over valid orders, block fallback.
+  [`trial_plan.gd:165`](../../game/scripts/trial_plan.gd#L165)
+
+- Where each direction × level cry sits in the world.
+  [`trial_plan.gd:199`](../../game/scripts/trial_plan.gd#L199)
+
+- Scoring: both-correct pass mark plus direction, level and per-level breakdowns.
+  [`trial_plan.gd:265`](../../game/scripts/trial_plan.gd#L265)
+
+**Audio: level cues without HRTF**
+
+- BUS_FX overwrites the editor's buses at startup; any mismatch blocks Start.
+  [`ear_test.gd:134`](../../game/scripts/ear_test.gd#L134)
+
+- Fade-out curve that removes the end-of-window click.
+  [`trial_plan.gd:221`](../../game/scripts/trial_plan.gd#L221)
+
+**Clips and results data**
+
+- Discovery loads every clip and flags un-imported files; any problem blocks Start.
+  [`cry_library.gd:77`](../../game/scripts/cry_library.gd#L77)
+
+- Tester ID: Unicode-aware trim; letters of any script kept in file names.
+  [`results_log.gd:36`](../../game/scripts/results_log.gd#L36)
+
+- Never overwrite a finished session: `_2`, `_3` suffixes.
+  [`results_log.gd:91`](../../game/scripts/results_log.gd#L91)
+
+**Peripherals**
+
+- Logger that fails the suite on any unexpected engine or script error.
+  [`run_tests.gd:36`](../../game/tests/run_tests.gd#L36)
+
+- Pause tests across every state, including the scored round.
+  [`run_tests.gd:1094`](../../game/tests/run_tests.gd#L1094)
+
+- Placeholder generator refuses folders that already hold real clips.
+  [`make_placeholder_cries.py:276`](../../game/tools/make_placeholder_cries.py#L276)
+
+- Panning strength and WAV-to-mono import default.
+  [`project.godot:20`](../../game/project.godot#L20)

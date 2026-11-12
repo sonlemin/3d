@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Write the ear test's placeholder cries: 2 mono 16-bit WAVs per level.
 
-    python3 game/tools/make_placeholder_cries.py
+    python3 game/tools/make_placeholder_cries.py [--force]
+
+Meant for a fresh checkout with no clips. A level folder that already holds a real clip
+(any .wav not named placeholder_*) is skipped, so placeholders never end up mixed with
+real clips; --force writes them anyway.
 
 Python standard library only, fixed seeds, so every run writes the same files.
 No AI is involved anywhere: each cry is plain additive synthesis or filtered noise.
@@ -15,6 +19,7 @@ placeholder_*.wav files there, log the source in game/audio/cries/CREDITS.md, th
 `godot --headless --path game --import`.
 """
 
+import argparse
 import math
 import os
 import random
@@ -45,6 +50,8 @@ def smoothstep(u):
 
 def normalize(samples):
     """Scale to the target RMS, then pull down if the peak would clip."""
+    if not samples:
+        return samples
     rms = math.sqrt(sum(s * s for s in samples) / len(samples))
     peak = max(abs(s) for s in samples)
     if rms <= 0.0 or peak <= 0.0:
@@ -215,40 +222,71 @@ def whisper(rng, duration, syllables):
 # ---------------------------------------------------------------- the six clips
 
 
-def build_all():
-    clips = {
-        "above/placeholder_above_1.wav": shriek(
+# Each clip is built only when its level is written; every clip has its own fixed seed.
+CLIPS = {
+    "above": {
+        "placeholder_above_1.wav": lambda: shriek(
             random.Random(1101), 1.8, 1200.0, 2450.0, 1700.0, 0.35, 7.0, 0.03
         ),
-        "above/placeholder_above_2.wav": shriek(
+        "placeholder_above_2.wav": lambda: shriek(
             random.Random(1102), 2.4, 1350.0, 2350.0, 1250.0, 0.55, 9.5, 0.025
         ),
-        "inside/placeholder_inside_1.wav": sob(
+    },
+    "inside": {
+        "placeholder_inside_1.wav": lambda: sob(
             random.Random(2101), 2.6, 330.0, 220.0, [0.45, 0.95, 1.35, 1.9]
         ),
-        "inside/placeholder_inside_2.wav": sob(
+        "placeholder_inside_2.wav": lambda: sob(
             random.Random(2102), 3.0, 310.0, 225.0, [0.35, 0.75, 1.4, 1.8, 2.35]
         ),
-        "below/placeholder_below_1.wav": whisper(
+    },
+    "below": {
+        "placeholder_below_1.wav": lambda: whisper(
             random.Random(3101),
             2.2,
             [(0.05, 0.30, 900.0), (0.42, 0.22, 1400.0), (0.70, 0.35, 1100.0),
              (1.18, 0.25, 1700.0), (1.55, 0.50, 800.0)],
         ),
-        "below/placeholder_below_2.wav": whisper(
+        "placeholder_below_2.wav": lambda: whisper(
             random.Random(3102),
             2.8,
             [(0.05, 0.25, 1200.0), (0.36, 0.30, 850.0), (0.80, 0.20, 1600.0),
              (1.08, 0.40, 1000.0), (1.62, 0.28, 1350.0), (2.02, 0.65, 750.0)],
         ),
-    }
-    for rel_path, samples in clips.items():
-        path = os.path.join(CRIES_DIR, rel_path)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        write_wav(path, fade_edges(normalize(samples)))
-        print("wrote %s  (%.2f s, mono, 16-bit, %d Hz)"
-              % (os.path.relpath(path), len(samples) / SAMPLE_RATE, SAMPLE_RATE))
+    },
+}
+
+
+def real_clips_in(folder):
+    """Names of the .wav files in `folder` that are not placeholder_*.wav."""
+    if not os.path.isdir(folder):
+        return []
+    return sorted(
+        name for name in os.listdir(folder)
+        if name.lower().endswith(".wav") and not name.lower().startswith("placeholder_")
+    )
+
+
+def build_all(force=False):
+    print("cries folder: %s" % CRIES_DIR)
+    for level, clips in CLIPS.items():
+        folder = os.path.join(CRIES_DIR, level)
+        real = real_clips_in(folder)
+        if real and not force:
+            print("skipped %s/: it already holds real clips (%s); use --force to add placeholders anyway"
+                  % (level, ", ".join(real)))
+            continue
+        os.makedirs(folder, exist_ok=True)
+        for file_name, build in clips.items():
+            samples = build()
+            write_wav(os.path.join(folder, file_name), fade_edges(normalize(samples)))
+            # Paths relative to CRIES_DIR, not os.path.relpath (it fails across Windows drives).
+            print("wrote %s/%s  (%.2f s, mono, 16-bit, %d Hz)"
+                  % (level, file_name, len(samples) / SAMPLE_RATE, SAMPLE_RATE))
 
 
 if __name__ == "__main__":
-    build_all()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--force", action="store_true",
+                        help="write placeholders even into level folders that hold real clips")
+    build_all(force=parser.parse_args().force)

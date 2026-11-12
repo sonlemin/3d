@@ -42,8 +42,9 @@ const SOURCE_DISTANCE: float = 6.0
 const ABOVE_Y: float = 5.0
 ## In the abyss under the span.
 const BELOW_Y: float = -6.0
-## Inside, left/right rail: in the parapet, at ear height.
-const INSIDE_RAIL_DISTANCE: float = 2.0
+## Inside, left/right rail: at ear height, in the parapet pylon that rises above the 1.2 m
+## parapet at x = +-1.85 (Span/PylonLeft and Span/PylonRight in ear_test.tscn).
+const INSIDE_RAIL_DISTANCE: float = 1.85
 const INSIDE_RAIL_Y: float = EAR_HEIGHT
 ## Inside, town/far bank: in the deck slab.
 const INSIDE_DECK_Y: float = -0.5
@@ -55,17 +56,31 @@ const LEVEL_BUSES: Dictionary = {
 	"inside": &"Inside",
 	"below": &"Below",
 }
-## Applied over res://default_bus_layout.tres at startup (ear_test.gd), so these win.
-## filter: "high_pass" or "low_pass".
+## The single source of truth for the level buses: applied over res://default_bus_layout.tres
+## at startup (ear_test.gd), so values changed in the editor's Audio panel are overwritten.
+## Each level bus holds exactly these two effects (any other effect is a setup problem);
+## they are forced on, and the bus is forced unmuted, unbypassed, not solo, sending to Master.
+## filter: one of BUS_FILTER_TYPES.
+const BUS_FILTER_TYPES: Array[String] = ["high_pass", "low_pass"]
+## Volume of every level bus, the same for all three so no level is louder than another.
+const LEVEL_BUS_VOLUME_DB: float = 0.0
 const BUS_FX: Dictionary = {
 	"above": {"filter": "high_pass", "cutoff_hz": 400.0, "room_size": 0.4, "damping": 0.1, "wet": 0.2},
 	"inside": {"filter": "low_pass", "cutoff_hz": 900.0, "room_size": 0.15, "damping": 0.8, "wet": 0.35},
 	"below": {"filter": "low_pass", "cutoff_hz": 2500.0, "room_size": 0.9, "damping": 0.3, "wet": 0.45},
 }
+## No distance attenuation: every source plays at the same level wherever it is, so loudness
+## is not a cue (with inverse-distance falloff the below sources were ~2.7 dB quieter).
+## Panning still follows the source direction.
+const EMITTER_ATTENUATION_MODEL: AudioStreamPlayer3D.AttenuationModel = AudioStreamPlayer3D.ATTENUATION_DISABLED
 ## 0 dB: distance filtering must not blur the level filters.
 const EMITTER_ATTENUATION_FILTER_DB: float = 0.0
-const EMITTER_UNIT_SIZE: float = 10.0
+## The emitter's volume while a cry plays; the fade-out starts from here.
+const EMITTER_VOLUME_DB: float = 0.0
+## Ceiling on the emitter's volume; kept above EMITTER_VOLUME_DB so it never clips the level.
 const EMITTER_MAX_DB: float = 3.0
+## Unused while attenuation is disabled; kept so switching the model back stays a one-line change.
+const EMITTER_UNIT_SIZE: float = 10.0
 # Stereo panning strength is the project setting audio/general/3d_panning_strength (1.0).
 
 # ------------------------------------------------------------------ timings (s)
@@ -73,6 +88,11 @@ const EMITTER_MAX_DB: float = 3.0
 const SILENCE_BEFORE_CRY_S: float = 1.0
 ## The cry loops if the clip is shorter, and is cut if longer.
 const CRY_WINDOW_S: float = 4.0
+## The last part of the cry window fades to silence instead of stopping on a click.
+const CRY_FADE_OUT_S: float = 0.05
+## Paused in the silence or before this much of the cry was heard: resume replays the trial.
+## Paused later in the cry or at the answer grid: resume goes to the grid, no replay.
+const REPLAY_IF_PAUSED_BEFORE_S: float = 1.0
 const PRACTICE_FEEDBACK_S: float = 2.0
 
 # ------------------------------------------------------------------ session & scoring
@@ -85,11 +105,13 @@ const SCORED_REPEATS: int = 2
 const MAX_ORDER_ATTEMPTS: int = 200
 ## Pass = both direction and level right on at least this % of scored trials.
 const PASS_PERCENT: int = 80
+## Longest tester ID the setup screen accepts (characters).
+const TESTER_ID_MAX_LENGTH: int = 64
 
 const CSV_COLUMNS: Array[String] = [
 	"tester_id", "output_mode", "round", "trial_index",
 	"true_direction", "true_level", "answer_direction", "answer_level",
-	"direction_correct", "level_correct", "both_correct", "response_ms", "clip",
+	"direction_correct", "level_correct", "both_correct", "response_ms", "pauses", "clip",
 ]
 
 
@@ -124,10 +146,11 @@ static func shuffled(items: Array, rng: RandomNumberGenerator) -> Array:
 	return out
 
 
-## Practice round: each combination once, shuffled.
-static func build_practice_order(rng: RandomNumberGenerator) -> Array:
+## Practice round: each combination `repeats` times (PRACTICE_REPEATS), shuffled.
+## Empty when repeats is 0: the session then goes straight to the round break.
+static func build_practice_order(rng: RandomNumberGenerator, repeats: int = PRACTICE_REPEATS) -> Array:
 	var order: Array = []
-	for _repeat: int in PRACTICE_REPEATS:
+	for _repeat: int in repeats:
 		order.append_array(all_combinations())
 	return shuffled(order, rng)
 
@@ -191,11 +214,23 @@ static func source_position(direction: String, level: String) -> Vector3:
 	return Vector3.ZERO
 
 
+# ------------------------------------------------------------------ cry volume
+
+## Emitter volume (dB) `elapsed_s` into the cry window: EMITTER_VOLUME_DB, then a linear
+## fade to silence over the last CRY_FADE_OUT_S, so the cry never ends on a click.
+static func cry_volume_db(elapsed_s: float) -> float:
+	var left: float = CRY_WINDOW_S - elapsed_s
+	if CRY_FADE_OUT_S <= 0.0 or left >= CRY_FADE_OUT_S:
+		return EMITTER_VOLUME_DB
+	return EMITTER_VOLUME_DB + linear_to_db(clampf(left / CRY_FADE_OUT_S, 0.0001, 1.0))
+
+
 # ------------------------------------------------------------------ scoring
 
 ## One answered trial. Keys are the CSV columns after tester_id and output_mode.
+## `pauses` counts every pause taken during the trial, its practice feedback included.
 static func make_result(round_name: String, trial_index: int, truth: Dictionary,
-		answer: Dictionary, response_ms: int, clip: String) -> Dictionary:
+		answer: Dictionary, response_ms: int, pauses: int, clip: String) -> Dictionary:
 	var direction_ok: bool = truth["direction"] == answer["direction"]
 	var level_ok: bool = truth["level"] == answer["level"]
 	return {
@@ -209,6 +244,7 @@ static func make_result(round_name: String, trial_index: int, truth: Dictionary,
 		"level_correct": level_ok,
 		"both_correct": direction_ok and level_ok,
 		"response_ms": response_ms,
+		"pauses": pauses,
 		"clip": clip,
 	}
 
