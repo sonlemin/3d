@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Runs the local CI before each commit. Skip once with: git commit --no-verify
+# Only runs when the commit touches game/ (docs-only commits go straight through).
+if git diff --cached --name-only | grep -q '^game/\|^tools/ci.sh'; then
+	exec "$(git rev-parse --show-toplevel)/tools/ci.sh"
+fi

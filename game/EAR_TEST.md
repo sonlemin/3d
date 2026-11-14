@@ -29,6 +29,14 @@ Then run the test with `godot --path game`, or open `game/` in the editor and pr
 The placeholder script refuses any level folder that already holds a real clip (a `.wav` not
 named `placeholder_*`) unless you pass `--force`, so it never mixes placeholders into real clips.
 
+## Local CI (free, no hosted service)
+
+`tools/ci.sh` runs the import, the test suite and a 120-frame smoke run (about 10 s);
+`tools/ci.sh --export` also makes both builds. A pre-commit hook in `.githooks/` runs it
+before any commit that touches `game/`, and blocks the commit if a check fails. Enable the
+hook once per clone with `git config core.hooksPath .githooks`; skip it once with
+`git commit --no-verify`.
+
 ## Builds (no Godot needed on the test machine)
 
 `game/export_presets.cfg` has a **Windows** and a **Linux** preset (x86_64, game data embedded,
