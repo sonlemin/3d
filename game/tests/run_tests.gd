@@ -129,6 +129,7 @@ func _run() -> void:
 	_test_scene_listener_geometry()
 	_test_scene_trial_flow()
 	_test_scene_feedback()
+	_test_scene_replay()
 	_test_scene_pauses()
 	_test_scene_scored_pauses()
 	_test_scene_close_during_feedback()
@@ -440,7 +441,7 @@ func _test_scoring_correct_answer() -> void:
 	var result: Dictionary = TrialPlan.make_result(TrialPlan.ROUND_SCORED, 3, truth, truth, 4567, 2, "x.wav")
 	var row: PackedStringArray = TrialPlan.csv_row("ann", "headphones", result)
 	var expected: PackedStringArray = ["ann", "headphones", "scored", "3", "left_rail", "above",
-			"left_rail", "above", "1", "1", "1", "4567", "2", "x.wav"]
+			"left_rail", "above", "1", "1", "1", "4567", "2", "0", "x.wav"]
 	_check("scoring: correct answer -> direction 1, level 1, both 1; pauses after response_ms (CSV row)",
 			row == expected and TrialPlan.CSV_COLUMNS[12] == "pauses", str(row))
 
@@ -701,7 +702,7 @@ func _test_results_log_writes() -> void:
 			err == OK and append_err == OK
 			and log_file.path.ends_with("log/ann____x_headphones_%s.csv" % TIMESTAMP)
 			and lines.size() == 2 and lines[0] == ",".join(TrialPlan.CSV_COLUMNS)
-			and lines[1] == "ann/../x,headphones,practice,1,town,below,town,below,1,1,1,4100,1,c.wav",
+			and lines[1] == "ann/../x,headphones,practice,1,town,below,town,below,1,1,1,4100,1,0,c.wav",
 			"%s %s %s" % [error_string(err), log_file.path, lines])
 
 
@@ -1089,6 +1090,52 @@ func _is_paused(scene: EarTest) -> bool:
 	return scene.state == EarTest.State.PAUSED and not scene.listener.look_enabled \
 			and not scene.emitter.playing and scene._pause_panel.visible \
 			and scene._pause_label.text == EarTest.PAUSE_TEXT
+
+
+## Practice: Replay at the grid plays the same cry again and counts in the replays column.
+## Scored: no Replay button, and replay_cry() does nothing.
+func _test_scene_replay() -> void:
+	var scene: EarTest = _new_scene("replay")
+	scene.start_session("replay", "headphones")
+	var first: Dictionary = scene.current_combo()
+	var clip: String = scene.current_clip
+	_to_grid(scene)
+	var shown: bool = scene._replay_button.visible and not scene._replay_button.disabled
+	scene.listener.rotation.y = 1.0
+	var replayed: bool = scene.replay_cry()
+	_check("replay: practice grid shows Replay; pressing it replays the same cry from the silence, facing reset",
+			shown and replayed and scene.state == EarTest.State.SILENCE and scene.trial_index == 0
+			and scene.current_combo() == first and scene.current_clip == clip
+			and scene.listener.rotation.is_zero_approx() and scene.results.is_empty())
+	_to_grid(scene)
+	scene.replay_cry()
+	_to_grid(scene)
+	_step(scene, 1.5)  # 1.5 s at the grid after the last cry
+	scene.answer(first["direction"], first["level"])
+	var blocked_in_feedback: bool = not scene.replay_cry() and scene._replay_button.disabled
+	_step(scene, TrialPlan.PRACTICE_FEEDBACK_S)
+	var row: Dictionary = scene.results[0]
+	var expected_ms: int = roundi((TrialPlan.CRY_WINDOW_S + 1.5) * 1000.0)
+	_check("replay: 2 replays logged; response_ms counts from the last cry; no replay during feedback",
+			blocked_in_feedback and row["replays"] == 2 and row["response_ms"] == expected_ms
+			and _read_csv(scene.results_log.path)[0]["replays"] == "2", str(row))
+	_to_grid(scene)
+	var second: Dictionary = scene.current_combo()
+	scene.answer(second["direction"], second["level"])
+	_step(scene, TrialPlan.PRACTICE_FEEDBACK_S)
+	_check("replay: the count resets for the next trial", scene.results[1]["replays"] == 0)
+	scene.free()
+
+	scene = _new_scene("replay_scored")
+	scene.start_session("replay", "speakers")
+	_play_practice(scene)
+	scene.start_scored_round()
+	_to_grid(scene)
+	var refused: bool = not scene.replay_cry()
+	_check("replay: none in the scored round (button hidden, replay_cry() refused, state unchanged)",
+			refused and not scene._replay_button.visible and scene.state == EarTest.State.ANSWER
+			and scene.trial_replays == 0)
+	scene.free()
 
 
 func _test_scene_pauses() -> void:

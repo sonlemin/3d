@@ -63,7 +63,9 @@ same per-OS folders listed under "Where the CSVs are".
    right rail or far bank, and above, inside or below." The map beside the grid shows which way
    is which. Don't give hints during the trials.
 5. **Practice (12 trials).** Each combination plays once, with feedback for 2 seconds after
-   each answer. Practice is logged but not scored.
+   each answer. A **Replay** button under the grid plays the same cry again, as often as the
+   tester likes; each press is counted in the `replays` column. Practice is logged but not
+   scored. The scored round has no Replay button: each cry is heard once, as in the game.
 6. **Scored round (24 trials).** Each combination plays twice, never twice in a row, in an
    order shuffled afresh for every session. No feedback.
 7. **Pausing.** Esc pauses, and so does losing window focus: the cry stops and the mouse is
@@ -106,13 +108,15 @@ no-break, ideographic and zero-width spaces). An ID made only of spaces counts a
 
 The results screen shows the full path, and **Open results folder** opens it. The columns are:
 `tester_id, output_mode, round, trial_index, true_direction, true_level, answer_direction,
-answer_level, direction_correct, level_correct, both_correct, response_ms, pauses, clip`.
+answer_level, direction_correct, level_correct, both_correct, response_ms, pauses, replays, clip`.
 
 - A scored row is written as soon as the tester answers. A practice row is written when its
   2 seconds of feedback end, so a pause during the feedback counts in that row. A crash or a
   forced kill during those 2 seconds can therefore lose that one unscored practice row (closing
   the window normally still writes it).
-- `response_ms` is measured from the start of the cry, not counting time spent paused. It is
+- `replays` counts Replay presses; it is always 0 in scored rows.
+- `response_ms` is measured from the start of the last cry heard (after a replay, the replayed
+  one), not counting time spent paused. It is
   at least 4000, because the grid appears only after the 4-second cry, unless the tester paused
   late in the cry and resumed straight to the grid (that row has `pauses` of at least 1).
 - If the file can't be written, a red banner says so at once ("Results are NOT being saved")

@@ -2,7 +2,7 @@
 ##
 ## Each trial starts facing the far bank with mouse-look off for 1 s of silence; then the cry
 ## plays for 4 s (fading out over its last 50 ms) while the tester is free to look around;
-## then the answer grid appears. A scored answer is written to the CSV at once; a practice
+## then the answer grid appears (in practice, with a Replay button). A scored answer is written to the CSV at once; a practice
 ## answer is written when its feedback ends, so a pause during the feedback counts in its row.
 ## Values (positions, bus FX, timings, counts, pass mark) all come from trial_plan.gd.
 extends Node3D
@@ -53,6 +53,8 @@ var tester_id: String = ""
 var output_mode: String = ""
 ## Pauses taken in the current trial so far, its practice feedback included.
 var trial_pauses: int = 0
+## Replay presses in the current practice trial (always 0 in the scored round).
+var trial_replays: int = 0
 
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _phase_time: float = 0.0
@@ -78,6 +80,7 @@ var _start_button: Button
 var _answer_panel: PanelContainer
 var _progress_label: Label
 var _feedback_label: Label
+var _replay_button: Button
 var _answer_buttons: Array[Button] = []
 var _break_panel: PanelContainer
 var _pause_panel: PanelContainer
@@ -319,6 +322,17 @@ func resume() -> bool:
 	return true
 
 
+## Practice only, at the answer grid: plays the same cry again from the silence (same
+## combination, same clip, facing reset). response_ms then counts from the last cry heard.
+## The scored round has no replay: each cry is heard once, as in the game.
+func replay_cry() -> bool:
+	if state != State.ANSWER or round_name != TrialPlan.ROUND_PRACTICE:
+		return false
+	trial_replays += 1
+	_begin_trial(false)
+	return true
+
+
 func toggle_pause() -> bool:
 	return resume() if state == State.PAUSED else pause()
 
@@ -354,6 +368,7 @@ func _begin_trial(pick_new_clip: bool) -> void:
 	if pick_new_clip:
 		current_clip = library.pick(level, _rng)
 		trial_pauses = 0
+		trial_replays = 0
 	var stream: AudioStream = library.stream_for(current_clip)
 	if stream == null:
 		_abort_session("No playable clip for %s ('%s'), so the session stopped before that trial."
@@ -394,6 +409,7 @@ func _on_emitter_finished() -> void:
 
 func _log_result(result: Dictionary) -> void:
 	result["pauses"] = trial_pauses
+	result["replays"] = trial_replays
 	results.append(result)
 	results_log.append_row(TrialPlan.csv_row(tester_id, output_mode, result))
 	_refresh_save_banner()
@@ -598,6 +614,10 @@ func _build_answer_panel() -> PanelContainer:
 	hint_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint_box.add_child(hint_caption)
 
+	_replay_button = _add_button(box, "Replay the cry (practice only)", replay_cry)
+	_replay_button.focus_mode = Control.FOCUS_NONE  # Space/Enter can't replay by accident
+	_replay_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+
 	_feedback_label = Label.new()
 	_feedback_label.add_theme_font_size_override("font_size", 24)
 	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -750,12 +770,15 @@ func _show_answer_grid() -> void:
 	_feedback_label.text = ""
 	for button: Button in _answer_buttons:
 		button.disabled = false
+	_replay_button.visible = round_name == TrialPlan.ROUND_PRACTICE
+	_replay_button.disabled = false
 	_show_only(_answer_panel)
 
 
 func _show_feedback(result: Dictionary) -> void:
 	for button: Button in _answer_buttons:
 		button.disabled = true
+	_replay_button.disabled = true
 	if result["both_correct"]:
 		_feedback_label.text = "Correct"
 		_feedback_label.add_theme_color_override("font_color", COLOR_GOOD)

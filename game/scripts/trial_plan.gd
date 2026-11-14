@@ -111,7 +111,7 @@ const TESTER_ID_MAX_LENGTH: int = 64
 const CSV_COLUMNS: Array[String] = [
 	"tester_id", "output_mode", "round", "trial_index",
 	"true_direction", "true_level", "answer_direction", "answer_level",
-	"direction_correct", "level_correct", "both_correct", "response_ms", "pauses", "clip",
+	"direction_correct", "level_correct", "both_correct", "response_ms", "pauses", "replays", "clip",
 ]
 
 
@@ -229,6 +229,7 @@ static func cry_volume_db(elapsed_s: float) -> float:
 
 ## One answered trial. Keys are the CSV columns after tester_id and output_mode.
 ## `pauses` counts every pause taken during the trial, its practice feedback included.
+## `replays` counts Replay presses (practice only); the scene fills it in when it logs the row.
 static func make_result(round_name: String, trial_index: int, truth: Dictionary,
 		answer: Dictionary, response_ms: int, pauses: int, clip: String) -> Dictionary:
 	var direction_ok: bool = truth["direction"] == answer["direction"]
@@ -245,6 +246,7 @@ static func make_result(round_name: String, trial_index: int, truth: Dictionary,
 		"both_correct": direction_ok and level_ok,
 		"response_ms": response_ms,
 		"pauses": pauses,
+		"replays": 0,
 		"clip": clip,
 	}
 
