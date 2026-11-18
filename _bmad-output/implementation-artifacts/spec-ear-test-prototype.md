@@ -77,6 +77,7 @@ Greenfield: no game code yet. The addendum (in `context`) holds the Godot audio 
 - **2026-11-18, human renegotiation (Sonlm), frozen Intent and Always.** Trigger: with one kind of cry per level (shriek above, sob inside, whisper below), testers could name the level from the kind of cry alone, so the level score didn't test hearing the level. Amended: each trial draws its clip from any folder (each kind equally likely) and plays it through the trial's level bus and position; a `cry_kind` CSV column records the source folder. Known-bad state avoided: a pass that only proves cry recognition. KEEP: per-level buses and positions; one random clip per trial.
 - **2026-11-18, tuning after Sonlm's first listen ("quite hard").** Not a frozen change. The placeholders were narrow-band (the shriek had 0% energy below 400 Hz, so the above high-pass did nothing to it); they are now wide-band in every filter band. Echo contrast widened, and reverb `dry` and `predelay_msec` brought under BUS_FX (Godot's default 150 ms predelay had given every bus, even inside, a cave-like gap).
 - **2026-11-18, human request (Sonlm), frozen Always (session flow).** Trigger: levels were hard to learn from practice feedback alone. Amended: a listen screen between setup and practice plays the same clip from the far bank through each level's bus, on demand, with "Another cry" to step through every clip; nothing logged. Known-bad state avoided: testers failing levels they were never shown side by side. KEEP: practice and scored rounds unchanged.
+- **2026-11-19, human request (Sonlm) after a 70% self-test.** Not a frozen change (no HRTF, no plugin). Above vs inside blurred: above's high-pass moved 400 → 1000 Hz and inside's low-pass 900 → 650 Hz, so they no longer share the 400–900 Hz band. Front/back was harder: added the rear-shadow cue (Design Notes). Verified on captured engine output: same sob, above is all treble and inside all bass; behind vs facing, treble −10 dB. Found: below plays ~11 dB louder than above/inside on every clip (cave reverb), a loudness giveaway.
 
 ## Design Notes
 
@@ -84,11 +85,12 @@ Starting values, tuned by ear:
 
 | Level | Position (horizontal 6 m along the direction unless noted) | Bus FX |
 |---|---|---|
-| above | y +5 m | HighPass 400 Hz; Reverb room 0.25, damping 0.5, wet 0.06, dry 1.0, predelay 10 ms (open air, almost dry) |
-| inside | ear height, in a parapet pylon (L/R at 1.85 m) or the deck (town/far bank, y −0.5 m) | LowPass 900 Hz; Reverb room 0.08, damping 0.95, wet 0.45, dry 1.0, predelay 3 ms (tight box, muffled) |
+| above | y +5 m | HighPass 1000 Hz; Reverb room 0.25, damping 0.5, wet 0.06, dry 1.0, predelay 10 ms (open air, almost dry) |
+| inside | ear height, in a parapet pylon (L/R at 1.85 m) or the deck (town/far bank, y −0.5 m) | LowPass 650 Hz; Reverb room 0.08, damping 0.95, wet 0.45, dry 1.0, predelay 3 ms (tight box, muffled) |
 | below | y −6 m, in the abyss | LowPass 2500 Hz; Reverb room 1.0, damping 0.15, wet 0.7, dry 0.6, predelay 120 ms (cave: distant, long tail) |
 
 Emitter: `attenuation_filter_db` = 0, so distance filtering doesn't blur the level filters. Listen window: 1 s of silence, then 4 s of cry (looped if shorter), then the grid appears; response time is measured from cry start.
+Rear shadow: every level bus feeds a `Shadow` bus (first in the bus list, into Master) holding one high shelf at 2 kHz; per frame, from how far behind the listener the source is (0 ahead, 0.5 side, 1 behind), the treble is cut up to −10 dB and the bus dipped up to −2 dB. Godot's shelf gain cuts by 40·log10(gain) dB (measured).
 Review fixes: the emitter uses `ATTENUATION_DISABLED` (no distance loudness cue), the cry fades out over the last 50 ms of the window, and the inside-rail sources sit at ear height in a 1.9 m parapet pylon at x = ±1.85 m (the rest of the parapet stays 1.2 m).
 
 ## Verification

@@ -38,6 +38,9 @@ var library: CryLibrary = CryLibrary.new()
 var results_log: ResultsLog = null
 ## Problems found by apply_bus_fx() at startup. Any problem disables Start.
 var bus_problems: PackedStringArray = []
+## How far behind the listener the emitter is (0 ahead .. 1 behind), as last applied to the
+## Shadow bus by update_rear_shadow().
+var rear_shadow: float = 0.0
 ## Why the last session stopped early, shown on the setup screen; "" when it didn't.
 var setup_error: String = ""
 ## "<tester ID> · <output mode>" of the last session started; "" before the first.
@@ -113,6 +116,7 @@ func _ready() -> void:
 	library.discover()
 	_build_ui()
 	_show_setup()
+	update_rear_shadow()
 
 
 func _exit_tree() -> void:
@@ -141,11 +145,14 @@ func _notification(what: int) -> void:
 ## Writes `fx_table` (TrialPlan.BUS_FX) onto the level buses loaded from
 ## default_bus_layout.tres: sets the filter and reverb values and forces both effects on, and
 ## forces the bus unmuted, unbypassed, not solo, at TrialPlan.LEVEL_BUS_VOLUME_DB, sending to
-## Master. Returns a list of problems (missing bus, unknown filter type, missing filter or
-## reverb, any other effect on the bus); empty when all is in place. Tests pass other tables.
+## the Shadow bus (which goes to Master and holds only the rear-shadow high shelf). Returns a
+## list of problems (missing bus, bus order, unknown filter type, missing filter or reverb,
+## any other effect on a bus); empty when all is in place. Tests pass other tables and names.
 static func apply_bus_fx(fx_table: Dictionary = TrialPlan.BUS_FX,
-		buses: Dictionary = TrialPlan.LEVEL_BUSES) -> PackedStringArray:
-	var problems: PackedStringArray = []
+		buses: Dictionary = TrialPlan.LEVEL_BUSES,
+		shadow_bus: StringName = TrialPlan.SHADOW_BUS) -> PackedStringArray:
+	var problems: PackedStringArray = _apply_shadow_bus(shadow_bus)
+	var shadow: int = AudioServer.get_bus_index(shadow_bus)
 	for level: String in TrialPlan.LEVELS:
 		var bus_name: StringName = buses.get(level, &"")
 		var bus: int = AudioServer.get_bus_index(bus_name)
@@ -156,7 +163,10 @@ static func apply_bus_fx(fx_table: Dictionary = TrialPlan.BUS_FX,
 		AudioServer.set_bus_bypass_effects(bus, false)
 		AudioServer.set_bus_solo(bus, false)
 		AudioServer.set_bus_volume_db(bus, TrialPlan.LEVEL_BUS_VOLUME_DB)
-		AudioServer.set_bus_send(bus, &"Master")
+		AudioServer.set_bus_send(bus, shadow_bus if shadow >= 0 else &"Master")
+		if shadow >= bus:  # Godot would quietly send this bus to Master instead
+			problems.append("audio bus '%s' must come after '%s' in default_bus_layout.tres"
+					% [bus_name, shadow_bus])
 		if not fx_table.has(level):
 			problems.append("TrialPlan.BUS_FX has no entry for %s" % level)
 			continue
@@ -190,6 +200,52 @@ static func apply_bus_fx(fx_table: Dictionary = TrialPlan.BUS_FX,
 		if not reverb_done:
 			problems.append("audio bus '%s' has no reverb" % bus_name)
 	return problems
+
+
+## The Shadow bus: unmuted, unbypassed, not solo, into Master, with exactly one effect, the
+## rear-shadow high shelf (cutoff from TrialPlan, gain reset to 1 until a cry is placed).
+static func _apply_shadow_bus(shadow_bus: StringName) -> PackedStringArray:
+	var problems: PackedStringArray = []
+	var bus: int = AudioServer.get_bus_index(shadow_bus)
+	if bus < 0:
+		problems.append("audio bus '%s' (rear shadow) is missing from default_bus_layout.tres" % shadow_bus)
+		return problems
+	AudioServer.set_bus_mute(bus, false)
+	AudioServer.set_bus_bypass_effects(bus, false)
+	AudioServer.set_bus_solo(bus, false)
+	AudioServer.set_bus_volume_db(bus, 0.0)
+	AudioServer.set_bus_send(bus, &"Master")
+	var shelf_done: bool = false
+	for i: int in AudioServer.get_bus_effect_count(bus):
+		var effect: AudioEffect = AudioServer.get_bus_effect(bus, i)
+		if effect is AudioEffectHighShelfFilter and not shelf_done:
+			var shelf: AudioEffectHighShelfFilter = effect as AudioEffectHighShelfFilter
+			shelf.cutoff_hz = TrialPlan.REAR_SHADOW_CUTOFF_HZ
+			shelf.gain = 1.0
+			AudioServer.set_bus_effect_enabled(bus, i, true)
+			shelf_done = true
+		else:
+			problems.append("audio bus '%s' has an extra effect %s (slot %d); it should hold only the rear-shadow high shelf"
+					% [shadow_bus, effect.get_class(), i])
+	if not shelf_done:
+		problems.append("audio bus '%s' has no high-shelf filter for the rear shadow" % shadow_bus)
+	return problems
+
+
+## Sets the Shadow bus from where the emitter is relative to where the listener faces: the
+## further behind, the more treble cut and the quieter. Runs every frame (end of advance()).
+func update_rear_shadow() -> void:
+	var facing: Vector3 = -listener.global_basis.z
+	rear_shadow = TrialPlan.rear_amount(facing, emitter.global_position - listener.camera.global_position)
+	var bus: int = AudioServer.get_bus_index(TrialPlan.SHADOW_BUS)
+	if bus < 0:
+		return
+	AudioServer.set_bus_volume_db(bus, rear_shadow * TrialPlan.REAR_SHADOW_VOLUME_DB)
+	for i: int in AudioServer.get_bus_effect_count(bus):
+		var shelf: AudioEffectHighShelfFilter = AudioServer.get_bus_effect(bus, i) as AudioEffectHighShelfFilter
+		if shelf != null:
+			shelf.gain = TrialPlan.shelf_gain_for_db(rear_shadow * TrialPlan.REAR_SHADOW_TREBLE_DB)
+			return
 
 
 func _configure_emitter() -> void:
@@ -326,6 +382,7 @@ func advance(delta: float) -> void:
 			_phase_time += delta
 			if _phase_time >= TrialPlan.PRACTICE_FEEDBACK_S:
 				_finish_feedback()
+	update_rear_shadow()
 
 
 func answer(direction: String, level: String) -> bool:

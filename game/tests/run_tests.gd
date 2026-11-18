@@ -24,11 +24,11 @@ const SEEDS: int = 200
 const TIMESTAMP: String = "20261112-101500"
 const FOCUS_OUT: int = Node.NOTIFICATION_APPLICATION_FOCUS_OUT
 ## Design Notes bus FX, written out literally (not read from TrialPlan.BUS_FX). Every level
-## bus also plays at 0 dB, unmuted, unbypassed, not solo, into Master.
+## bus also plays at 0 dB, unmuted, unbypassed, not solo, into the Shadow bus.
 const DESIGN_NOTES_BUS_FX: Dictionary = {
-	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 400.0,
+	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 1000.0,
 		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
-	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 900.0,
+	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 650.0,
 		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
 	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0,
 		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
@@ -126,11 +126,15 @@ func _run() -> void:
 	_test_bus_layout_file_matches_bus_fx()
 	_test_bus_fx_problems()
 	_test_bus_fx_forces_buses()
+	_test_rear_amount()
+	_test_shadow_bus()
+	_test_shadow_bus_problems()
 	_test_scene_bus_problem_from_ready()
 	_test_scene_setup_gates()
 	_test_scene_audio_setup()
 	_test_scene_inside_rail_pylons()
 	_test_scene_listener_geometry()
+	_test_scene_rear_shadow()
 	_test_scene_listen()
 	_test_scene_trial_flow()
 	_test_scene_feedback()
@@ -810,7 +814,7 @@ func _test_bus_layout() -> void:
 		if bus < 0:
 			problems.append("%s missing" % bus_name)
 			continue
-		if AudioServer.get_bus_send(bus) != &"Master" or AudioServer.is_bus_mute(bus) \
+		if AudioServer.get_bus_send(bus) != &"Shadow" or AudioServer.is_bus_mute(bus) \
 				or AudioServer.is_bus_bypassing_effects(bus) or AudioServer.is_bus_solo(bus) \
 				or not is_zero_approx(AudioServer.get_bus_volume_db(bus)):
 			problems.append("%s: send/mute/bypass/solo/volume wrong" % bus_name)
@@ -844,7 +848,7 @@ func _test_bus_layout_file_matches_bus_fx() -> void:
 			found = true
 			var key: String = "bus/%d/" % i
 			if layout.get(key + "mute") != false or layout.get(key + "bypass_fx") != false \
-					or layout.get(key + "solo") != false or layout.get(key + "send") != &"Master" \
+					or layout.get(key + "solo") != false or layout.get(key + "send") != &"Shadow" \
 					or not is_equal_approx(layout.get(key + "volume_db"), TrialPlan.LEVEL_BUS_VOLUME_DB):
 				problems.append("tres %s: mute/bypass/solo/send/volume differ from the rule" % bus_name)
 			var effects: Array = []
@@ -896,6 +900,68 @@ func _test_bus_fx_forces_buses() -> void:
 	_check("audio buses: effects forced on, bus unmuted/unbypassed/not solo at its volume; an extra effect is a problem",
 			forced and problems.size() == 1 and problems[0].contains("extra effect AudioEffectCompressor")
 			and after.is_empty(), "%s / %s" % [problems, after])
+
+
+func _test_rear_amount() -> void:
+	var ahead: Vector3 = Vector3(0.0, 0.0, -1.0)  # facing the far bank
+	var cases: Dictionary = {
+		"ahead": [Vector3(0.0, 0.0, -6.0), 0.0],
+		"behind": [Vector3(0.0, 0.0, 6.0), 1.0],
+		"left": [Vector3(-6.0, 0.0, 0.0), 0.5],
+		"right": [Vector3(6.0, 0.0, 0.0), 0.5],
+		"behind and high (height ignored)": [Vector3(0.0, 5.0, 6.0), 1.0],
+		"ahead-left 45 deg": [Vector3(-1.0, 0.0, -1.0), (1.0 - cos(PI / 4.0)) * 0.5],
+		"straight overhead (no direction)": [Vector3(0.0, 5.0, 0.0), 0.0],
+	}
+	var wrong: PackedStringArray = []
+	for case_name: String in cases:
+		var got: float = TrialPlan.rear_amount(ahead, cases[case_name][0])
+		if not is_equal_approx(got, cases[case_name][1]):
+			wrong.append("%s=%s" % [case_name, got])
+	_check("rear shadow: 0 ahead, 0.5 at either side, 1 behind, smooth between, height ignored",
+			wrong.is_empty(), ", ".join(wrong))
+
+
+## The Shadow bus sits before the level buses, goes to Master and holds one high shelf.
+func _test_shadow_bus() -> void:
+	var problems: PackedStringArray = EarTest.apply_bus_fx()
+	var shadow: int = AudioServer.get_bus_index(&"Shadow")
+	var ok: bool = problems.is_empty() and shadow > 0 and AudioServer.get_bus_send(shadow) == &"Master" \
+			and AudioServer.get_bus_effect_count(shadow) == 1 \
+			and AudioServer.get_bus_effect(shadow, 0) is AudioEffectHighShelfFilter \
+			and AudioServer.is_bus_effect_enabled(shadow, 0) \
+			and is_equal_approx((AudioServer.get_bus_effect(shadow, 0) as AudioEffectFilter).cutoff_hz, 2000.0) \
+			and TrialPlan.SHADOW_BUS == &"Shadow"
+	for level: String in TrialPlan.LEVELS:
+		ok = ok and AudioServer.get_bus_index(TrialPlan.LEVEL_BUSES[level]) > shadow
+	var layout: Resource = ResourceLoader.load("res://default_bus_layout.tres", "", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
+	var tres_ok: bool = layout.get("bus/1/name") == &"Shadow" and layout.get("bus/1/send") == &"Master" \
+			and layout.get("bus/1/effect/0/effect") is AudioEffectHighShelfFilter \
+			and layout.get("bus/1/effect/0/enabled") == true and layout.get("bus/1/effect/1/effect") == null \
+			and is_equal_approx((layout.get("bus/1/effect/0/effect") as AudioEffectFilter).cutoff_hz,
+					TrialPlan.REAR_SHADOW_CUTOFF_HZ) \
+			and layout.get("bus/1/mute") == false and layout.get("bus/1/bypass_fx") == false
+	_check("rear shadow: Shadow bus comes before the level buses, sends to Master, one high shelf at 2000 Hz (live and .tres)",
+			ok and tres_ok, str(problems))
+
+
+## A missing Shadow bus, an extra effect on it, or the wrong bus order are setup problems.
+func _test_shadow_bus_problems() -> void:
+	var missing: PackedStringArray = EarTest.apply_bus_fx(TrialPlan.BUS_FX, TrialPlan.LEVEL_BUSES, &"NoShadow")
+	var shadow: int = AudioServer.get_bus_index(&"Shadow")
+	AudioServer.add_bus_effect(shadow, AudioEffectCompressor.new())
+	var extra: PackedStringArray = EarTest.apply_bus_fx()
+	AudioServer.remove_bus_effect(shadow, 1)
+	AudioServer.move_bus(shadow, AudioServer.bus_count)  # to the very end (move_bus inserts before the index)
+	var order: PackedStringArray = EarTest.apply_bus_fx()
+	AudioServer.move_bus(AudioServer.get_bus_index(&"Shadow"), shadow)
+	var restored: PackedStringArray = EarTest.apply_bus_fx()
+	_check("rear shadow: missing Shadow bus, an extra effect on it, or Shadow after a level bus is a problem",
+			missing.size() == 1 and missing[0].contains("'NoShadow' (rear shadow) is missing")
+			and extra.size() == 1 and extra[0].contains("extra effect AudioEffectCompressor")
+			and order.size() == 3 and order[0].contains("must come after 'Shadow'")
+			and restored.is_empty() and AudioServer.get_bus_index(&"Shadow") == shadow,
+			"%s / %s / %s / %s" % [missing, extra, order, restored])
 
 
 ## _ready() wires apply_bus_fx() into the setup gate: a broken bus disables Start.
@@ -1051,6 +1117,33 @@ func _test_scene_inside_rail_pylons() -> void:
 	var parapet_top: float = (parapet.global_transform * parapet.get_aabb()).end.y
 	_check("scene: each inside-rail source sits inside its parapet pylon; the parapet stays 1.2 m",
 			ok and is_equal_approx(parapet_top, 1.2), detail + "parapet top %s" % parapet_top)
+	scene.free()
+
+
+## The Shadow bus follows the cry as the listener turns: behind is duller and quieter.
+func _test_scene_rear_shadow() -> void:
+	var scene: EarTest = _new_scene("shadow")
+	var bus: int = AudioServer.get_bus_index(TrialPlan.SHADOW_BUS)
+	var shelf: AudioEffectFilter = AudioServer.get_bus_effect(bus, 0) as AudioEffectFilter
+	_start(scene, "shadow", "headphones")
+	scene.emitter.global_position = TrialPlan.source_position("town", "above")
+	scene.listener.reset_facing()  # facing the far bank: town is straight behind
+	_step(scene, 0.1)
+	var behind: Array = [scene.rear_shadow, shelf.gain, AudioServer.get_bus_volume_db(bus)]
+	scene.listener.rotation.y = PI / 2.0  # facing the left rail: town is to the right
+	_step(scene, 0.1)
+	var side: Array = [scene.rear_shadow, shelf.gain, AudioServer.get_bus_volume_db(bus)]
+	scene.listener.rotation.y = PI  # facing town
+	_step(scene, 0.1)
+	var facing: Array = [scene.rear_shadow, shelf.gain, AudioServer.get_bus_volume_db(bus)]
+	# Shelf gain g cuts the treble by 40*log10(g) dB (measured), so -10 dB is g = 10^(-10/40).
+	_check("rear shadow: behind -10 dB treble and -2 dB, side half, facing it none; updated every frame",
+			is_equal_approx(behind[0], 1.0) and is_equal_approx(behind[1], pow(10.0, -10.0 / 40.0))
+			and is_equal_approx(behind[2], -2.0)
+			and is_equal_approx(side[0], 0.5) and is_equal_approx(side[1], pow(10.0, -5.0 / 40.0))
+			and is_equal_approx(side[2], -1.0)
+			and is_zero_approx(facing[0]) and is_equal_approx(facing[1], 1.0) and is_zero_approx(facing[2]),
+			"behind %s, side %s, facing %s" % [behind, side, facing])
 	scene.free()
 
 

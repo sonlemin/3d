@@ -159,14 +159,25 @@ level; `REVERB_KEYS` lists them), emitter settings, timings, trial counts and th
 mark are constants at the top of `game/scripts/trial_plan.gd`. The bus FX live in `BUS_FX` there
 and nowhere else that counts: they are applied over `default_bus_layout.tres` at startup, with
 both effects forced on and each level bus forced unmuted, unbypassed, not solo, at
-`LEVEL_BUS_VOLUME_DB` and sending to Master. So values changed in the editor's Audio panel are
+`LEVEL_BUS_VOLUME_DB` and sending to the Shadow bus. So values changed in the editor's Audio panel are
 overwritten, and any other effect added to a level bus is listed on the setup screen and
 disables Start. (A test checks that the `.tres` still matches, effects enabled included;
 update both together.) The emitter has distance attenuation turned off,
 so every source plays at the same loudness and only panning and the level buses tell them apart.
 
+**Rear shadow (front/back cue).** Plain stereo panning sounds the same ahead and behind. The
+`Shadow` bus, which every level bus feeds, copies what the head and outer ears do: the further
+behind you a cry is, the more its treble is cut (up to `REAR_SHADOW_TREBLE_DB`, -10 dB above
+`REAR_SHADOW_CUTOFF_HZ`, 2 kHz) and the quieter it is (up to `REAR_SHADOW_VOLUME_DB`, -2 dB);
+half of each when it's square to one side. It updates every frame, so a cry brightens as you
+turn to face it. The bus must stay before the level buses in `default_bus_layout.tres` (Godot
+only sends to buses on the left) and hold only its high-shelf filter; anything else is listed
+on the setup screen and disables Start. Note: Godot's shelf `gain` cuts by 40·log10(gain) dB
+(measured), so `shelf_gain_for_db()` does the conversion.
+
 ## Manual check (can't be done headless)
 
-Run one practice round on headphones and check three things: the three levels sound clearly
+Run one practice round on headphones and check four things: the three levels sound clearly
 different, the cry pans as you turn your head (a left-rail cry moves to centre when you face it),
-and a CSV appears in the results folder.
+a cry from behind (town, at the start of a trial) sounds duller and brightens as you turn to
+face it, and a CSV appears in the results folder.

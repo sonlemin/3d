@@ -70,13 +70,28 @@ const LEVEL_BUS_VOLUME_DB: float = 0.0
 ## below a cave (largest room, long predelay, long bright tail, dry signal pulled back).
 const REVERB_KEYS: Array[String] = ["room_size", "damping", "wet", "dry", "predelay_msec"]
 const BUS_FX: Dictionary = {
-	"above": {"filter": "high_pass", "cutoff_hz": 400.0,
+	"above": {"filter": "high_pass", "cutoff_hz": 1000.0,
 		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
-	"inside": {"filter": "low_pass", "cutoff_hz": 900.0,
+	"inside": {"filter": "low_pass", "cutoff_hz": 650.0,
 		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
 	"below": {"filter": "low_pass", "cutoff_hz": 2500.0,
 		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
 }
+## Above keeps only what is over 1000 Hz (thin, bright) and inside only what is under 650 Hz
+## (dark, muffled): no shared middle band, so the two can't sound alike.
+
+## Every level bus sends into this bus, which holds one effect: the rear-shadow high shelf.
+## It must come before the level buses in default_bus_layout.tres (Godot only sends leftward).
+const SHADOW_BUS: StringName = &"Shadow"
+## Rear shadow: the head and outer ears make a sound behind you duller and a little quieter
+## than the same sound in front, and it brightens as you turn to face it. Plain stereo
+## panning has no front/back cue; this adds one without HRTF. A high-shelf cut takes off only
+## the top, so the low end that tells above from inside is untouched.
+const REAR_SHADOW_CUTOFF_HZ: float = 2000.0
+## Treble cut, and overall dip, with the source straight behind; half of each at the side.
+const REAR_SHADOW_TREBLE_DB: float = -10.0
+const REAR_SHADOW_VOLUME_DB: float = -2.0
+
 ## No distance attenuation: every source plays at the same level wherever it is, so loudness
 ## is not a cue (with inverse-distance falloff the below sources were ~2.7 dB quieter).
 ## Panning still follows the source direction.
@@ -242,6 +257,26 @@ static func cry_volume_db(elapsed_s: float) -> float:
 	if CRY_FADE_OUT_S <= 0.0 or left >= CRY_FADE_OUT_S:
 		return EMITTER_VOLUME_DB
 	return EMITTER_VOLUME_DB + linear_to_db(clampf(left / CRY_FADE_OUT_S, 0.0001, 1.0))
+
+
+# ------------------------------------------------------------------ rear shadow
+
+## How far behind the listener a source is, in the horizontal plane: 0 straight ahead,
+## 0.5 square to one side, 1 straight behind. From the angle's cosine, so it changes smoothly
+## as the listener turns. Height is ignored.
+static func rear_amount(facing: Vector3, to_source: Vector3) -> float:
+	var ahead: Vector2 = Vector2(facing.x, facing.z)
+	var toward: Vector2 = Vector2(to_source.x, to_source.z)
+	if ahead.is_zero_approx() or toward.is_zero_approx():
+		return 0.0
+	return clampf((1.0 - ahead.normalized().dot(toward.normalized())) * 0.5, 0.0, 1.0)
+
+
+## The AudioEffectHighShelfFilter `gain` that cuts the treble by `treble_db`. Godot's shelf
+## changes the treble by 40 * log10(gain) dB (measured: gain 0.5 -> -12 dB, 0.25 -> -24 dB),
+## so the gain is 10^(dB / 40), not db_to_linear(dB).
+static func shelf_gain_for_db(treble_db: float) -> float:
+	return pow(10.0, treble_db / 40.0)
 
 
 # ------------------------------------------------------------------ scoring
