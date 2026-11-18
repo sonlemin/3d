@@ -14,7 +14,7 @@ context:
 
 **Problem:** The game depends on players placing a cry's direction and level by ear, and Godot's built-in 3D audio has no front/back or elevation cue. That pillar is unproven.
 
-**Approach:** A private gray-box Godot test. A first-person listener stands mid-span with free mouse-look; cries play from 4 directions × 3 levels; the tester names each on a 12-button grid. Each level has its own kind of cry and its own audio bus (filters and reverb). Sessions are logged to CSV and scored against the brief's pass mark.
+**Approach:** A private gray-box Godot test. A first-person listener stands mid-span with free mouse-look; cries play from 4 directions × 3 levels; the tester names each on a 12-button grid. Each level has its own audio bus (filters and reverb); the kind of cry is mixed across levels, so only the sound treatment and position tell the level. Sessions are logged to CSV and scored against the brief's pass mark.
 
 ## Boundaries & Constraints
 
@@ -25,7 +25,7 @@ context:
 - Pass = both direction and level correct on ≥ 80% of scored trials in that session. Results also show direction-only %, level-only %, and both-correct % per level.
 - Each trial starts facing the far bank; mouse-look is free during the listen window; walking is not possible.
 - Trial ordering, source positions and scoring live in one pure script that tests run headless. Positions, bus FX and timings are tunable constants in one place.
-- Clips are discovered at runtime from `res://audio/cries/<level>/` via `ResourceLoader.list_directory()`; one random clip per trial.
+- Clips are discovered at runtime from `res://audio/cries/<level>/` via `ResourceLoader.list_directory()`; one random clip per trial, from any level's folder (`MIX_CRY_KINDS`).
 
 **Ask First:** installing any addon or downloading anything (export templates, sound libraries); changing the direction/level set, trial counts or pass rule.
 
@@ -74,6 +74,7 @@ Greenfield: no game code yet. The addendum (in `context`) holds the Godot audio 
 - **2026-11-12, human renegotiation (Sonlm) after step-4 review, frozen Pause row.** Trigger: all three reviewers found that a pause late in the cry still replayed the whole trial, so repeated pauses gave unlimited listens, invisible in the CSV. Amended: replay only if paused in the silence or the first 1 s of the cry; a later pause resumes at the grid; feedback pauses resume to the next trial; a `pauses` CSV column counts every pause. Known-bad state avoided: unlimited, unrecorded re-listens. KEEP: no replay from the grid; pause time excluded from response time.
 - **2026-11-12, human renegotiation (Sonlm) after step-4 review, frozen Bad tester ID row.** Trigger: ASCII-only sanitizing merged distinct Vietnamese names (`Sơn`, `Sân` → `S_n`) in the CSV, and edge-space trimming wasn't in the row. Amended: letters of any script stay in the filename, ends are trimmed, and the CSV keeps the ID as typed. Known-bad state avoided: different testers' rows sharing an ID.
 - **2026-11-14, human request (Sonlm): Replay button, practice only.** Trigger: a tester who missed a practice cry had no way to hear it again. Amended: the practice answer grid has a Replay button that plays the same cry again from the silence; a `replays` CSV column counts presses. Known-bad state avoided: extra listens in the scored round inflating the gate score. KEEP: one listen per scored trial; the frozen pause rules unchanged.
+- **2026-11-18, human renegotiation (Sonlm), frozen Intent and Always.** Trigger: with one kind of cry per level (shriek above, sob inside, whisper below), testers could name the level from the kind of cry alone, so the level score didn't test hearing the level. Amended: each trial draws its clip from any folder (each kind equally likely) and plays it through the trial's level bus and position; a `cry_kind` CSV column records the source folder. Known-bad state avoided: a pass that only proves cry recognition. KEEP: per-level buses and positions; one random clip per trial.
 
 ## Design Notes
 

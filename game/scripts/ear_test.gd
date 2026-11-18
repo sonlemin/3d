@@ -268,6 +268,7 @@ func answer(direction: String, level: String) -> bool:
 	var response_ms: int = _now_ms() - _cry_started_ms
 	var result: Dictionary = TrialPlan.make_result(round_name, trial_index + 1, current_combo(),
 			TrialPlan.make_combo(direction, level), response_ms, trial_pauses, current_clip.get_file())
+	result["cry_kind"] = CryLibrary.kind_of(current_clip)
 	if round_name == TrialPlan.ROUND_PRACTICE:
 		_pending_result = result
 		_show_feedback(result)
@@ -366,7 +367,7 @@ func _begin_trial(pick_new_clip: bool) -> void:
 	var level: String = combo["level"]
 	var direction: String = combo["direction"]
 	if pick_new_clip:
-		current_clip = library.pick(level, _rng)
+		current_clip = library.pick_any(_rng) if TrialPlan.MIX_CRY_KINDS else library.pick(level, _rng)
 		trial_pauses = 0
 		trial_replays = 0
 	var stream: AudioStream = library.stream_for(current_clip)

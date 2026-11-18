@@ -96,9 +96,12 @@ A session passes when both direction **and** level are right on at least **80%**
 24 scored trials, which means at least 20 of 24. The results screen also shows direction
 accuracy (any level), level accuracy (any direction), and both-correct accuracy for each level.
 
-Each level has its own kind of cry (shriek above, sob inside, whisper below), so the level score
-includes recognising that kind of cry, not only hearing height. That is by design: the brief
-makes the cry type a level cue.
+**Mixed cries.** The three clip folders hold three kinds of cry (shriek in `above/`, sob in
+`inside/`, whisper in `below/`), but every trial picks its clip from any folder, each kind
+equally likely, and plays it through the trial's level filter, echo and position. A whisper can
+come from above. So the level score measures hearing the level, not recognising the kind of cry.
+The `cry_kind` column records which folder the clip came from. To go back to one kind per level,
+set `MIX_CRY_KINDS = false` in `trial_plan.gd`.
 
 ## Where the CSVs are
 
@@ -116,7 +119,7 @@ no-break, ideographic and zero-width spaces). An ID made only of spaces counts a
 
 The results screen shows the full path, and **Open results folder** opens it. The columns are:
 `tester_id, output_mode, round, trial_index, true_direction, true_level, answer_direction,
-answer_level, direction_correct, level_correct, both_correct, response_ms, pauses, replays, clip`.
+answer_level, direction_correct, level_correct, both_correct, response_ms, pauses, replays, cry_kind, clip`.
 
 - A scored row is written as soon as the tester answers. A practice row is written when its
   2 seconds of feedback end, so a pause during the feedback counts in that row. A crash or a

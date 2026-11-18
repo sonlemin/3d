@@ -113,6 +113,7 @@ func _run() -> void:
 	_test_tester_id_file_name_chars()
 	_test_clip_name_filter()
 	_test_clip_discovery()
+	_test_pick_any()
 	_test_clip_discovery_problems()
 	_test_empty_levels()
 	_test_results_log_writes()
@@ -441,7 +442,7 @@ func _test_scoring_correct_answer() -> void:
 	var result: Dictionary = TrialPlan.make_result(TrialPlan.ROUND_SCORED, 3, truth, truth, 4567, 2, "x.wav")
 	var row: PackedStringArray = TrialPlan.csv_row("ann", "headphones", result)
 	var expected: PackedStringArray = ["ann", "headphones", "scored", "3", "left_rail", "above",
-			"left_rail", "above", "1", "1", "1", "4567", "2", "0", "x.wav"]
+			"left_rail", "above", "1", "1", "1", "4567", "2", "0", "", "x.wav"]
 	_check("scoring: correct answer -> direction 1, level 1, both 1; pauses after response_ms (CSV row)",
 			row == expected and TrialPlan.CSV_COLUMNS[12] == "pauses", str(row))
 
@@ -609,6 +610,26 @@ func _test_clip_discovery() -> void:
 			ok, detail + str(library.problems))
 
 
+## Mixed cries: pick_any draws from every cry folder, about equally often.
+func _test_pick_any() -> void:
+	var library: CryLibrary = CryLibrary.new()
+	library.discover()
+	var rng: RandomNumberGenerator = _seeded(7)
+	var counts: Dictionary = {}
+	var all_known: bool = true
+	for _i: int in 600:
+		var clip: String = library.pick_any(rng)
+		var kind: String = CryLibrary.kind_of(clip)
+		all_known = all_known and library.clips_for(kind).has(clip)
+		counts[kind] = counts.get(kind, 0) + 1
+	var balanced: bool = counts.size() == 3
+	for kind: String in counts:
+		balanced = balanced and counts[kind] > 150  # 200 expected each
+	_check("mixed cries: pick_any draws every kind of cry about equally (MIX_CRY_KINDS on)",
+			TrialPlan.MIX_CRY_KINDS and all_known and balanced
+			and CryLibrary.kind_of("res://audio/cries/below/x.wav") == "below", str(counts))
+
+
 ## Fake listings, raw files and loader: not imported, unloadable, skipped audio, mixed placeholders.
 func _test_clip_discovery_problems() -> void:
 	var listings: Dictionary = {
@@ -702,7 +723,7 @@ func _test_results_log_writes() -> void:
 			err == OK and append_err == OK
 			and log_file.path.ends_with("log/ann____x_headphones_%s.csv" % TIMESTAMP)
 			and lines.size() == 2 and lines[0] == ",".join(TrialPlan.CSV_COLUMNS)
-			and lines[1] == "ann/../x,headphones,practice,1,town,below,town,below,1,1,1,4100,1,0,c.wav",
+			and lines[1] == "ann/../x,headphones,practice,1,town,below,town,below,1,1,1,4100,1,0,,c.wav",
 			"%s %s %s" % [error_string(err), log_file.path, lines])
 
 
@@ -1334,6 +1355,24 @@ func _test_scene_full_session() -> void:
 		level += int(row["level_correct"])
 		per_level_trials[row["true_level"]] = per_level_trials.get(row["true_level"], 0) + 1
 		per_level_both[row["true_level"]] = per_level_both.get(row["true_level"], 0) + int(row["both_correct"])
+	var kinds_ok: bool = true
+	var kind_differs: int = 0
+	var kinds_per_level: Dictionary = {}
+	for row: Dictionary in csv:
+		var kind: String = row["cry_kind"]
+		kinds_ok = kinds_ok and kind in TrialPlan.LEVELS \
+				and scene.library.clips_for(kind).has("res://audio/cries/%s/%s" % [kind, row["clip"]])
+		if kind != row["true_level"]:
+			kind_differs += 1
+		var seen: Dictionary = kinds_per_level.get(row["true_level"], {})
+		seen[kind] = true
+		kinds_per_level[row["true_level"]] = seen
+	var mixed_everywhere: bool = kinds_per_level.size() == 3
+	for seen_level: String in kinds_per_level:
+		mixed_everywhere = mixed_everywhere and kinds_per_level[seen_level].size() >= 2
+	_check("session: cry_kind is logged and not tied to the level (the kind of cry doesn't give the level away)",
+			kinds_ok and kind_differs >= 12 and mixed_everywhere,
+			"%d of %d rows differ; %s" % [kind_differs, csv.size(), kinds_per_level])
 	_check("session: CSV has 12 practice + 24 scored rows",
 			started and scene.state == EarTest.State.RESULTS and practice == 12 and scored == 24
 			and not scene.results_log.has_error(),

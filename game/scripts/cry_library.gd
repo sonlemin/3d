@@ -139,6 +139,23 @@ func pick(level: String, rng: RandomNumberGenerator) -> String:
 	return clips[rng.randi_range(0, clips.size() - 1)]
 
 
+## One random clip from any cry folder: a folder with clips is picked first (each equally
+## likely, however many clips it holds), then a clip in it. "" if no folder has clips.
+func pick_any(rng: RandomNumberGenerator) -> String:
+	var kinds: PackedStringArray = []
+	for level: String in TrialPlan.LEVELS:
+		if not clips_for(level).is_empty():
+			kinds.append(level)
+	if kinds.is_empty():
+		return ""
+	return pick(kinds[rng.randi_range(0, kinds.size() - 1)], rng)
+
+
+## The cry folder (kind of cry) a clip path came from, e.g. "below".
+static func kind_of(clip_path: String) -> String:
+	return clip_path.get_base_dir().get_file()
+
+
 func _raw_files(folder: String) -> PackedStringArray:
 	if list_raw_files.is_valid():
 		return list_raw_files.call(folder)

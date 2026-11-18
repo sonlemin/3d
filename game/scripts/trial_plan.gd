@@ -83,6 +83,14 @@ const EMITTER_MAX_DB: float = 3.0
 const EMITTER_UNIT_SIZE: float = 10.0
 # Stereo panning strength is the project setting audio/general/3d_panning_strength (1.0).
 
+# ------------------------------------------------------------------ cries
+
+## true: each trial plays a clip from ANY cry folder (above/inside/below hold kinds of cry:
+## shriek, sob, whisper) through the trial's level bus and position, so only the filter, echo
+## and position tell the level, not which kind of cry it is. false: each level plays only its
+## own folder's clips, so the kind of cry gives the level away.
+const MIX_CRY_KINDS: bool = true
+
 # ------------------------------------------------------------------ timings (s)
 
 const SILENCE_BEFORE_CRY_S: float = 1.0
@@ -111,7 +119,7 @@ const TESTER_ID_MAX_LENGTH: int = 64
 const CSV_COLUMNS: Array[String] = [
 	"tester_id", "output_mode", "round", "trial_index",
 	"true_direction", "true_level", "answer_direction", "answer_level",
-	"direction_correct", "level_correct", "both_correct", "response_ms", "pauses", "replays", "clip",
+	"direction_correct", "level_correct", "both_correct", "response_ms", "pauses", "replays", "cry_kind", "clip",
 ]
 
 
@@ -230,6 +238,7 @@ static func cry_volume_db(elapsed_s: float) -> float:
 ## One answered trial. Keys are the CSV columns after tester_id and output_mode.
 ## `pauses` counts every pause taken during the trial, its practice feedback included.
 ## `replays` counts Replay presses (practice only); the scene fills it in when it logs the row.
+## `cry_kind` is the folder the clip came from (see MIX_CRY_KINDS); the scene fills it in.
 static func make_result(round_name: String, trial_index: int, truth: Dictionary,
 		answer: Dictionary, response_ms: int, pauses: int, clip: String) -> Dictionary:
 	var direction_ok: bool = truth["direction"] == answer["direction"]
@@ -247,6 +256,7 @@ static func make_result(round_name: String, trial_index: int, truth: Dictionary,
 		"response_ms": response_ms,
 		"pauses": pauses,
 		"replays": 0,
+		"cry_kind": "",
 		"clip": clip,
 	}
 
