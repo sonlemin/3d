@@ -144,7 +144,7 @@ func _notification(what: int) -> void:
 
 ## Writes `fx_table` (TrialPlan.BUS_FX) onto the level buses loaded from
 ## default_bus_layout.tres: sets the filter and reverb values and forces both effects on, and
-## forces the bus unmuted, unbypassed, not solo, at TrialPlan.LEVEL_BUS_VOLUME_DB, sending to
+## forces the bus unmuted, unbypassed, not solo, at its TrialPlan.LEVEL_BUS_VOLUME_DB, sending to
 ## the Shadow bus (which goes to Master and holds only the rear-shadow high shelf). Returns a
 ## list of problems (missing bus, bus order, unknown filter type, missing filter or reverb,
 ## any other effect on a bus); empty when all is in place. Tests pass other tables and names.
@@ -162,7 +162,7 @@ static func apply_bus_fx(fx_table: Dictionary = TrialPlan.BUS_FX,
 		AudioServer.set_bus_mute(bus, false)
 		AudioServer.set_bus_bypass_effects(bus, false)
 		AudioServer.set_bus_solo(bus, false)
-		AudioServer.set_bus_volume_db(bus, TrialPlan.LEVEL_BUS_VOLUME_DB)
+		AudioServer.set_bus_volume_db(bus, TrialPlan.LEVEL_BUS_VOLUME_DB.get(level, 0.0))
 		AudioServer.set_bus_send(bus, shadow_bus if shadow >= 0 else &"Master")
 		if shadow >= bus:  # Godot would quietly send this bus to Master instead
 			problems.append("audio bus '%s' must come after '%s' in default_bus_layout.tres"

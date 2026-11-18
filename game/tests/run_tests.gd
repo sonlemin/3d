@@ -24,13 +24,14 @@ const SEEDS: int = 200
 const TIMESTAMP: String = "20261112-101500"
 const FOCUS_OUT: int = Node.NOTIFICATION_APPLICATION_FOCUS_OUT
 ## Design Notes bus FX, written out literally (not read from TrialPlan.BUS_FX). Every level
-## bus also plays at 0 dB, unmuted, unbypassed, not solo, into the Shadow bus.
+## bus also plays unmuted, unbypassed, not solo, into the Shadow bus, at its loudness-matching
+## volume_db.
 const DESIGN_NOTES_BUS_FX: Dictionary = {
-	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 1000.0,
+	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 1000.0, "volume_db": 1.3,
 		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
-	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 650.0,
+	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 650.0, "volume_db": 4.8,
 		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
-	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0,
+	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0, "volume_db": -9.3,
 		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
 }
 
@@ -127,6 +128,7 @@ func _run() -> void:
 	_test_bus_fx_problems()
 	_test_bus_fx_forces_buses()
 	_test_rear_amount()
+	_test_loudness_meter()
 	_test_shadow_bus()
 	_test_shadow_bus_problems()
 	_test_scene_bus_problem_from_ready()
@@ -816,7 +818,7 @@ func _test_bus_layout() -> void:
 			continue
 		if AudioServer.get_bus_send(bus) != &"Shadow" or AudioServer.is_bus_mute(bus) \
 				or AudioServer.is_bus_bypassing_effects(bus) or AudioServer.is_bus_solo(bus) \
-				or not is_zero_approx(AudioServer.get_bus_volume_db(bus)):
+				or not is_equal_approx(AudioServer.get_bus_volume_db(bus), DESIGN_NOTES_BUS_FX[bus_name]["volume_db"]):
 			problems.append("%s: send/mute/bypass/solo/volume wrong" % bus_name)
 		var effects: Array = []
 		var enabled: Array = []
@@ -849,7 +851,7 @@ func _test_bus_layout_file_matches_bus_fx() -> void:
 			var key: String = "bus/%d/" % i
 			if layout.get(key + "mute") != false or layout.get(key + "bypass_fx") != false \
 					or layout.get(key + "solo") != false or layout.get(key + "send") != &"Shadow" \
-					or not is_equal_approx(layout.get(key + "volume_db"), TrialPlan.LEVEL_BUS_VOLUME_DB):
+					or not is_equal_approx(layout.get(key + "volume_db"), TrialPlan.LEVEL_BUS_VOLUME_DB[level]):
 				problems.append("tres %s: mute/bypass/solo/send/volume differ from the rule" % bus_name)
 			var effects: Array = []
 			var enabled: Array = []
@@ -894,7 +896,7 @@ func _test_bus_fx_forces_buses() -> void:
 	var forced: bool = AudioServer.is_bus_effect_enabled(inside, 0) and AudioServer.is_bus_effect_enabled(inside, 1) \
 			and not AudioServer.is_bus_mute(inside) and not AudioServer.is_bus_bypassing_effects(inside) \
 			and not AudioServer.is_bus_solo(inside) \
-			and is_equal_approx(AudioServer.get_bus_volume_db(inside), TrialPlan.LEVEL_BUS_VOLUME_DB)
+			and is_equal_approx(AudioServer.get_bus_volume_db(inside), TrialPlan.LEVEL_BUS_VOLUME_DB["inside"])
 	AudioServer.remove_bus_effect(inside, AudioServer.get_bus_effect_count(inside) - 1)
 	var after: PackedStringArray = EarTest.apply_bus_fx()
 	_check("audio buses: effects forced on, bus unmuted/unbypassed/not solo at its volume; an extra effect is a problem",
@@ -920,6 +922,23 @@ func _test_rear_amount() -> void:
 			wrong.append("%s=%s" % [case_name, got])
 	_check("rear shadow: 0 ahead, 0.5 at either side, 1 behind, smooth between, height ignored",
 			wrong.is_empty(), ", ".join(wrong))
+
+
+## tools/measure_loudness.gd: BS.1770's reference reading, a full-scale 1 kHz sine in one
+## channel is -3.01 LUFS; and the K-weighting (+4 dB shelf) makes 4 kHz read louder than 1 kHz.
+func _test_loudness_meter() -> void:
+	var meter: GDScript = load("res://tools/measure_loudness.gd")
+	var rate: float = 48000.0
+	var sine_1k: PackedVector2Array = []
+	var sine_4k: PackedVector2Array = []
+	for i: int in int(rate):
+		sine_1k.append(Vector2(sin(TAU * 1000.0 * i / rate), 0.0))
+		sine_4k.append(Vector2(sin(TAU * 4000.0 * i / rate), 0.0))
+	var at_1k: float = meter.k_weighted_lufs(sine_1k, rate)
+	var at_4k: float = meter.k_weighted_lufs(sine_4k, rate)
+	_check("loudness meter: full-scale 1 kHz sine in one channel reads -3.01 LUFS (BS.1770); 4 kHz reads ~4 dB louder",
+			absf(at_1k + 3.01) < 0.1 and at_4k - at_1k > 3.0 and at_4k - at_1k < 5.0,
+			"1 kHz %.2f, 4 kHz %.2f" % [at_1k, at_4k])
 
 
 ## The Shadow bus sits before the level buses, goes to Master and holds one high shelf.
@@ -1088,14 +1107,16 @@ func _test_scene_audio_setup() -> void:
 	var bus_volumes: Array = []
 	for level: String in TrialPlan.LEVELS:
 		bus_volumes.append(AudioServer.get_bus_volume_db(AudioServer.get_bus_index(TrialPlan.LEVEL_BUSES[level])))
-	_check("emitter: no distance attenuation, so all 12 sources (%.2f to %.2f m) play at the same level"
+	_check("emitter: no distance attenuation, so all 12 sources (%.2f to %.2f m) play at the same level; level buses at their matching volumes"
 			% [distances.min(), distances.max()],
 			TrialPlan.EMITTER_ATTENUATION_MODEL == AudioStreamPlayer3D.ATTENUATION_DISABLED
 			and emitter.attenuation_model == AudioStreamPlayer3D.ATTENUATION_DISABLED
 			and is_zero_approx(emitter.max_distance) and not emitter.emission_angle_enabled
 			and is_equal_approx(emitter.volume_db, TrialPlan.EMITTER_VOLUME_DB)
 			and emitter.max_db >= emitter.volume_db
-			and bus_volumes[0] == bus_volumes[1] and bus_volumes[1] == bus_volumes[2],
+			and is_equal_approx(bus_volumes[0], TrialPlan.LEVEL_BUS_VOLUME_DB["above"])
+			and is_equal_approx(bus_volumes[1], TrialPlan.LEVEL_BUS_VOLUME_DB["inside"])
+			and is_equal_approx(bus_volumes[2], TrialPlan.LEVEL_BUS_VOLUME_DB["below"]),
 			"model %d, bus volumes %s" % [emitter.attenuation_model, bus_volumes])
 	_check("emitter: does not filter by distance",
 			is_equal_approx(emitter.attenuation_filter_db, TrialPlan.EMITTER_ATTENUATION_FILTER_DB)

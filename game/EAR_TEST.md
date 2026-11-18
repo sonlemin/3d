@@ -147,6 +147,8 @@ answer_level, direction_correct, level_correct, both_correct, response_ms, pause
 - The `placeholder_*.wav` files are synthesized by `game/tools/make_placeholder_cries.py`.
   Delete them once real clips are in place; the setup screen warns when a folder mixes the two.
 - Log every real clip in `game/audio/cries/CREDITS.md`. No AI-generated audio.
+- After adding or removing clips, re-run `tools/measure_loudness.gd` (see Tuning) and update the
+  loudness trims: the current ones were measured on the placeholders.
 - Run `godot --headless --path game --import` after adding clips. A `.wav` that hasn't been
   imported yet, or that doesn't load, is named on the setup screen, and Start stays disabled
   until every clip in the folders is imported and loads. A level folder with no clips is named
@@ -164,6 +166,20 @@ overwritten, and any other effect added to a level bus is listed on the setup sc
 disables Start. (A test checks that the `.tres` still matches, effects enabled included;
 update both together.) The emitter has distance attenuation turned off,
 so every source plays at the same loudness and only panning and the level buses tell them apart.
+
+**Loudness matching.** Filters and reverb change how loud a level plays (untrimmed, the cave
+reverb made below ~10 dB louder than above), which would let loudness give the level away.
+Each level bus has its own trim in `LEVEL_BUS_VOLUME_DB` so all three play equally loud on
+average. The trims come from
+
+```
+godot --headless --path game -s res://tools/measure_loudness.gd
+```
+
+which plays every clip through every level's real buses and measures the output (ITU-R BS.1770
+loudness, LUFS; about 4 s per clip per level). **Re-run it after changing `BUS_FX` or the clips**
+and copy its suggested values into `LEVEL_BUS_VOLUME_DB` and the level buses' `volume_db` in
+`default_bus_layout.tres` (a test checks they match).
 
 **Rear shadow (front/back cue).** Plain stereo panning sounds the same ahead and behind. The
 `Shadow` bus, which every level bus feeds, copies what the head and outer ears do: the further

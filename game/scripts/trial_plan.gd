@@ -59,11 +59,21 @@ const LEVEL_BUSES: Dictionary = {
 ## The single source of truth for the level buses: applied over res://default_bus_layout.tres
 ## at startup (ear_test.gd), so values changed in the editor's Audio panel are overwritten.
 ## Each level bus holds exactly these two effects (any other effect is a setup problem);
-## they are forced on, and the bus is forced unmuted, unbypassed, not solo, sending to Master.
+## they are forced on, and the bus is forced unmuted, unbypassed, not solo, sending to Shadow.
 ## filter: one of BUS_FILTER_TYPES.
 const BUS_FILTER_TYPES: Array[String] = ["high_pass", "low_pass"]
-## Volume of every level bus, the same for all three so no level is louder than another.
-const LEVEL_BUS_VOLUME_DB: float = 0.0
+## Volume of each level bus: loudness matching, so loudness never gives the level away. The
+## filters and reverb change loudness a lot: untrimmed, the cave reverb made below ~10 dB
+## louder than above, and the 650 Hz low-pass made inside ~3.5 dB quieter. These trims bring the
+## three levels to the same average loudness, measured by tools/measure_loudness.gd (all clips
+## from the far bank through the real buses, ITU-R BS.1770 K-weighted LUFS, both ears summed).
+## Re-run it after changing BUS_FX or the clips, and copy its suggestions here and to the
+## level buses' volume_db in default_bus_layout.tres.
+const LEVEL_BUS_VOLUME_DB: Dictionary = {
+	"above": 1.3,
+	"inside": 4.8,
+	"below": -9.3,
+}
 ## The reverb settings every BUS_FX entry sets (AudioEffectReverb property names).
 ## Echo is the strongest level cue (it works on any clip), so the three are far apart:
 ## above almost dry (open air), inside a tight box (tiny room, no predelay, heavily damped),
