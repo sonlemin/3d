@@ -75,6 +75,7 @@ Greenfield: no game code yet. The addendum (in `context`) holds the Godot audio 
 - **2026-11-12, human renegotiation (Sonlm) after step-4 review, frozen Bad tester ID row.** Trigger: ASCII-only sanitizing merged distinct Vietnamese names (`Sơn`, `Sân` → `S_n`) in the CSV, and edge-space trimming wasn't in the row. Amended: letters of any script stay in the filename, ends are trimmed, and the CSV keeps the ID as typed. Known-bad state avoided: different testers' rows sharing an ID.
 - **2026-11-14, human request (Sonlm): Replay button, practice only.** Trigger: a tester who missed a practice cry had no way to hear it again. Amended: the practice answer grid has a Replay button that plays the same cry again from the silence; a `replays` CSV column counts presses. Known-bad state avoided: extra listens in the scored round inflating the gate score. KEEP: one listen per scored trial; the frozen pause rules unchanged.
 - **2026-11-18, human renegotiation (Sonlm), frozen Intent and Always.** Trigger: with one kind of cry per level (shriek above, sob inside, whisper below), testers could name the level from the kind of cry alone, so the level score didn't test hearing the level. Amended: each trial draws its clip from any folder (each kind equally likely) and plays it through the trial's level bus and position; a `cry_kind` CSV column records the source folder. Known-bad state avoided: a pass that only proves cry recognition. KEEP: per-level buses and positions; one random clip per trial.
+- **2026-11-18, tuning after Sonlm's first listen ("quite hard").** Not a frozen change. The placeholders were narrow-band (the shriek had 0% energy below 400 Hz, so the above high-pass did nothing to it); they are now wide-band in every filter band. Echo contrast widened, and reverb `dry` and `predelay_msec` brought under BUS_FX (Godot's default 150 ms predelay had given every bus, even inside, a cave-like gap).
 
 ## Design Notes
 
@@ -82,9 +83,9 @@ Starting values, tuned by ear:
 
 | Level | Position (horizontal 6 m along the direction unless noted) | Bus FX |
 |---|---|---|
-| above | y +5 m | HighPass 400 Hz; Reverb room 0.4, damping 0.1, wet 0.2 (open air) |
-| inside | ear height, in a parapet pylon (L/R at 1.85 m) or the deck (town/far bank, y −0.5 m) | LowPass 900 Hz; Reverb room 0.15, damping 0.8, wet 0.35 (boxy, muffled) |
-| below | y −6 m, in the abyss | LowPass 2500 Hz; Reverb room 0.9, damping 0.3, wet 0.45 (cavernous) |
+| above | y +5 m | HighPass 400 Hz; Reverb room 0.25, damping 0.5, wet 0.06, dry 1.0, predelay 10 ms (open air, almost dry) |
+| inside | ear height, in a parapet pylon (L/R at 1.85 m) or the deck (town/far bank, y −0.5 m) | LowPass 900 Hz; Reverb room 0.08, damping 0.95, wet 0.45, dry 1.0, predelay 3 ms (tight box, muffled) |
+| below | y −6 m, in the abyss | LowPass 2500 Hz; Reverb room 1.0, damping 0.15, wet 0.7, dry 0.6, predelay 120 ms (cave: distant, long tail) |
 
 Emitter: `attenuation_filter_db` = 0, so distance filtering doesn't blur the level filters. Listen window: 1 s of silence, then 4 s of cry (looped if shorter), then the grid appears; response time is measured from cry start.
 Review fixes: the emitter uses `ATTENUATION_DISABLED` (no distance loudness cue), the cry fades out over the last 50 ms of the window, and the inside-rail sources sit at ear height in a 1.9 m parapet pylon at x = ±1.85 m (the rest of the parapet stays 1.2 m).

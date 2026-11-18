@@ -26,9 +26,12 @@ const FOCUS_OUT: int = Node.NOTIFICATION_APPLICATION_FOCUS_OUT
 ## Design Notes bus FX, written out literally (not read from TrialPlan.BUS_FX). Every level
 ## bus also plays at 0 dB, unmuted, unbypassed, not solo, into Master.
 const DESIGN_NOTES_BUS_FX: Dictionary = {
-	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 400.0, "room_size": 0.4, "damping": 0.1, "wet": 0.2},
-	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 900.0, "room_size": 0.15, "damping": 0.8, "wet": 0.35},
-	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0, "room_size": 0.9, "damping": 0.3, "wet": 0.45},
+	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 400.0,
+		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
+	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 900.0,
+		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
+	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0,
+		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
 }
 
 
@@ -784,9 +787,9 @@ func _bus_mismatches(bus_label: String, effects: Array, enabled: Array, want: Di
 		elif effect is AudioEffectReverb:
 			reverbs += 1
 			var reverb: AudioEffectReverb = effect as AudioEffectReverb
-			if not (is_equal_approx(reverb.room_size, want["room_size"]) and is_equal_approx(reverb.damping, want["damping"])
-					and is_equal_approx(reverb.wet, want["wet"])):
-				problems.append("%s: reverb %s/%s/%s" % [bus_label, reverb.room_size, reverb.damping, reverb.wet])
+			for key: String in TrialPlan.REVERB_KEYS:
+				if not want.has(key) or not is_equal_approx(reverb.get(key), want[key]):
+					problems.append("%s: reverb %s is %s, want %s" % [bus_label, key, reverb.get(key), want.get(key)])
 		else:
 			problems.append("%s: extra effect %s" % [bus_label, effect.get_class()])
 	if filters != 1 or reverbs != 1:

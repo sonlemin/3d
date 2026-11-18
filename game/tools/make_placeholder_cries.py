@@ -10,9 +10,15 @@ real clips; --force writes them anyway.
 Python standard library only, fixed seeds, so every run writes the same files.
 No AI is involved anywhere: each cry is plain additive synthesis or filtered noise.
 
-  above  -> shriek-like: 1.2-2.5 kHz pitch glide, vibrato, harsh harmonics, sharp attack
-  inside -> sob-like:    ~330 -> 220 Hz falling voiced tone with hiccup stutters
-  below  -> whisper-like: band-limited breathy noise shaped into syllables
+  above  -> shriek-like: ~600-1100 Hz pitch glide with a rough sub-octave, vibrato, harsh
+            harmonics, chest rumble and breath noise, sharp attack
+  inside -> sob-like:    ~330 -> 220 Hz falling voiced tone, rich harmonics, breathy top,
+            hiccup stutters
+  below  -> whisper-like: breathy noise shaped into syllables, from low chest air to hiss
+
+Every clip is wide-band (real energy below 400 Hz, 400-900 Hz, 0.9-2.5 kHz and above
+2.5 kHz), like a real voice, so each level's filter has something to cut: the trials mix
+kinds of cry across levels, and a narrow clip would slip through a filter unchanged.
 
 Real clips replace these later: drop them into game/audio/cries/<level>/, delete the
 placeholder_*.wav files there, log the source in game/audio/cries/CREDITS.md, then run
@@ -112,7 +118,10 @@ def shriek(rng, duration, f_start, f_peak, f_end, peak_at, vibrato_hz, vibrato_d
     n = int(duration * SAMPLE_RATE)
     out = []
     phase = 0.0
+    sub_phase = 0.0
     jitter = 0.0
+    chest = BandPass(220.0, 0.9)
+    breath = BandPass(4500.0, 0.8)
     attack_s = 0.006
     release_s = duration * 0.3
     for i in range(n):
@@ -125,15 +134,19 @@ def shriek(rng, duration, f_start, f_peak, f_end, peak_at, vibrato_hz, vibrato_d
         jitter = 0.995 * jitter + 0.005 * rng.uniform(-1.0, 1.0)
         f *= 1.0 + vibrato_depth * math.sin(TWO_PI * vibrato_hz * t) + 0.02 * jitter
         phase = (phase + TWO_PI * f / SAMPLE_RATE) % TWO_PI
+        sub_phase = (sub_phase + TWO_PI * 0.5 * f / SAMPLE_RATE) % TWO_PI
         s = (
-            math.sin(phase)
+            0.7 * math.sin(sub_phase)  # rough sub-octave, as in a strained scream
+            + math.sin(phase)
             + 0.55 * math.sin(2.0 * phase)
             + 0.40 * math.sin(3.0 * phase)
             + 0.25 * math.sin(4.0 * phase)
             + 0.15 * math.sin(5.0 * phase)
         )
         s = math.tanh(2.2 * s)  # hard drive: harsh, buzzy upper harmonics
-        s += 0.06 * rng.uniform(-1.0, 1.0)  # rasp
+        noise = rng.uniform(-1.0, 1.0)
+        s += 0.06 * noise  # rasp
+        s += 2.8 * chest.process(noise) + 0.9 * breath.process(noise)  # chest rumble, breath
         if t < attack_s:
             env = t / attack_s
         elif t > duration - release_s:
@@ -152,6 +165,7 @@ def sob(rng, duration, f_start, f_end, hiccup_times):
     hiccups = [h + rng.uniform(-0.03, 0.03) for h in hiccup_times]
     gap_s = 0.07  # the "catch": the voice cuts out
     regain_s = 0.09  # then comes back quickly, with a pitch blip
+    breath = BandPass(4000.0, 0.7)
     out = []
     phase = 0.0
     for i in range(n):
@@ -170,11 +184,14 @@ def sob(rng, duration, f_start, f_end, hiccup_times):
                 f *= 1.0 + 0.08 * (1.0 - k)
         phase = (phase + TWO_PI * f / SAMPLE_RATE) % TWO_PI
         s = 0.0
-        for k in range(1, 11):
+        for k in range(1, 25):
             hz = f * k
-            formant = 1.0 + 1.5 * math.exp(-(((hz - 750.0) / 300.0) ** 2))
-            s += formant * math.sin(k * phase) / k
+            formant = (1.0 + 1.5 * math.exp(-(((hz - 750.0) / 300.0) ** 2))
+                       + 2.5 * math.exp(-(((hz - 2600.0) / 500.0) ** 2))
+                       + 2.0 * math.exp(-(((hz - 3600.0) / 600.0) ** 2)))
+            s += formant * math.sin(k * phase) / k ** 0.8
         s += 0.04 * rng.uniform(-1.0, 1.0)  # breath
+        s += 2.2 * breath.process(rng.uniform(-1.0, 1.0))  # wet, breathy top of a sob
         env = min(1.0, t / 0.04) * min(1.0, (duration - t) / 0.25)
         out.append(s * amp * env)
     return out
@@ -188,6 +205,8 @@ def whisper(rng, duration, syllables):
     n = int(duration * SAMPLE_RATE)
     low_band = [BandPass(1000.0, 1.6), BandPass(1000.0, 1.6)]
     high_band = BandPass(2200.0, 2.0)
+    chest_air = BandPass(260.0, 0.8)
+    hiss = BandPass(5500.0, 0.9)
     current = None
     out = []
     for i in range(n):
@@ -215,6 +234,7 @@ def whisper(rng, duration, syllables):
         x = rng.uniform(-1.0, 1.0)
         y = low_band[1].process(low_band[0].process(x))
         y += 0.45 * high_band.process(x)
+        y += 1.6 * chest_air.process(x) + 0.22 * hiss.process(x)
         out.append(y * env)
     return out
 
@@ -226,10 +246,10 @@ def whisper(rng, duration, syllables):
 CLIPS = {
     "above": {
         "placeholder_above_1.wav": lambda: shriek(
-            random.Random(1101), 1.8, 1200.0, 2450.0, 1700.0, 0.35, 7.0, 0.03
+            random.Random(1101), 1.8, 650.0, 1150.0, 800.0, 0.35, 7.0, 0.03
         ),
         "placeholder_above_2.wav": lambda: shriek(
-            random.Random(1102), 2.4, 1350.0, 2350.0, 1250.0, 0.55, 9.5, 0.025
+            random.Random(1102), 2.4, 700.0, 1100.0, 600.0, 0.55, 9.5, 0.025
         ),
     },
     "inside": {

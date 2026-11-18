@@ -6,9 +6,11 @@ cutoff_hz = 400.0
 
 [sub_resource type="AudioEffectReverb" id="AudioEffectReverb_above"]
 resource_name = "Reverb"
-room_size = 0.4
-damping = 0.1
-wet = 0.2
+room_size = 0.25
+damping = 0.5
+wet = 0.06
+dry = 1.0
+predelay_msec = 10.0
 
 [sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_inside"]
 resource_name = "LowPassFilter"
@@ -16,9 +18,11 @@ cutoff_hz = 900.0
 
 [sub_resource type="AudioEffectReverb" id="AudioEffectReverb_inside"]
 resource_name = "Reverb"
-room_size = 0.15
-damping = 0.8
-wet = 0.35
+room_size = 0.08
+damping = 0.95
+wet = 0.45
+dry = 1.0
+predelay_msec = 3.0
 
 [sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_below"]
 resource_name = "LowPassFilter"
@@ -26,9 +30,11 @@ cutoff_hz = 2500.0
 
 [sub_resource type="AudioEffectReverb" id="AudioEffectReverb_below"]
 resource_name = "Reverb"
-room_size = 0.9
-damping = 0.3
-wet = 0.45
+room_size = 1.0
+damping = 0.15
+wet = 0.7
+dry = 0.6
+predelay_msec = 120.0
 
 [resource]
 bus/1/name = &"Above"

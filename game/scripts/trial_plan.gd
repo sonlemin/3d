@@ -64,10 +64,18 @@ const LEVEL_BUSES: Dictionary = {
 const BUS_FILTER_TYPES: Array[String] = ["high_pass", "low_pass"]
 ## Volume of every level bus, the same for all three so no level is louder than another.
 const LEVEL_BUS_VOLUME_DB: float = 0.0
+## The reverb settings every BUS_FX entry sets (AudioEffectReverb property names).
+## Echo is the strongest level cue (it works on any clip), so the three are far apart:
+## above almost dry (open air), inside a tight box (tiny room, no predelay, heavily damped),
+## below a cave (largest room, long predelay, long bright tail, dry signal pulled back).
+const REVERB_KEYS: Array[String] = ["room_size", "damping", "wet", "dry", "predelay_msec"]
 const BUS_FX: Dictionary = {
-	"above": {"filter": "high_pass", "cutoff_hz": 400.0, "room_size": 0.4, "damping": 0.1, "wet": 0.2},
-	"inside": {"filter": "low_pass", "cutoff_hz": 900.0, "room_size": 0.15, "damping": 0.8, "wet": 0.35},
-	"below": {"filter": "low_pass", "cutoff_hz": 2500.0, "room_size": 0.9, "damping": 0.3, "wet": 0.45},
+	"above": {"filter": "high_pass", "cutoff_hz": 400.0,
+		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
+	"inside": {"filter": "low_pass", "cutoff_hz": 900.0,
+		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
+	"below": {"filter": "low_pass", "cutoff_hz": 2500.0,
+		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
 }
 ## No distance attenuation: every source plays at the same level wherever it is, so loudness
 ## is not a cue (with inverse-distance falloff the below sources were ~2.7 dB quieter).

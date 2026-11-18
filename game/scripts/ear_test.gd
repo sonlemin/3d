@@ -169,9 +169,8 @@ static func apply_bus_fx(fx_table: Dictionary = TrialPlan.BUS_FX,
 				filter_done = true
 			elif effect is AudioEffectReverb and not reverb_done:
 				var reverb: AudioEffectReverb = effect as AudioEffectReverb
-				reverb.room_size = fx["room_size"]
-				reverb.damping = fx["damping"]
-				reverb.wet = fx["wet"]
+				for key: String in TrialPlan.REVERB_KEYS:
+					reverb.set(key, fx[key])
 				AudioServer.set_bus_effect_enabled(bus, i, true)
 				reverb_done = true
 			elif filter_known or not (effect is AudioEffectFilter):
