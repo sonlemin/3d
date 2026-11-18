@@ -72,6 +72,9 @@ var _demo_clips: PackedStringArray = []
 var _demo_index: int = 0
 var _demo_playing: bool = false
 var _demo_level: String = ""
+## True when the listen screen was reopened from the practice break: its button then starts
+## the scored round instead of practice.
+var _listen_before_scored: bool = false
 
 # UI, built in code by _build_ui().
 var _panels: Array[Control] = []
@@ -95,6 +98,7 @@ var _break_panel: PanelContainer
 var _listen_panel: PanelContainer
 var _demo_label: Label
 var _demo_now_label: Label
+var _listen_start_button: Button
 var _pause_panel: PanelContainer
 var _pause_label: Label
 var _results_panel: PanelContainer
@@ -295,13 +299,28 @@ func start_session(raw_tester_id: String, mode: String) -> bool:
 	_demo_clips = PackedStringArray()
 	for level: String in TrialPlan.LEVELS:
 		_demo_clips.append_array(library.clips_for(level))
+	_listen_before_scored = false
+	_open_listen()
+	return true
+
+
+## Practice break -> the listen screen again, to refresh the three levels just before the
+## scored round. Its button then starts the scored round. Nothing is logged.
+func listen_again() -> bool:
+	if state != State.ROUND_BREAK:
+		return false
+	_listen_before_scored = true
+	_open_listen()
+	return true
+
+
+func _open_listen() -> void:
 	_demo_index = 0
 	listener.reset_facing()
 	listener.set_look_enabled(false)
 	state = State.LISTEN
 	_refresh_demo_labels()
 	_show_only(_listen_panel)
-	return true
 
 
 ## Listen screen: plays the selected clip from the far bank (straight ahead, so direction
@@ -336,16 +355,21 @@ func next_demo_clip() -> bool:
 	return true
 
 
-## Listen screen -> the practice round.
+## Listen screen (opened at the start of the session) -> the practice round.
 func start_practice() -> bool:
-	if state != State.LISTEN:
+	if state != State.LISTEN or _listen_before_scored:
 		return false
 	_stop_cry()
 	_begin_round(TrialPlan.ROUND_PRACTICE, TrialPlan.build_practice_order(_rng))
 	return state != State.SETUP
 
 
+## Practice break, or the listen screen reopened from it -> the scored round.
 func start_scored_round() -> bool:
+	if state == State.LISTEN and _listen_before_scored:
+		_stop_cry()
+		_listen_before_scored = false
+		state = State.ROUND_BREAK
 	if state != State.ROUND_BREAK:
 		return false
 	var combos: Array = TrialPlan.all_combinations()
@@ -589,6 +613,7 @@ func _return_to_setup() -> void:
 	_stop_cry()
 	listener.set_look_enabled(false)
 	_pending_result = {}
+	_listen_before_scored = false
 	state = State.SETUP
 	_save_banner.visible = false
 	for button: Button in _mode_buttons:
@@ -616,7 +641,11 @@ func _build_ui() -> void:
 	_break_panel = _new_panel("Practice done")
 	_add_text(_box(_break_panel), "Next: %d scored trials, no feedback. Same as before: listen, look around, then answer."
 			% (TrialPlan.all_combinations().size() * TrialPlan.SCORED_REPEATS))
-	_add_button(_box(_break_panel), "Start scored round", start_scored_round)
+	var break_buttons: HBoxContainer = HBoxContainer.new()
+	break_buttons.add_theme_constant_override("separation", 12)
+	_box(_break_panel).add_child(break_buttons)
+	_add_button(break_buttons, "Hear the levels again", listen_again)
+	_add_button(break_buttons, "Start scored round", start_scored_round)
 	_pause_panel = _new_panel("")
 	_pause_label = _add_text(_box(_pause_panel), PAUSE_TEXT)
 	_add_button(_box(_pause_panel), "Resume (Esc)", resume)
@@ -702,10 +731,13 @@ func _build_listen_panel() -> PanelContainer:
 	row.add_theme_constant_override("separation", 12)
 	box.add_child(row)
 	for level: String in TrialPlan.LEVELS:
-		var button: Button = _add_button(row, "Play " + String(TrialPlan.LEVEL_LABELS[level]).to_lower(),
+		var column: VBoxContainer = VBoxContainer.new()
+		row.add_child(column)
+		var button: Button = _add_button(column, "Play " + String(TrialPlan.LEVEL_LABELS[level]).to_lower(),
 				play_demo.bind(level))
 		button.custom_minimum_size = Vector2(150.0, 56.0)
 		button.focus_mode = Control.FOCUS_NONE
+		column.add_child(_hint_label(level, HORIZONTAL_ALIGNMENT_CENTER))
 	var clip_row: HBoxContainer = HBoxContainer.new()
 	clip_row.add_theme_constant_override("separation", 12)
 	box.add_child(clip_row)
@@ -715,8 +747,19 @@ func _build_listen_panel() -> PanelContainer:
 	_add_button(clip_row, "Another cry", next_demo_clip).focus_mode = Control.FOCUS_NONE
 	_demo_now_label = Label.new()
 	box.add_child(_demo_now_label)
-	_add_button(box, "Start practice", start_practice).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_listen_start_button = _add_button(box, "Start practice", _on_listen_done)
+	_listen_start_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	return panel
+
+
+## The level's memory aid (TrialPlan.LEVEL_HINTS) in small muted text.
+func _hint_label(level: String, alignment: HorizontalAlignment) -> Label:
+	var hint: Label = Label.new()
+	hint.text = TrialPlan.LEVEL_HINTS[level]
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", COLOR_MUTED)
+	hint.horizontal_alignment = alignment
+	return hint
 
 
 func _build_answer_panel() -> PanelContainer:
@@ -745,9 +788,13 @@ func _build_answer_panel() -> PanelContainer:
 		header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		grid.add_child(header)
 	for level: String in TrialPlan.LEVELS:
-		var row_header: Label = Label.new()
-		row_header.text = TrialPlan.LEVEL_LABELS[level]
-		row_header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var row_header: VBoxContainer = VBoxContainer.new()
+		row_header.alignment = BoxContainer.ALIGNMENT_CENTER
+		row_header.add_theme_constant_override("separation", 0)
+		var level_name: Label = Label.new()
+		level_name.text = TrialPlan.LEVEL_LABELS[level]
+		row_header.add_child(level_name)
+		row_header.add_child(_hint_label(level, HORIZONTAL_ALIGNMENT_LEFT))
 		grid.add_child(row_header)
 		for direction: String in TrialPlan.DIRECTIONS:
 			var button: Button = Button.new()
@@ -865,6 +912,7 @@ func _show_only(panel: Control) -> void:
 
 
 func _refresh_demo_labels() -> void:
+	_listen_start_button.text = "Start scored round" if _listen_before_scored else "Start practice"
 	_demo_label.text = "Cry %d of %d" % [_demo_index + 1, _demo_clips.size()]
 	_demo_now_label.text = ("Playing: " + String(TrialPlan.LEVEL_LABELS[_demo_level])) if _demo_playing else " "
 
@@ -965,6 +1013,7 @@ func _show_results() -> void:
 		"Direction correct, any level: %.1f%%  (%d / %d)" % [summary["direction_pct"], summary["direction_correct"], total],
 		"Level correct, any direction: %.1f%%  (%d / %d)" % [summary["level_pct"], summary["level_correct"], total],
 		"Both correct by level: " + "  ·  ".join(per_level),
+		"Level mix-ups (true → answered): " + TrialPlan.confusion_text(summary["level_confusions"]),
 	]
 	_results_label.text = "\n".join(lines)
 	if results_log.has_error():
@@ -988,6 +1037,13 @@ func show_open_folder_result(err: Error, folder: String) -> void:
 
 func _on_start_pressed() -> void:
 	start_session(_id_edit.text, _selected_mode())
+
+
+func _on_listen_done() -> void:
+	if _listen_before_scored:
+		start_scored_round()
+	else:
+		start_practice()
 
 
 func _on_answer_pressed(direction: String, level: String) -> void:

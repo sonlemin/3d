@@ -73,14 +73,19 @@ same per-OS folders listed under "Where the CSVs are".
 5. **Listen screen (unscored).** Before practice, the tester hears the three levels side by
    side: **Play above**, **Play inside** and **Play below** play the same cry from straight
    ahead (the far bank), so only the level changes. **Another cry** steps through every clip.
+   Under each button is a short hint of what the level sounds like (above "thin, open air",
+   inside "muffled, boxed in", below "cave echo"); the answer grid shows the same hints beside
+   each level, as a memory aid. They never say which level a trial's cry was.
    Let the tester take as long as they like, then press **Start practice**. Nothing here is
    logged. Esc just stops the sound.
 6. **Practice (12 trials).** Each combination plays once, with feedback for 2 seconds after
    each answer. A **Replay** button under the grid plays the same cry again, as often as the
    tester likes; each press is counted in the `replays` column. Practice is logged but not
    scored. The scored round has no Replay button: each cry is heard once, as in the game.
-7. **Scored round (24 trials).** Each combination plays twice, never twice in a row, in an
-   order shuffled afresh for every session. No feedback.
+7. **Scored round (24 trials).** At the practice break, **Hear the levels again** reopens the
+   listen screen (its button then says **Start scored round**), so the levels are fresh just
+   before scoring. Each combination plays twice, never twice in a row, in an order shuffled
+   afresh for every session. No feedback.
 8. **Pausing.** Esc pauses, and so does losing window focus: the cry stops and the mouse is
    released. What resume does depends on when the pause came:
    - in the second of silence, or in the first second of the cry: the trial replays from its
@@ -99,7 +104,9 @@ same per-OS folders listed under "Where the CSVs are".
 
 A session passes when both direction **and** level are right on at least **80%** of its
 24 scored trials, which means at least 20 of 24. The results screen also shows direction
-accuracy (any level), level accuracy (any direction), and both-correct accuracy for each level.
+accuracy (any level), level accuracy (any direction), both-correct accuracy for each level, and
+the **level mix-ups**: for each true level, what the tester answered instead (for example
+"above → inside 2"). Use the mix-ups to decide which level's sound to tune.
 
 **Mixed cries.** The three clip folders hold three kinds of cry (shriek in `above/`, sob in
 `inside/`, whisper in `below/`), but every trial picks its clip from any folder, each kind

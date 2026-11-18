@@ -24,6 +24,13 @@ const LEVEL_LABELS: Dictionary = {
 	"inside": "Inside",
 	"below": "Below",
 }
+## Memory aids under each level name, on the answer grid and the listen screen: what each
+## level sounds like (never which level a trial's cry was). Keep them true to BUS_FX.
+const LEVEL_HINTS: Dictionary = {
+	"above": "thin, open air",
+	"inside": "muffled, boxed in",
+	"below": "cave echo",
+}
 
 ## World axes. Godot's forward is -Z, so a listener with zero rotation faces the far bank.
 const DIRECTION_VECTORS: Dictionary = {
@@ -337,9 +344,11 @@ static func score(results: Array) -> Dictionary:
 	var level: int = 0
 	var level_trials: Dictionary = {}
 	var level_both: Dictionary = {}
+	var confusions: Dictionary = {}  # true level -> {answered level: count}, wrong levels only
 	for name: String in LEVELS:
 		level_trials[name] = 0
 		level_both[name] = 0
+		confusions[name] = {}
 	for result: Dictionary in results:
 		if result["round"] != ROUND_SCORED:
 			continue
@@ -350,6 +359,9 @@ static func score(results: Array) -> Dictionary:
 			direction += 1
 		if result["level_correct"]:
 			level += 1
+		else:
+			var answered: String = result["answer_level"]
+			confusions[true_level][answered] = confusions[true_level].get(answered, 0) + 1
 		if result["both_correct"]:
 			both += 1
 			level_both[true_level] += 1
@@ -366,8 +378,23 @@ static func score(results: Array) -> Dictionary:
 		"level_pct": percent(level, total),
 		"per_level_trials": level_trials,
 		"per_level_both_pct": per_level_both_pct,
+		"level_confusions": confusions,
 		"passed": total > 0 and both * 100 >= PASS_PERCENT * total,
 	}
+
+
+## "above → inside 2, above → below 1, inside → above 1" from score()'s level_confusions, in
+## LEVELS order, most first within each level; "none" when every level was right.
+static func confusion_text(confusions: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	for true_level: String in LEVELS:
+		var answered: Dictionary = confusions.get(true_level, {})
+		var wrong: Array = answered.keys()
+		wrong.sort_custom(func(a: String, b: String) -> bool:
+			return answered[a] > answered[b] or (answered[a] == answered[b] and LEVELS.find(a) < LEVELS.find(b)))
+		for level: String in wrong:
+			parts.append("%s → %s %d" % [true_level, level, answered[level]])
+	return "none" if parts.is_empty() else ", ".join(parts)
 
 
 static func percent(part: int, whole: int) -> float:

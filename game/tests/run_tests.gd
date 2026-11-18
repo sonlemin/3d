@@ -111,6 +111,7 @@ func _run() -> void:
 	_test_scoring_half_right()
 	_test_score_excludes_practice()
 	_test_pass_mark()
+	_test_level_confusions()
 	_test_cry_fade()
 	_test_tester_id()
 	_test_tester_id_unicode_spaces()
@@ -138,6 +139,8 @@ func _run() -> void:
 	_test_scene_listener_geometry()
 	_test_scene_rear_shadow()
 	_test_scene_listen()
+	_test_scene_level_hints()
+	_test_scene_listen_again()
 	_test_scene_trial_flow()
 	_test_scene_feedback()
 	_test_scene_replay()
@@ -483,6 +486,27 @@ func _test_score_excludes_practice() -> void:
 	_check("scoring: practice rows are excluded from the score",
 			summary["scored_trials"] == 24 and is_equal_approx(summary["both_pct"], 100.0) and summary["passed"],
 			str(summary))
+
+
+## Which level each wrong level answer went to, scored rows only.
+func _test_level_confusions() -> void:
+	var rows: Array = []
+	var above: Dictionary = TrialPlan.make_combo("town", "above")
+	var inside: Dictionary = TrialPlan.make_combo("town", "inside")
+	var below: Dictionary = TrialPlan.make_combo("town", "below")
+	for answer: Dictionary in [inside, inside, below, above]:  # above -> inside 2, below 1; 1 right
+		rows.append(TrialPlan.make_result(TrialPlan.ROUND_SCORED, 1, above, answer, 4000, 0, ""))
+	rows.append(TrialPlan.make_result(TrialPlan.ROUND_SCORED, 1, inside, above, 4000, 0, ""))
+	rows.append(TrialPlan.make_result(TrialPlan.ROUND_SCORED, 1, below, TrialPlan.make_combo("left_rail", "below"), 4000, 0, ""))
+	rows.append(TrialPlan.make_result(TrialPlan.ROUND_PRACTICE, 1, below, above, 4000, 0, ""))  # ignored
+	var summary: Dictionary = TrialPlan.score(rows)
+	var confusions: Dictionary = summary["level_confusions"]
+	var text: String = TrialPlan.confusion_text(confusions)
+	_check("scoring: level mix-ups count each wrong level answer by true level (practice and wrong-direction-only ignored)",
+			confusions["above"] == {"inside": 2, "below": 1} and confusions["inside"] == {"above": 1}
+			and confusions["below"].is_empty()
+			and text == "above → inside 2, above → below 1, inside → above 1"
+			and TrialPlan.confusion_text(TrialPlan.score([])["level_confusions"]) == "none", text)
 
 
 func _test_pass_mark() -> void:
@@ -1298,6 +1322,52 @@ func _test_scene_listen() -> void:
 	scene.free()
 
 
+## Every label under `node` (recursively), by text.
+func _label_texts(node: Node) -> PackedStringArray:
+	var texts: PackedStringArray = []
+	if node is Label:
+		texts.append((node as Label).text)
+	for child: Node in node.get_children():
+		texts.append_array(_label_texts(child))
+	return texts
+
+
+## The memory aids show under each level on the answer grid and the listen screen.
+func _test_scene_level_hints() -> void:
+	var scene: EarTest = _new_scene("hints")
+	var grid_texts: PackedStringArray = _label_texts(scene._answer_panel)
+	var listen_texts: PackedStringArray = _label_texts(scene._listen_panel)
+	var missing: PackedStringArray = []
+	for level: String in TrialPlan.LEVELS:
+		var hint: String = TrialPlan.LEVEL_HINTS.get(level, "")
+		if hint.is_empty() or not grid_texts.has(hint) or not listen_texts.has(hint):
+			missing.append(level)
+	_check("hints: each level's sound hint is on the answer grid and the listen screen",
+			missing.is_empty() and TrialPlan.LEVEL_HINTS["below"] == "cave echo", ", ".join(missing))
+	scene.free()
+
+
+## Practice break -> listen again -> scored round, nothing extra logged.
+func _test_scene_listen_again() -> void:
+	var scene: EarTest = _new_scene("listen_again")
+	_start(scene, "again", "headphones")
+	var refused_mid_trial: bool = not scene.listen_again()
+	_play_practice(scene)
+	var reopened: bool = scene.listen_again()
+	var at_listen: bool = scene.state == EarTest.State.LISTEN and scene._listen_panel.visible \
+			and scene._listen_start_button.text == "Start scored round"
+	var practice_refused: bool = not scene.start_practice()
+	var demo: bool = scene.play_demo("above")
+	scene._on_listen_done()  # the listen screen's button
+	_check("listen again: from the practice break, back to the listen screen; its button starts the scored round",
+			refused_mid_trial and reopened and at_listen and practice_refused and demo
+			and scene.state == EarTest.State.SILENCE and scene.round_name == TrialPlan.ROUND_SCORED
+			and scene.trial_index == 0 and not scene._demo_playing
+			and scene.results.size() == TrialPlan.all_combinations().size(),
+			"state %d, round %s, %d results" % [scene.state, scene.round_name, scene.results.size()])
+	scene.free()
+
+
 func _test_scene_replay() -> void:
 	var scene: EarTest = _new_scene("replay")
 	_start(scene, "replay", "headphones")
@@ -1594,6 +1664,17 @@ func _test_scene_full_session() -> void:
 	var verdict_ok: bool = scene._verdict_label.text == ("PASS" if both * 100 >= TrialPlan.PASS_PERCENT * scored else "FAIL")
 	_check("session: results screen both/direction/level/per-level figures match the CSV (%d/%d both)" % [both, scored],
 			screen_ok and verdict_ok and both == 6 and direction == 12 and level == 12, detail + text)
+
+	# The mix-up line, rebuilt from the CSV's scored rows.
+	var from_csv: Dictionary = {}
+	for name: String in TrialPlan.LEVELS:
+		from_csv[name] = {}
+	for row: Dictionary in csv:
+		if row["round"] == TrialPlan.ROUND_SCORED and row["level_correct"] == "0":
+			from_csv[row["true_level"]][row["answer_level"]] = from_csv[row["true_level"]].get(row["answer_level"], 0) + 1
+	var mixups: String = "Level mix-ups (true → answered): " + TrialPlan.confusion_text(from_csv)
+	_check("session: results screen lists the level mix-ups, matching the CSV",
+			text.contains(mixups) and not mixups.ends_with("none"), mixups + " / " + text)
 
 	scene.new_session()
 	_check("session: New session keeps the ID, clears the output mode, shows the last session",
