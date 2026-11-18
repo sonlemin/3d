@@ -1,0 +1,138 @@
+{
+	"about": "Per-trial loudness matching for the ear test, written by tools/measure_loudness.gd -- --write. gains_db: the emitter gain for each clip and level. measured_lufs: loudness through each level's buses at 0 dB gain.",
+	"gains_db": {
+		"res://audio/cries/above/319258_the-sound-side_1.wav": {
+			"above": -0.2,
+			"below": -7.3,
+			"inside": 10.4
+		},
+		"res://audio/cries/above/320740_aderumoro_1.wav": {
+			"above": -3.3,
+			"below": -5.5,
+			"inside": 14.2
+		},
+		"res://audio/cries/above/384213_vidrik_1.wav": {
+			"above": 1.4,
+			"below": -11.8,
+			"inside": 6.2
+		},
+		"res://audio/cries/above/384213_vidrik_2.wav": {
+			"above": 2.7,
+			"below": -11.2,
+			"inside": 5.7
+		},
+		"res://audio/cries/above/520285_hisoul_1.wav": {
+			"above": 1.0,
+			"below": -10.1,
+			"inside": 6.9
+		},
+		"res://audio/cries/below/193812_geoneo0_1.wav": {
+			"above": 0.1,
+			"below": 0.1,
+			"inside": 16.1
+		},
+		"res://audio/cries/below/271633_carmsie_1.wav": {
+			"above": -0.1,
+			"below": -8.3,
+			"inside": 8.9
+		},
+		"res://audio/cries/below/790475_greasyplastic_1.wav": {
+			"above": 2.3,
+			"below": -5.1,
+			"inside": 11.7
+		},
+		"res://audio/cries/below/832739_evamusik_1.wav": {
+			"above": 5.6,
+			"below": -12.3,
+			"inside": 3.3
+		},
+		"res://audio/cries/inside/172738_alucardsbride_1.wav": {
+			"above": -1.9,
+			"below": -9.5,
+			"inside": 6.4
+		},
+		"res://audio/cries/inside/172738_alucardsbride_2.wav": {
+			"above": 1.4,
+			"below": -12.9,
+			"inside": 2.7
+		},
+		"res://audio/cries/inside/218184_mvvoiceacting_1.wav": {
+			"above": 10.8,
+			"below": -13.5,
+			"inside": 0.9
+		},
+		"res://audio/cries/inside/849642_iamthecomet_1.wav": {
+			"above": 5.6,
+			"below": -13.2,
+			"inside": 0.5
+		}
+	},
+	"measured_lufs": {
+		"res://audio/cries/above/319258_the-sound-side_1.wav": {
+			"above": -19.9,
+			"below": -12.8,
+			"inside": -30.5
+		},
+		"res://audio/cries/above/320740_aderumoro_1.wav": {
+			"above": -16.8,
+			"below": -14.6,
+			"inside": -34.3
+		},
+		"res://audio/cries/above/384213_vidrik_1.wav": {
+			"above": -21.5,
+			"below": -8.3,
+			"inside": -26.3
+		},
+		"res://audio/cries/above/384213_vidrik_2.wav": {
+			"above": -22.8,
+			"below": -8.9,
+			"inside": -25.8
+		},
+		"res://audio/cries/above/520285_hisoul_1.wav": {
+			"above": -21.1,
+			"below": -10.0,
+			"inside": -27.0
+		},
+		"res://audio/cries/below/193812_geoneo0_1.wav": {
+			"above": -20.2,
+			"below": -20.2,
+			"inside": -36.2
+		},
+		"res://audio/cries/below/271633_carmsie_1.wav": {
+			"above": -20.0,
+			"below": -11.8,
+			"inside": -29.0
+		},
+		"res://audio/cries/below/790475_greasyplastic_1.wav": {
+			"above": -22.4,
+			"below": -15.0,
+			"inside": -31.8
+		},
+		"res://audio/cries/below/832739_evamusik_1.wav": {
+			"above": -25.7,
+			"below": -7.8,
+			"inside": -23.4
+		},
+		"res://audio/cries/inside/172738_alucardsbride_1.wav": {
+			"above": -18.2,
+			"below": -10.6,
+			"inside": -26.5
+		},
+		"res://audio/cries/inside/172738_alucardsbride_2.wav": {
+			"above": -21.5,
+			"below": -7.2,
+			"inside": -22.8
+		},
+		"res://audio/cries/inside/218184_mvvoiceacting_1.wav": {
+			"above": -30.9,
+			"below": -6.6,
+			"inside": -21.0
+		},
+		"res://audio/cries/inside/849642_iamthecomet_1.wav": {
+			"above": -25.7,
+			"below": -6.9,
+			"inside": -20.6
+		}
+	},
+	"target_lufs": -20.1
+}

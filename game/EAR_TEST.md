@@ -147,15 +147,17 @@ answer_level, direction_correct, level_correct, both_correct, response_ms, pause
 
 ## Clips
 
+- The clips are 13 real CC0 recordings from Freesound (5 shrieks, 4 sobs, 4 whispers), cut by
+  `game/tools/cut_cries.py` from the recordings in `source_audio/cries/` (see the README there).
+  `game/audio/cries/CREDITS.md` lists every clip. No AI-generated audio.
 - Clips go in `game/audio/cries/<above|inside|below>/` and must be `.wav` files. Other audio
   files are skipped with a warning. Every `.wav` is imported as mono.
-- Use real clips at least as long as the 4-second cry window. A shorter clip loops, which
-  changes how many times the cry starts within a trial.
-- The `placeholder_*.wav` files are synthesized by `game/tools/make_placeholder_cries.py`.
-  Delete them once real clips are in place; the setup screen warns when a folder mixes the two.
-- Log every real clip in `game/audio/cries/CREDITS.md`. No AI-generated audio.
-- After adding or removing clips, re-run `tools/measure_loudness.gd` (see Tuning) and update the
-  loudness trims: the current ones were measured on the placeholders.
+- Clips should be at least as long as the 4-second cry window (the cut ones are 4.3 s). A
+  shorter clip loops, which changes how many times the cry starts within a trial.
+- `game/tools/make_placeholder_cries.py` can still synthesize stand-ins for a checkout with no
+  clips; the setup screen warns when a folder mixes placeholders and real clips.
+- **After adding, removing or re-cutting clips, re-measure loudness** (see Tuning): a clip with
+  no entry in the loudness table is named on the setup screen and Start stays disabled.
 - Run `godot --headless --path game --import` after adding clips. A `.wav` that hasn't been
   imported yet, or that doesn't load, is named on the setup screen, and Start stays disabled
   until every clip in the folders is imported and loads. A level folder with no clips is named
@@ -174,19 +176,24 @@ disables Start. (A test checks that the `.tres` still matches, effects enabled i
 update both together.) The emitter has distance attenuation turned off,
 so every source plays at the same loudness and only panning and the level buses tell them apart.
 
-**Loudness matching.** Filters and reverb change how loud a level plays (untrimmed, the cave
-reverb made below ~10 dB louder than above), which would let loudness give the level away.
-Each level bus has its own trim in `LEVEL_BUS_VOLUME_DB` so all three play equally loud on
-average. The trims come from
+**Loudness matching, per trial.** Filters and reverb change how loud a cry comes out, and with
+real recordings it depends on the clip and the level together: a hissy whisper through inside's
+650 Hz low-pass is about 12 dB quieter than a sob, and a narrow shriek loses most of itself
+there too. Left alone, "a quiet shriek" would mean inside. So every clip has a measured gain
+for every level, in `game/audio/cries/loudness.json`, and the emitter plays each trial (and
+each listen-screen demo) at that gain, so every cry comes out equally loud. Make the table with
 
 ```
-godot --headless --path game -s res://tools/measure_loudness.gd
+godot --headless --path game -s res://tools/measure_loudness.gd -- --write
+godot --headless --path game -s res://tools/measure_loudness.gd -- --verify
 ```
 
-which plays every clip through every level's real buses and measures the output (ITU-R BS.1770
-loudness, LUFS; about 4 s per clip per level). **Re-run it after changing `BUS_FX` or the clips**
-and copy its suggested values into `LEVEL_BUS_VOLUME_DB` and the level buses' `volume_db` in
-`default_bus_layout.tres` (a test checks they match).
+The first plays every clip through every level's real buses for the whole cry window and
+measures the output (ITU-R BS.1770 integrated loudness: K-weighted, gated, both ears summed);
+the second replays everything with the gains and fails if any cry lands more than 1 LU from
+the target. Both run in real time, about 6.5 s per clip per level. **Re-run both after changing
+`BUS_FX` or the clips.** The level buses' own volumes (`LEVEL_BUS_VOLUME_DB`) stay at 0 dB; the
+table was measured that way.
 
 **Rear shadow (front/back cue).** Plain stereo panning sounds the same ahead and behind. The
 `Shadow` bus, which every level bus feeds, copies what the head and outer ears do: the further

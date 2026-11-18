@@ -18,6 +18,7 @@ const OTHER_AUDIO_EXTENSIONS: Array[String] = ["ogg", "mp3", "flac", "aif", "aif
 ## Synthesized stand-ins written by tools/make_placeholder_cries.py.
 const PLACEHOLDER_PREFIX: String = "placeholder_"
 const IMPORT_COMMAND: String = "godot --headless --path game --import"
+const MEASURE_COMMAND: String = "godot --headless --path game -s res://tools/measure_loudness.gd -- --write"
 
 var root: String = DEFAULT_ROOT
 ## Non-blocking notes from the last discover() (skipped audio, mixed placeholders).
@@ -34,6 +35,10 @@ var list_folder: Callable = ResourceLoader.list_directory
 var list_raw_files: Callable = Callable()
 ## Loads one clip path. Empty means load(); the tests swap in fakes.
 var load_clip: Callable = Callable()
+## The per-trial loudness table (TrialPlan.LOUDNESS_TABLE_PATH); "" skips the check (tests).
+var loudness_table_path: String = TrialPlan.LOUDNESS_TABLE_PATH
+## clip resource path -> {level: emitter gain in dB}, from the loudness table.
+var loudness_gains: Dictionary = {}
 var _clips: Dictionary = {}  # level -> PackedStringArray of resource paths
 var _streams: Dictionary = {}  # resource path -> AudioStream (only clips that loaded)
 
@@ -80,6 +85,7 @@ func discover(cries_root: String = DEFAULT_ROOT) -> void:
 	problems.clear()
 	_clips.clear()
 	_streams.clear()
+	loudness_gains.clear()
 	for level: String in TrialPlan.LEVELS:
 		var folder: String = folder_for(level)
 		var listing: PackedStringArray = list_folder.call(folder)
@@ -112,6 +118,37 @@ func discover(cries_root: String = DEFAULT_ROOT) -> void:
 		if mixes_placeholders(clip_names + not_imported):
 			_warn("placeholders mixed with real clips in %s: delete the %s*.wav files there."
 					% [folder, PLACEHOLDER_PREFIX])
+	_check_loudness()
+
+
+## Every loaded clip needs a loudness gain for every level, or its trials would play louder
+## or quieter than the rest (a level giveaway). Missing entries are a problem.
+func _check_loudness() -> void:
+	if loudness_table_path.is_empty():
+		return
+	var table: Variant = null
+	if FileAccess.file_exists(loudness_table_path):
+		table = JSON.parse_string(FileAccess.get_file_as_string(loudness_table_path))
+	if not table is Dictionary or not (table as Dictionary).get("gains_db") is Dictionary:
+		_problem("no loudness table at %s. Run  %s  and restart." % [loudness_table_path, MEASURE_COMMAND])
+		return
+	loudness_gains = table["gains_db"]
+	var missing: PackedStringArray = []
+	for level: String in TrialPlan.LEVELS:
+		for path: String in _clips.get(level, PackedStringArray()):
+			var gains: Variant = loudness_gains.get(path)
+			for each: String in TrialPlan.LEVELS:
+				if not gains is Dictionary or not (gains as Dictionary).has(each):
+					missing.append(path.get_file())
+					break
+	if not missing.is_empty():
+		_problem("loudness not measured for %s. Run  %s  and restart." % [", ".join(missing), MEASURE_COMMAND])
+
+
+## The emitter gain (dB) that brings `clip_path` played through `level` to the common loudness.
+func gain_db(clip_path: String, level: String) -> float:
+	var gains: Variant = loudness_gains.get(clip_path)
+	return float((gains as Dictionary).get(level, 0.0)) if gains is Dictionary else 0.0
 
 
 func folder_for(level: String) -> String:

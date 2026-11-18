@@ -27,11 +27,11 @@ const FOCUS_OUT: int = Node.NOTIFICATION_APPLICATION_FOCUS_OUT
 ## bus also plays unmuted, unbypassed, not solo, into the Shadow bus, at its loudness-matching
 ## volume_db.
 const DESIGN_NOTES_BUS_FX: Dictionary = {
-	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 1000.0, "volume_db": 1.3,
+	&"Above": {"filter": "AudioEffectHighPassFilter", "cutoff_hz": 1000.0, "volume_db": 0.0,
 		"room_size": 0.25, "damping": 0.5, "wet": 0.06, "dry": 1.0, "predelay_msec": 10.0},
-	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 650.0, "volume_db": 4.8,
+	&"Inside": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 650.0, "volume_db": 0.0,
 		"room_size": 0.08, "damping": 0.95, "wet": 0.45, "dry": 1.0, "predelay_msec": 3.0},
-	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0, "volume_db": -9.3,
+	&"Below": {"filter": "AudioEffectLowPassFilter", "cutoff_hz": 2500.0, "volume_db": 0.0,
 		"room_size": 1.0, "damping": 0.15, "wet": 0.7, "dry": 0.6, "predelay_msec": 120.0},
 }
 
@@ -120,6 +120,8 @@ func _run() -> void:
 	_test_clip_discovery()
 	_test_pick_any()
 	_test_clip_discovery_problems()
+	_test_loudness_table_checks()
+	_test_loudness_table_real()
 	_test_empty_levels()
 	_test_results_log_writes()
 	_test_results_log_never_overwrites()
@@ -139,6 +141,7 @@ func _run() -> void:
 	_test_scene_listener_geometry()
 	_test_scene_rear_shadow()
 	_test_scene_listen()
+	_test_scene_demo_loudness()
 	_test_scene_level_hints()
 	_test_scene_listen_again()
 	_test_scene_trial_flow()
@@ -684,6 +687,7 @@ func _test_clip_discovery_problems() -> void:
 		"below": PackedStringArray(["broken.wav", "broken.wav.import", "whisper.wav", "whisper.wav.import"]),
 	}
 	var library: CryLibrary = CryLibrary.new()
+	library.loudness_table_path = ""  # fake clips have no loudness measurements
 	library.list_folder = func(folder: String) -> PackedStringArray:
 		return listings.get(folder.trim_suffix("/").get_file(), PackedStringArray())
 	library.list_raw_files = func(folder: String) -> PackedStringArray:
@@ -722,11 +726,66 @@ func _test_clip_discovery_problems() -> void:
 	library.load_clip = func(_path: String) -> Resource: return null
 	_expect_begin()
 	library.discover()
-	_expect_end("never imported", [["WARNING", "could not load placeholder_", 3]])
+	_expect_end("never imported", [["WARNING", "could not load ", 3]])
 	_check("clip discovery: nothing loads (never imported) -> every level empty, problems say to import",
 			library.empty_levels() == PackedStringArray(["above", "inside", "below"])
 			and library.problems.size() == 3 and "\n".join(library.problems).contains(CryLibrary.IMPORT_COMMAND),
 			"\n".join(library.problems))
+
+
+## A missing loudness table, or a clip without a gain for every level, is a setup problem.
+func _test_loudness_table_checks() -> void:
+	var library: CryLibrary = CryLibrary.new()
+	library.list_folder = func(folder: String) -> PackedStringArray:
+		return PackedStringArray(["%s_a.wav" % folder.trim_suffix("/").get_file()])
+	library.list_raw_files = func(folder: String) -> PackedStringArray:
+		return PackedStringArray(["%s_a.wav" % folder.trim_suffix("/").get_file()])
+	library.load_clip = func(_path: String) -> Resource: return AudioStreamWAV.new()
+	DirAccess.make_dir_recursive_absolute(SCRATCH_DIR)
+	library.loudness_table_path = SCRATCH_DIR.path_join("no_such_table.json")
+	_expect_begin()
+	library.discover()
+	_expect_end("no loudness table", [["WARNING", "no loudness table at", 1]])
+	var no_table: bool = library.problems.size() == 1 and library.problems[0].contains(CryLibrary.MEASURE_COMMAND)
+
+	var table_path: String = SCRATCH_DIR.path_join("loudness_test.json")
+	var file: FileAccess = FileAccess.open(table_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"target_lufs": -20.0, "gains_db": {
+		"res://audio/cries/above/above_a.wav": {"above": 1.5, "inside": 9.0, "below": -2.0},
+		"res://audio/cries/inside/inside_a.wav": {"above": 0.0, "inside": 0.0},  # below missing
+	}}))
+	file.close()
+	library.loudness_table_path = table_path
+	_expect_begin()
+	library.discover()
+	_expect_end("loudness entries missing", [["WARNING", "loudness not measured for inside_a.wav, below_a.wav", 1]])
+	_check("loudness table: missing table, or a clip missing any level, is a problem naming the clips",
+			no_table and library.problems.size() == 1
+			and library.problems[0].contains("inside_a.wav, below_a.wav")
+			and is_equal_approx(library.gain_db("res://audio/cries/above/above_a.wav", "inside"), 9.0)
+			and is_zero_approx(library.gain_db("res://audio/cries/below/below_a.wav", "above")),
+			str(library.problems))
+
+
+## The real table covers every clip at every level, within the emitter's headroom, and ships.
+func _test_loudness_table_real() -> void:
+	var library: CryLibrary = CryLibrary.new()
+	library.discover()
+	var gains: Array = []
+	var missing: PackedStringArray = []
+	for kind: String in TrialPlan.LEVELS:
+		for clip: String in library.clips_for(kind):
+			for level: String in TrialPlan.LEVELS:
+				if not (library.loudness_gains.get(clip, {}) as Dictionary).has(level):
+					missing.append("%s@%s" % [clip.get_file(), level])
+				gains.append(library.gain_db(clip, level))
+	var presets: String = FileAccess.get_file_as_string("res://export_presets.cfg")
+	_check("loudness table: every clip has a gain for every level; all fit under EMITTER_MAX_DB; exported builds include it",
+			missing.is_empty() and library.problems.is_empty() and not gains.is_empty()
+			and TrialPlan.EMITTER_VOLUME_DB + gains.max() < TrialPlan.EMITTER_MAX_DB
+			and presets.count('include_filter="audio/cries/loudness.json"') == 2,
+			"missing %s, gains %.1f..%.1f, problems %s" % [missing, gains.min() if gains else 0.0,
+				gains.max() if gains else 0.0, library.problems])
 
 
 func _test_empty_levels() -> void:
@@ -1057,26 +1116,27 @@ func _test_scene_setup_gates() -> void:
 			and scene._start_button.disabled, scene._library_label.text)
 
 	# One unloadable clip (the level still has others) and one skipped audio file.
+	var real_below: int = CryLibrary.filter_clip_names(ResourceLoader.list_directory("res://audio/cries/below/"))["clips"].size()
 	scene.library.list_folder = func(folder: String) -> PackedStringArray:
 		var names: PackedStringArray = ResourceLoader.list_directory(folder)
 		if folder.ends_with("/below/"):
-			names.append_array(PackedStringArray(["placeholder_below_9.wav", "extra.ogg"]))
+			names.append_array(PackedStringArray(["unloadable_9.wav", "extra.ogg"]))
 		return names
 	scene.library.list_raw_files = Callable()
 	scene.library.load_clip = func(path: String) -> Resource:
-		return null if path.ends_with("placeholder_below_9.wav") else load(path)
+		return null if path.ends_with("unloadable_9.wav") else load(path)
 	_expect_begin()
 	scene.library.discover()
 	_expect_end("setup with one unloadable clip", [
-		["WARNING", "could not load placeholder_below_9.wav in res://audio/cries/below/", 1],
+		["WARNING", "could not load unloadable_9.wav in res://audio/cries/below/", 1],
 		["WARNING", "skipped res://audio/cries/below/extra.ogg", 1],
 	])
 	scene.refresh_setup()
 	_check("setup: any clip that doesn't load disables Start (problem shown); skipped audio is a warning",
-			scene._problem_label.text.contains("placeholder_below_9.wav")
+			scene._problem_label.text.contains("unloadable_9.wav")
 			and scene._problem_label.text.contains(CryLibrary.IMPORT_COMMAND)
 			and scene._library_label.text.contains("skipped res://audio/cries/below/extra.ogg")
-			and scene.library.clips_for("below").size() == 2 and scene._start_button.disabled,
+			and scene.library.clips_for("below").size() == real_below and scene._start_button.disabled,
 			scene._problem_label.text + " / " + scene._library_label.text)
 
 	# A .wav dropped into a folder but not imported yet.
@@ -1091,7 +1151,6 @@ func _test_scene_setup_gates() -> void:
 	scene.library.discover()
 	_expect_end("setup with a clip not imported", [
 		["WARNING", "not imported yet: fresh_sob.wav in res://audio/cries/inside/", 1],
-		["WARNING", "placeholders mixed with real clips in res://audio/cries/inside/", 1],
 	])
 	scene.refresh_setup()
 	_check("setup: a .wav not imported yet is named with the import command and disables Start",
@@ -1103,7 +1162,7 @@ func _test_scene_setup_gates() -> void:
 	scene.library.load_clip = func(_path: String) -> Resource: return null
 	_expect_begin()
 	scene.library.discover()
-	_expect_end("setup never imported", [["WARNING", "could not load placeholder_", 3]])
+	_expect_end("setup never imported", [["WARNING", "could not load ", 3]])
 	scene.refresh_setup()
 	_check("setup: no loadable clips (never imported) -> Start disabled, import command shown",
 			scene._start_button.disabled and scene._library_label.text.contains(CryLibrary.IMPORT_COMMAND))
@@ -1217,13 +1276,15 @@ func _test_scene_trial_flow() -> void:
 	_check("trial: mouse-look off in the silence; the cry starts facing the far bank with look on",
 			silence_ok and scene.state == EarTest.State.CRY and scene.listener.look_enabled
 			and scene.listener.rotation.is_zero_approx() and scene.listener.camera.rotation.is_zero_approx()
-			and scene.emitter.playing and is_equal_approx(scene.emitter.volume_db, TrialPlan.EMITTER_VOLUME_DB))
+			and scene.emitter.playing and is_equal_approx(scene.emitter.volume_db, scene.cry_base_db)
+			and is_equal_approx(scene.cry_base_db, TrialPlan.EMITTER_VOLUME_DB
+					+ scene.library.gain_db(scene.current_clip, scene.current_combo()["level"])))
 	_step(scene, TrialPlan.CRY_WINDOW_S - TrialPlan.CRY_FADE_OUT_S * 0.5)
 	var fading_db: float = scene.emitter.volume_db
 	var still_cry: bool = scene.state == EarTest.State.CRY
 	_step(scene, TrialPlan.CRY_FADE_OUT_S)
 	_check("trial: the cry fades out over the last 50 ms, then the grid appears; volume restored",
-			still_cry and fading_db < TrialPlan.EMITTER_VOLUME_DB - 5.0 and scene.state == EarTest.State.ANSWER
+			still_cry and fading_db < scene.cry_base_db - 5.0 and scene.state == EarTest.State.ANSWER
 			and not scene.emitter.playing and not scene.listener.look_enabled
 			and is_equal_approx(scene.emitter.volume_db, TrialPlan.EMITTER_VOLUME_DB),
 			"fading at %s dB" % fading_db)
@@ -1344,6 +1405,23 @@ func _test_scene_level_hints() -> void:
 			missing.append(level)
 	_check("hints: each level's sound hint is on the answer grid and the listen screen",
 			missing.is_empty() and TrialPlan.LEVEL_HINTS["below"] == "cave echo", ", ".join(missing))
+	scene.free()
+
+
+## The listen screen plays each demo at its loudness-matched volume, like a trial.
+func _test_scene_demo_loudness() -> void:
+	var scene: EarTest = _new_scene("demo_loudness")
+	scene.start_session("demo", "headphones")
+	var ok: bool = true
+	var detail: PackedStringArray = []
+	for level: String in TrialPlan.LEVELS:
+		scene.play_demo(level)
+		var want: float = TrialPlan.EMITTER_VOLUME_DB + scene.library.gain_db(scene._demo_clips[0], level)
+		ok = ok and is_equal_approx(scene.emitter.volume_db, want) and is_equal_approx(scene.cry_base_db, want)
+		_step(scene, TrialPlan.CRY_WINDOW_S * 0.5)
+		ok = ok and is_equal_approx(scene.emitter.volume_db, want)  # held through the window
+		detail.append("%s %.1f/%.1f" % [level, scene.emitter.volume_db, want])
+	_check("listen: each demo plays at its clip's loudness gain for that level", ok, ", ".join(detail))
 	scene.free()
 
 

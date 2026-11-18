@@ -69,18 +69,19 @@ const LEVEL_BUSES: Dictionary = {
 ## they are forced on, and the bus is forced unmuted, unbypassed, not solo, sending to Shadow.
 ## filter: one of BUS_FILTER_TYPES.
 const BUS_FILTER_TYPES: Array[String] = ["high_pass", "low_pass"]
-## Volume of each level bus: loudness matching, so loudness never gives the level away. The
-## filters and reverb change loudness a lot: untrimmed, the cave reverb made below ~10 dB
-## louder than above, and the 650 Hz low-pass made inside ~3.5 dB quieter. These trims bring the
-## three levels to the same average loudness, measured by tools/measure_loudness.gd (all clips
-## from the far bank through the real buses, ITU-R BS.1770 K-weighted LUFS, both ears summed).
-## Re-run it after changing BUS_FX or the clips, and copy its suggestions here and to the
-## level buses' volume_db in default_bus_layout.tres.
+## Volume of each level bus. Loudness matching is done per trial instead (LOUDNESS_TABLE_PATH):
+## with real recordings, how loud a cry comes out depends on the clip and the level together
+## (a hissy whisper through inside's 650 Hz low-pass is ~12 dB quieter than a sob), so one trim
+## per level can't even it out. These stay 0 dB; the table was measured with them at 0.
 const LEVEL_BUS_VOLUME_DB: Dictionary = {
-	"above": 1.3,
-	"inside": 4.8,
-	"below": -9.3,
+	"above": 0.0,
+	"inside": 0.0,
+	"below": 0.0,
 }
+## Per-trial loudness matching: for every clip and level, the emitter gain that brings that cry
+## to the same loudness as all the others (ITU-R BS.1770, through the real buses), written by
+## tools/measure_loudness.gd -- --write. A clip without an entry is a setup problem.
+const LOUDNESS_TABLE_PATH: String = "res://audio/cries/loudness.json"
 ## The reverb settings every BUS_FX entry sets (AudioEffectReverb property names).
 ## Echo is the strongest level cue (it works on any clip), so the three are far apart:
 ## above almost dry (open air), inside a tight box (tiny room, no predelay, heavily damped),
@@ -115,10 +116,13 @@ const REAR_SHADOW_VOLUME_DB: float = -2.0
 const EMITTER_ATTENUATION_MODEL: AudioStreamPlayer3D.AttenuationModel = AudioStreamPlayer3D.ATTENUATION_DISABLED
 ## 0 dB: distance filtering must not blur the level filters.
 const EMITTER_ATTENUATION_FILTER_DB: float = 0.0
-## The emitter's volume while a cry plays; the fade-out starts from here.
+## The emitter's volume while a cry plays, before the clip's loudness gain; the fade-out
+## starts from the sum.
 const EMITTER_VOLUME_DB: float = 0.0
-## Ceiling on the emitter's volume; kept above EMITTER_VOLUME_DB so it never clips the level.
-const EMITTER_MAX_DB: float = 3.0
+## Ceiling on the emitter's volume (Godot caps volume_db there). Well above the largest
+## loudness gain, so it never limits one; a test checks. (The editor shows +6 dB as the top of
+## the range, but that is only a hint.)
+const EMITTER_MAX_DB: float = 24.0
 ## Unused while attenuation is disabled; kept so switching the model back stays a one-line change.
 const EMITTER_UNIT_SIZE: float = 10.0
 # Stereo panning strength is the project setting audio/general/3d_panning_strength (1.0).
@@ -269,11 +273,11 @@ static func source_position(direction: String, level: String) -> Vector3:
 
 ## Emitter volume (dB) `elapsed_s` into the cry window: EMITTER_VOLUME_DB, then a linear
 ## fade to silence over the last CRY_FADE_OUT_S, so the cry never ends on a click.
-static func cry_volume_db(elapsed_s: float) -> float:
+static func cry_volume_db(elapsed_s: float, base_db: float = EMITTER_VOLUME_DB) -> float:
 	var left: float = CRY_WINDOW_S - elapsed_s
 	if CRY_FADE_OUT_S <= 0.0 or left >= CRY_FADE_OUT_S:
-		return EMITTER_VOLUME_DB
-	return EMITTER_VOLUME_DB + linear_to_db(clampf(left / CRY_FADE_OUT_S, 0.0001, 1.0))
+		return base_db
+	return base_db + linear_to_db(clampf(left / CRY_FADE_OUT_S, 0.0001, 1.0))
 
 
 # ------------------------------------------------------------------ rear shadow

@@ -55,6 +55,9 @@ var current_clip: String = ""
 ## The trimmed ID exactly as typed (CSV and screens); the file name uses a sanitized copy.
 var tester_id: String = ""
 var output_mode: String = ""
+## The emitter volume for the current cry: EMITTER_VOLUME_DB plus the clip's loudness gain
+## for its level (from the loudness table), so every cry plays equally loud.
+var cry_base_db: float = TrialPlan.EMITTER_VOLUME_DB
 ## Pauses taken in the current trial so far, its practice feedback included.
 var trial_pauses: int = 0
 ## Replay presses in the current practice trial (always 0 in the scored round).
@@ -336,6 +339,8 @@ func play_demo(level: String) -> bool:
 	emitter.stream = stream
 	emitter.bus = TrialPlan.LEVEL_BUSES[level]
 	emitter.global_position = TrialPlan.source_position(TrialPlan.LISTEN_DIRECTION, level)
+	cry_base_db = TrialPlan.EMITTER_VOLUME_DB + library.gain_db(_demo_clips[_demo_index], level)
+	emitter.volume_db = cry_base_db
 	listener.reset_facing()
 	_phase_time = 0.0
 	_demo_level = level
@@ -391,7 +396,7 @@ func advance(delta: float) -> void:
 					_stop_cry()
 					_refresh_demo_labels()
 				else:
-					emitter.volume_db = TrialPlan.cry_volume_db(_phase_time)
+					emitter.volume_db = TrialPlan.cry_volume_db(_phase_time, cry_base_db)
 		State.SILENCE:
 			_phase_time += delta
 			if _phase_time >= TrialPlan.SILENCE_BEFORE_CRY_S:
@@ -401,7 +406,7 @@ func advance(delta: float) -> void:
 			if _phase_time >= TrialPlan.CRY_WINDOW_S:
 				_end_cry()
 			else:
-				emitter.volume_db = TrialPlan.cry_volume_db(_phase_time)
+				emitter.volume_db = TrialPlan.cry_volume_db(_phase_time, cry_base_db)
 		State.FEEDBACK:
 			_phase_time += delta
 			if _phase_time >= TrialPlan.PRACTICE_FEEDBACK_S:
@@ -531,6 +536,7 @@ func _begin_trial(pick_new_clip: bool) -> void:
 	emitter.stream = stream
 	emitter.bus = TrialPlan.LEVEL_BUSES[level]
 	emitter.global_position = TrialPlan.source_position(direction, level)
+	cry_base_db = TrialPlan.EMITTER_VOLUME_DB + library.gain_db(current_clip, level)
 	listener.reset_facing()
 	listener.set_look_enabled(false)  # no turning in the silence
 	_show_only(null)
@@ -543,7 +549,7 @@ func _start_cry() -> void:
 	_cry_started_ms = _now_ms()
 	listener.reset_facing()  # the cry always starts with the tester facing the far bank
 	listener.set_look_enabled(true)
-	emitter.volume_db = TrialPlan.EMITTER_VOLUME_DB
+	emitter.volume_db = cry_base_db
 	state = State.CRY
 	emitter.play()
 

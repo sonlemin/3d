@@ -1,46 +1,28 @@
 # Source recordings for the ear-test cries
 
-Original, uncut downloads go here. They stay outside `game/`, so Godot doesn't import the long
-raw files. Claude cuts them into 4-6 s mono clips in `game/audio/cries/<level>/` and logs them
-in `game/audio/cries/CREDITS.md`.
+The uncut recordings behind the clips in `game/audio/cries/<level>/`. They stay outside `game/`
+so Godot doesn't import them. Each folder holds one kind of cry: `above/` shrieks, `inside/`
+sobs, `below/` whispers (the test mixes the kinds across levels).
 
-Every file below is **CC0** on Freesound (checked 2026-11-19 on each sound's page). Download the
-**original WAV** (the download button needs a free Freesound account) and keep the file name
-Freesound gives it (it starts with the sound's ID).
+All 11 are **CC0 1.0** human recordings from Freesound (license checked on each sound's page on
+2026-11-19; no AI, synthesis or text-to-speech). `sources.json` lists each one's title, author
+and page.
 
-## `above/`: shrieks
+**These are Freesound's public previews** (hq Ogg Vorbis, lossy), named
+`<id>__<user>__<title>.preview.ogg`. They're fine for the ear test. For the released game,
+download the originals (a free Freesound account is needed), put them in the same folder with
+the name Freesound gives them (same ID), delete the `.preview.ogg`, and re-cut.
 
-- [ ] [Woman scream, Vidrik](https://freesound.org/people/Vidrik/sounds/384213/) (28 s)
-- [ ] [woman screaming of fear, The_Sound_Side](https://freesound.org/people/The_Sound_Side/sounds/319258/) (16 s)
-- [ ] [Zisa, Cry, Scream, Sad, Weep, Hysteric_7, hisoul](https://freesound.org/people/hisoul/sounds/520285/) (5 s)
-- [ ] optional: [Horror shrieks woman, AderuMoro](https://freesound.org/people/AderuMoro/sounds/320740/) (8 s)
-
-## `inside/`: sobs
-
-- [ ] [crying woman, AlucardsBride](https://freesound.org/people/AlucardsBride/sounds/172738/) (27 s)
-- [ ] [sobbing, iamthecomet](https://freesound.org/people/iamthecomet/sounds/849642/) (44 s)
-- [ ] [Girl Crying, mvVoiceActing](https://freesound.org/people/mvVoiceActing/sounds/218184/) (35 s)
-
-## `below/`: whispers
-
-- [ ] [LongWhisper, EvaMusik](https://freesound.org/people/EvaMusik/sounds/832739/) (6 s)
-- [ ] [Female Whisper "You better run", GreasyPlastic](https://freesound.org/people/GreasyPlastic/sounds/790475/) (28 s; only the first, bare take is used)
-- [ ] [Do you want to know a secret, carmsie](https://freesound.org/people/carmsie/sounds/271633/) (12 s)
-- [ ] optional: [Four_Voices_Whispering_6, geoneo0](https://freesound.org/people/geoneo0/sounds/193812/) (10 s)
-
-WAV only, please: the server has no decoder for MP3, FLAC or other formats.
-
-## Sending them to the server
-
-From your laptop clone:
+## Re-cutting
 
 ```
-git pull
-# put the files into source_audio/cries/above, inside and below
-git add source_audio
-git commit -m "Add CC0 cry recordings"
-git push origin HEAD:clips
+python3 game/tools/cut_cries.py                                    # rewrites the clips
+godot --headless --path game --import
+godot --headless --path game -s res://tools/measure_loudness.gd -- --write   # ~6.5 s per clip per level
+godot --headless --path game -s res://tools/measure_loudness.gd -- --verify
 ```
 
-That pushes to a new `clips` branch on the server (the server's working copy is on
-`ear-test-prototype`, so it can't receive a push to that branch directly).
+`cut_cries.py` decodes .ogg/.mp3 through Godot (WAV sources are read directly), removes rumble
+below 80 Hz, cuts the densest 4.3 s of voice (up to 2 clips per recording), mixes to mono and
+normalizes. `cuts.json` holds per-recording overrides (for example, only the first take of
+`790475`). Then update `game/audio/cries/CREDITS.md`.
