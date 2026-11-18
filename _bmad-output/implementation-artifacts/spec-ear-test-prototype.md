@@ -21,7 +21,7 @@ context:
 **Always:**
 - Godot 4.7.2, Forward+, statically typed GDScript; the Godot project lives in `game/`.
 - Directions are world terms: town, far bank, left rail, right rail (left/right as seen facing the far bank). Levels: above, inside, below.
-- A session: tester ID and output mode (headphones/speakers) → 12 practice trials (each combination once, with feedback) → 24 scored trials (each combination twice, never the same combination back to back) → results.
+- A session: tester ID and output mode (headphones/speakers) → listen screen (the same cry from straight ahead at each level, unscored, not logged) → 12 practice trials (each combination once, with feedback) → 24 scored trials (each combination twice, never the same combination back to back) → results.
 - Pass = both direction and level correct on ≥ 80% of scored trials in that session. Results also show direction-only %, level-only %, and both-correct % per level.
 - Each trial starts facing the far bank; mouse-look is free during the listen window; walking is not possible.
 - Trial ordering, source positions and scoring live in one pure script that tests run headless. Positions, bus FX and timings are tunable constants in one place.
@@ -76,6 +76,7 @@ Greenfield: no game code yet. The addendum (in `context`) holds the Godot audio 
 - **2026-11-14, human request (Sonlm): Replay button, practice only.** Trigger: a tester who missed a practice cry had no way to hear it again. Amended: the practice answer grid has a Replay button that plays the same cry again from the silence; a `replays` CSV column counts presses. Known-bad state avoided: extra listens in the scored round inflating the gate score. KEEP: one listen per scored trial; the frozen pause rules unchanged.
 - **2026-11-18, human renegotiation (Sonlm), frozen Intent and Always.** Trigger: with one kind of cry per level (shriek above, sob inside, whisper below), testers could name the level from the kind of cry alone, so the level score didn't test hearing the level. Amended: each trial draws its clip from any folder (each kind equally likely) and plays it through the trial's level bus and position; a `cry_kind` CSV column records the source folder. Known-bad state avoided: a pass that only proves cry recognition. KEEP: per-level buses and positions; one random clip per trial.
 - **2026-11-18, tuning after Sonlm's first listen ("quite hard").** Not a frozen change. The placeholders were narrow-band (the shriek had 0% energy below 400 Hz, so the above high-pass did nothing to it); they are now wide-band in every filter band. Echo contrast widened, and reverb `dry` and `predelay_msec` brought under BUS_FX (Godot's default 150 ms predelay had given every bus, even inside, a cave-like gap).
+- **2026-11-18, human request (Sonlm), frozen Always (session flow).** Trigger: levels were hard to learn from practice feedback alone. Amended: a listen screen between setup and practice plays the same clip from the far bank through each level's bus, on demand, with "Another cry" to step through every clip; nothing logged. Known-bad state avoided: testers failing levels they were never shown side by side. KEEP: practice and scored rounds unchanged.
 
 ## Design Notes
 

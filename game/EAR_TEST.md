@@ -70,13 +70,18 @@ same per-OS folders listed under "Where the CSVs are".
    mouse to turn your head while it plays. Then click where it came from: town, left rail,
    right rail or far bank, and above, inside or below." The map beside the grid shows which way
    is which. Don't give hints during the trials.
-5. **Practice (12 trials).** Each combination plays once, with feedback for 2 seconds after
+5. **Listen screen (unscored).** Before practice, the tester hears the three levels side by
+   side: **Play above**, **Play inside** and **Play below** play the same cry from straight
+   ahead (the far bank), so only the level changes. **Another cry** steps through every clip.
+   Let the tester take as long as they like, then press **Start practice**. Nothing here is
+   logged. Esc just stops the sound.
+6. **Practice (12 trials).** Each combination plays once, with feedback for 2 seconds after
    each answer. A **Replay** button under the grid plays the same cry again, as often as the
    tester likes; each press is counted in the `replays` column. Practice is logged but not
    scored. The scored round has no Replay button: each cry is heard once, as in the game.
-6. **Scored round (24 trials).** Each combination plays twice, never twice in a row, in an
+7. **Scored round (24 trials).** Each combination plays twice, never twice in a row, in an
    order shuffled afresh for every session. No feedback.
-7. **Pausing.** Esc pauses, and so does losing window focus: the cry stops and the mouse is
+8. **Pausing.** Esc pauses, and so does losing window focus: the cry stops and the mouse is
    released. What resume does depends on when the pause came:
    - in the second of silence, or in the first second of the cry: the trial replays from its
      start (same cry, same clip);
@@ -86,7 +91,7 @@ same per-OS folders listed under "Where the CSVs are".
 
    Every pause is counted in the trial's `pauses` column. Testers aren't told these rules: the
    setup screen says only "Esc pauses", and the pause screen says only "Paused.".
-8. **Results** appear at the end. **New session** goes back to the setup screen. It keeps the
+9. **Results** appear at the end. **New session** goes back to the setup screen. It keeps the
    tester ID, clears the output mode (so pick the other one for the second session), and shows
    "Last session: <ID> · <mode>".
 
@@ -149,7 +154,8 @@ answer_level, direction_correct, level_correct, both_correct, response_ms, pause
 
 ## Tuning
 
-Source positions, bus filters and reverb, emitter settings, timings, trial counts and the pass
+Source positions, bus filters and reverb (room size, damping, wet, dry and predelay for each
+level; `REVERB_KEYS` lists them), emitter settings, timings, trial counts and the pass
 mark are constants at the top of `game/scripts/trial_plan.gd`. The bus FX live in `BUS_FX` there
 and nowhere else that counts: they are applied over `default_bus_layout.tres` at startup, with
 both effects forced on and each level bus forced unmuted, unbypassed, not solo, at

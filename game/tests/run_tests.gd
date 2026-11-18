@@ -131,6 +131,7 @@ func _run() -> void:
 	_test_scene_audio_setup()
 	_test_scene_inside_rail_pylons()
 	_test_scene_listener_geometry()
+	_test_scene_listen()
 	_test_scene_trial_flow()
 	_test_scene_feedback()
 	_test_scene_replay()
@@ -255,6 +256,11 @@ func _new_scene(results_subdir: String) -> EarTest:
 	root.add_child(scene)
 	scene.set_process(false)  # after add_child (entering the tree re-enables it): time only moves via _step()
 	return scene
+
+
+## Starts a session and leaves the listen screen for practice, as a tester would.
+func _start(scene: EarTest, raw_id: String, mode: String) -> bool:
+	return scene.start_session(raw_id, mode) and scene.start_practice()
 
 
 ## Moves the fake clock and the scene's state machine by the same amount.
@@ -1065,7 +1071,7 @@ func _test_scene_listener_geometry() -> void:
 
 func _test_scene_trial_flow() -> void:
 	var scene: EarTest = _new_scene("flow")
-	scene.start_session("flow", "headphones")
+	_start(scene, "flow", "headphones")
 	var silence_ok: bool = scene.state == EarTest.State.SILENCE and not scene.listener.look_enabled \
 			and scene.listener.rotation.is_zero_approx()
 	scene.listener.look(Vector2(300.0, -120.0))  # however the view got turned before the cry...
@@ -1088,7 +1094,7 @@ func _test_scene_trial_flow() -> void:
 
 func _test_scene_feedback() -> void:
 	var scene: EarTest = _new_scene("feedback")
-	scene.start_session("feedback", "speakers")
+	_start(scene, "feedback", "speakers")
 	_to_grid(scene)
 	var truth: Dictionary = scene.current_combo()
 	scene.answer(truth["direction"], truth["level"])
@@ -1118,9 +1124,69 @@ func _is_paused(scene: EarTest) -> bool:
 
 ## Practice: Replay at the grid plays the same cry again and counts in the replays column.
 ## Scored: no Replay button, and replay_cry() does nothing.
+## Setup -> listen screen: the same clip from straight ahead at each level, nothing logged.
+func _test_scene_listen() -> void:
+	var scene: EarTest = _new_scene("listen")
+	var started: bool = scene.start_session("listen", "headphones")
+	var clip_total: int = 0
+	for level: String in TrialPlan.LEVELS:
+		clip_total += scene.library.clips_for(level).size()
+	_check("listen: Start opens the listen screen (no trial yet, mouse free, every clip offered)",
+			started and scene.state == EarTest.State.LISTEN and scene._listen_panel.visible
+			and not scene._answer_panel.visible and not scene.listener.look_enabled
+			and scene._demo_clips.size() == clip_total and scene._demo_label.text == "Cry 1 of %d" % clip_total,
+			scene._demo_label.text)
+
+	var played: Dictionary = {}
+	var clip: String = scene._demo_clips[0]
+	var same_clip: bool = true
+	for level: String in TrialPlan.LEVELS:
+		var ok: bool = scene.play_demo(level)
+		played[level] = ok and scene.emitter.playing \
+				and scene.emitter.bus == TrialPlan.LEVEL_BUSES[level] \
+				and scene.emitter.global_position.is_equal_approx(TrialPlan.source_position("far_bank", level)) \
+				and scene._demo_now_label.text == "Playing: " + String(TrialPlan.LEVEL_LABELS[level])
+		same_clip = same_clip and scene.emitter.stream == scene.library.stream_for(clip)
+	_check("listen: each level button plays the same clip from the far bank through that level's bus",
+			played.values().all(func(v: bool) -> bool: return v) and same_clip
+			and TrialPlan.LISTEN_DIRECTION == "far_bank", str(played))
+
+	_step(scene, TrialPlan.CRY_WINDOW_S * 0.5)
+	var mid: bool = scene.emitter.playing and scene._demo_playing
+	_step(scene, TrialPlan.CRY_WINDOW_S * 0.5 + 0.01)
+	_check("listen: a demo plays for the cry window, then stops by itself",
+			mid and not scene.emitter.playing and not scene._demo_playing
+			and scene._demo_now_label.text.strip_edges().is_empty())
+
+	scene.play_demo("above")
+	var paused: bool = scene.pause()
+	_check("listen: Esc or focus loss just stops the sound (no pause screen)",
+			not paused and scene.state == EarTest.State.LISTEN and not scene.emitter.playing
+			and not scene._pause_panel.visible)
+
+	var cycled: bool = true
+	for i: int in clip_total:
+		cycled = cycled and scene.next_demo_clip()
+	scene.next_demo_clip()
+	_check("listen: Another cry steps through every clip and wraps around",
+			cycled and scene._demo_index == 1 and scene._demo_label.text == "Cry 2 of %d" % clip_total,
+			scene._demo_label.text)
+
+	scene.play_demo("inside")
+	var practice: bool = scene.start_practice()
+	_check("listen: Start practice stops the demo and begins trial 1; the listen screen logged nothing",
+			practice and scene.state == EarTest.State.SILENCE and scene.trial_index == 0
+			and scene.round_name == TrialPlan.ROUND_PRACTICE and not scene._demo_playing
+			and scene.results.is_empty() and _read_lines(scene.results_log.path).size() == 1)
+	_check("listen: refused outside the listen screen (play, another cry, start practice)",
+			not scene.play_demo("below") and not scene.next_demo_clip() and not scene.start_practice()
+			and scene.state == EarTest.State.SILENCE)
+	scene.free()
+
+
 func _test_scene_replay() -> void:
 	var scene: EarTest = _new_scene("replay")
-	scene.start_session("replay", "headphones")
+	_start(scene, "replay", "headphones")
 	var first: Dictionary = scene.current_combo()
 	var clip: String = scene.current_clip
 	_to_grid(scene)
@@ -1151,7 +1217,7 @@ func _test_scene_replay() -> void:
 	scene.free()
 
 	scene = _new_scene("replay_scored")
-	scene.start_session("replay", "speakers")
+	_start(scene, "replay", "speakers")
 	_play_practice(scene)
 	scene.start_scored_round()
 	_to_grid(scene)
@@ -1164,7 +1230,7 @@ func _test_scene_replay() -> void:
 
 func _test_scene_pauses() -> void:
 	var scene: EarTest = _new_scene("pauses")
-	scene.start_session("pauses", "headphones")
+	_start(scene, "pauses", "headphones")
 	var first: Dictionary = scene.current_combo()
 	var clip: String = scene.current_clip
 
@@ -1247,7 +1313,7 @@ func _test_scene_pauses() -> void:
 ## The same pause rules in the scored round (no feedback there).
 func _test_scene_scored_pauses() -> void:
 	var scene: EarTest = _new_scene("scored_pauses")
-	scene.start_session("scored", "speakers")
+	_start(scene, "scored", "speakers")
 	_play_practice(scene)
 	scene.start_scored_round()
 	var first: Dictionary = scene.current_combo()
@@ -1297,7 +1363,7 @@ func _test_scene_scored_pauses() -> void:
 ## Closing the window during practice feedback still logs the answer (via _exit_tree).
 func _test_scene_close_during_feedback() -> void:
 	var scene: EarTest = _new_scene("close_feedback")
-	scene.start_session("close", "headphones")
+	_start(scene, "close", "headphones")
 	_to_grid(scene)
 	var truth: Dictionary = scene.current_combo()
 	scene.answer(truth["direction"], truth["level"])
@@ -1311,7 +1377,7 @@ func _test_scene_close_during_feedback() -> void:
 	scene.free()
 
 	scene = _new_scene("close_paused")
-	scene.start_session("close-paused", "headphones")
+	_start(scene, "close-paused", "headphones")
 	_to_grid(scene)
 	truth = scene.current_combo()
 	scene.answer(truth["direction"], _other_level(truth["level"]))
@@ -1329,7 +1395,9 @@ func _test_scene_full_session() -> void:
 	var raw_id: String = "  Sơn/../x, Đức  "
 	_setup_ready(scene, raw_id)
 	scene._on_start_pressed()
-	var started: bool = scene.state == EarTest.State.SILENCE
+	var at_listen: bool = scene.state == EarTest.State.LISTEN and scene._listen_panel.visible
+	scene.start_practice()
+	var started: bool = at_listen and scene.state == EarTest.State.SILENCE
 	_play_to_results(scene, true)
 	var path: String = scene.results_log.path
 	var csv: Array = _read_csv(path)
@@ -1432,7 +1500,7 @@ func _test_scene_write_failure() -> void:
 	var scene: EarTest = _new_scene("")
 	scene.results_dir = blocker.path_join("results")
 	_expect_begin()
-	scene.start_session("wf", "speakers")
+	_start(scene, "wf", "speakers")
 	_expect_end("session write failure", [
 		["ERROR", "Could not create directory", 1],
 		["WARNING", "could not create the results folder", 1],
@@ -1459,7 +1527,7 @@ func _test_scene_missing_stream_aborts() -> void:
 	var scene: EarTest = _new_scene("abort")
 	scene.library._streams.clear()  # clips listed but no stream: must never become a silent trial
 	_expect_begin()
-	var started: bool = scene.start_session("abort", "speakers")
+	var started: bool = _start(scene, "abort", "speakers")
 	_expect_end("missing stream", [["ERROR", "No playable clip", 1]])
 	_check("missing stream: the session stops back at setup with the error shown, nothing logged",
 			not started and scene.state == EarTest.State.SETUP
@@ -1471,7 +1539,7 @@ func _test_scene_missing_stream_aborts() -> void:
 
 func _test_scene_practice_zero() -> void:
 	var scene: EarTest = _new_scene("zero")
-	scene.start_session("zero", "headphones")
+	_start(scene, "zero", "headphones")
 	scene._begin_round(TrialPlan.ROUND_PRACTICE, [])  # what PRACTICE_REPEATS = 0 produces
 	var at_break: bool = scene.state == EarTest.State.ROUND_BREAK and scene._break_panel.visible
 	scene.start_scored_round()

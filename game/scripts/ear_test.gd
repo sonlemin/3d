@@ -1,4 +1,5 @@
-## Ear test session: setup -> 12 practice trials (with feedback) -> 24 scored trials -> results.
+## Ear test session: setup -> listen (hear the three levels, unscored) -> 12 practice trials
+## (with feedback) -> 24 scored trials -> results.
 ##
 ## Each trial starts facing the far bank with mouse-look off for 1 s of silence; then the cry
 ## plays for 4 s (fading out over its last 50 ms) while the tester is free to look around;
@@ -12,7 +13,7 @@ const CryLibrary := preload("res://scripts/cry_library.gd")
 const ResultsLog := preload("res://scripts/results_log.gd")
 const ListenerRig := preload("res://scripts/listener.gd")
 
-enum State { SETUP, SILENCE, CRY, ANSWER, FEEDBACK, ROUND_BREAK, PAUSED, RESULTS }
+enum State { SETUP, LISTEN, SILENCE, CRY, ANSWER, FEEDBACK, ROUND_BREAK, PAUSED, RESULTS }
 ## What resume() does; decided when the pause starts.
 enum Resume { REPLAY, TO_GRID, NEXT_TRIAL }
 
@@ -63,6 +64,11 @@ var _resume_to: Resume = Resume.REPLAY
 var _paused_at_ms: int = 0
 ## A practice result shown as feedback, logged when the feedback ends.
 var _pending_result: Dictionary = {}
+## Listen screen: every clip, in order; which one the level buttons play; whether one plays.
+var _demo_clips: PackedStringArray = []
+var _demo_index: int = 0
+var _demo_playing: bool = false
+var _demo_level: String = ""
 
 # UI, built in code by _build_ui().
 var _panels: Array[Control] = []
@@ -83,6 +89,9 @@ var _feedback_label: Label
 var _replay_button: Button
 var _answer_buttons: Array[Button] = []
 var _break_panel: PanelContainer
+var _listen_panel: PanelContainer
+var _demo_label: Label
+var _demo_now_label: Label
 var _pause_panel: PanelContainer
 var _pause_label: Label
 var _results_panel: PanelContainer
@@ -196,6 +205,7 @@ func _configure_emitter() -> void:
 func _stop_cry() -> void:
 	emitter.stop()
 	emitter.volume_db = TrialPlan.EMITTER_VOLUME_DB
+	_demo_playing = false
 
 
 # ------------------------------------------------------------------ session state machine
@@ -226,6 +236,55 @@ func start_session(raw_tester_id: String, mode: String) -> bool:
 	_refresh_save_banner()
 	print("Ear test: session %s / %s, seed %d, results -> %s"
 			% [tester_id, output_mode, _rng.seed, results_log.global_path()])
+	_demo_clips = PackedStringArray()
+	for level: String in TrialPlan.LEVELS:
+		_demo_clips.append_array(library.clips_for(level))
+	_demo_index = 0
+	listener.reset_facing()
+	listener.set_look_enabled(false)
+	state = State.LISTEN
+	_refresh_demo_labels()
+	_show_only(_listen_panel)
+	return true
+
+
+## Listen screen: plays the selected clip from the far bank (straight ahead, so direction
+## never changes) through `level`'s bus, looped and faded exactly like a trial's cry. Only
+## the level differs between the three buttons. Nothing is logged.
+func play_demo(level: String) -> bool:
+	if state != State.LISTEN or not level in TrialPlan.LEVELS or _demo_clips.is_empty():
+		return false
+	var stream: AudioStream = library.stream_for(_demo_clips[_demo_index])
+	if stream == null:
+		return false
+	_stop_cry()
+	emitter.stream = stream
+	emitter.bus = TrialPlan.LEVEL_BUSES[level]
+	emitter.global_position = TrialPlan.source_position(TrialPlan.LISTEN_DIRECTION, level)
+	listener.reset_facing()
+	_phase_time = 0.0
+	_demo_level = level
+	_demo_playing = true
+	emitter.play()
+	_refresh_demo_labels()
+	return true
+
+
+## Listen screen: the next clip (any kind of cry) for the level buttons.
+func next_demo_clip() -> bool:
+	if state != State.LISTEN or _demo_clips.is_empty():
+		return false
+	_stop_cry()
+	_demo_index = (_demo_index + 1) % _demo_clips.size()
+	_refresh_demo_labels()
+	return true
+
+
+## Listen screen -> the practice round.
+func start_practice() -> bool:
+	if state != State.LISTEN:
+		return false
+	_stop_cry()
 	_begin_round(TrialPlan.ROUND_PRACTICE, TrialPlan.build_practice_order(_rng))
 	return state != State.SETUP
 
@@ -245,6 +304,14 @@ func start_scored_round() -> bool:
 ## Steps the listen window and the practice feedback. Called every frame; tests call it directly.
 func advance(delta: float) -> void:
 	match state:
+		State.LISTEN:
+			if _demo_playing:
+				_phase_time += delta
+				if _phase_time >= TrialPlan.CRY_WINDOW_S:
+					_stop_cry()
+					_refresh_demo_labels()
+				else:
+					emitter.volume_db = TrialPlan.cry_volume_db(_phase_time)
 		State.SILENCE:
 			_phase_time += delta
 			if _phase_time >= TrialPlan.SILENCE_BEFORE_CRY_S:
@@ -292,6 +359,11 @@ func pause() -> bool:
 			_resume_to = Resume.TO_GRID
 		State.FEEDBACK:
 			_resume_to = Resume.NEXT_TRIAL
+		State.LISTEN:
+			if _demo_playing:  # nothing to pause on the listen screen; just stop the sound
+				_stop_cry()
+				_refresh_demo_labels()
+			return false
 		_:
 			return false
 	trial_pauses += 1
@@ -403,7 +475,7 @@ func _end_cry() -> void:
 
 
 func _on_emitter_finished() -> void:
-	if state == State.CRY:
+	if state == State.CRY or (state == State.LISTEN and _demo_playing):
 		emitter.play()  # loop clips shorter than the cry window
 
 
@@ -483,6 +555,7 @@ func _build_ui() -> void:
 
 	_setup_panel = _build_setup_panel()
 	_answer_panel = _build_answer_panel()
+	_listen_panel = _build_listen_panel()
 	_break_panel = _new_panel("Practice done")
 	_add_text(_box(_break_panel), "Next: %d scored trials, no feedback. Same as before: listen, look around, then answer."
 			% (TrialPlan.all_combinations().size() * TrialPlan.SCORED_REPEATS))
@@ -491,7 +564,7 @@ func _build_ui() -> void:
 	_pause_label = _add_text(_box(_pause_panel), PAUSE_TEXT)
 	_add_button(_box(_pause_panel), "Resume (Esc)", resume)
 	_results_panel = _build_results_panel()
-	_panels = [_setup_panel, _answer_panel, _break_panel, _pause_panel, _results_panel]
+	_panels = [_setup_panel, _listen_panel, _answer_panel, _break_panel, _pause_panel, _results_panel]
 	for panel: Control in _panels:
 		center.add_child(panel)
 
@@ -515,7 +588,7 @@ func _build_ui() -> void:
 func _build_setup_panel() -> PanelContainer:
 	var panel: PanelContainer = _new_panel("Ear test")
 	var box: VBoxContainer = _box(panel)
-	_add_text(box, ("Stand still and listen. Each trial: 1 s of silence, then a cry for 4 s. "
+	_add_text(box, ("Stand still and listen. First, hear the three levels. Then each trial: 1 s of silence, then a cry for 4 s. "
 			+ "Turn your head with the mouse while it plays, then click where it came from. "
 			+ "%d practice trials with feedback, then %d scored trials. Esc pauses.")
 			% [TrialPlan.all_combinations().size() * TrialPlan.PRACTICE_REPEATS,
@@ -559,6 +632,33 @@ func _build_setup_panel() -> PanelContainer:
 	_file_label = _add_text(box, "")
 	_file_label.add_theme_color_override("font_color", COLOR_MUTED)
 	_start_button = _add_button(box, "Start", _on_start_pressed)
+	return panel
+
+
+func _build_listen_panel() -> PanelContainer:
+	var panel: PanelContainer = _new_panel("Hear the three levels")
+	var box: VBoxContainer = _box(panel)
+	_add_text(box, "The same cry, straight ahead of you, from above, from inside the bridge and "
+			+ "from below. Play each as often as you like. Any kind of cry can come from any "
+			+ "level, so listen to the space around the cry, not the voice.")
+	var row: HBoxContainer = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	box.add_child(row)
+	for level: String in TrialPlan.LEVELS:
+		var button: Button = _add_button(row, "Play " + String(TrialPlan.LEVEL_LABELS[level]).to_lower(),
+				play_demo.bind(level))
+		button.custom_minimum_size = Vector2(150.0, 56.0)
+		button.focus_mode = Control.FOCUS_NONE
+	var clip_row: HBoxContainer = HBoxContainer.new()
+	clip_row.add_theme_constant_override("separation", 12)
+	box.add_child(clip_row)
+	_demo_label = Label.new()
+	_demo_label.add_theme_color_override("font_color", COLOR_MUTED)
+	clip_row.add_child(_demo_label)
+	_add_button(clip_row, "Another cry", next_demo_clip).focus_mode = Control.FOCUS_NONE
+	_demo_now_label = Label.new()
+	box.add_child(_demo_now_label)
+	_add_button(box, "Start practice", start_practice).size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	return panel
 
 
@@ -705,6 +805,11 @@ func _add_button(parent: Control, text: String, action: Callable) -> Button:
 func _show_only(panel: Control) -> void:
 	for each: Control in _panels:
 		each.visible = each == panel
+
+
+func _refresh_demo_labels() -> void:
+	_demo_label.text = "Cry %d of %d" % [_demo_index + 1, _demo_clips.size()]
+	_demo_now_label.text = ("Playing: " + String(TrialPlan.LEVEL_LABELS[_demo_level])) if _demo_playing else " "
 
 
 func _show_setup() -> void:

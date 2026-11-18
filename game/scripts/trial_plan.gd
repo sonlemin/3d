@@ -98,6 +98,9 @@ const EMITTER_UNIT_SIZE: float = 10.0
 ## and position tell the level, not which kind of cry it is. false: each level plays only its
 ## own folder's clips, so the kind of cry gives the level away.
 const MIX_CRY_KINDS: bool = true
+## The listen screen plays its cries from here (straight ahead at the start of every trial),
+## so its three buttons differ only in level.
+const LISTEN_DIRECTION: String = "far_bank"
 
 # ------------------------------------------------------------------ timings (s)
 
