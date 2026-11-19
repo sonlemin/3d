@@ -1,0 +1,148 @@
+<title>Mourning Watch Key Screens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=Inter:wght@400;600&display=swap">
+<style>
+/* Governed by DESIGN.md (Colors, Typography, Layout & Spacing, Components) and EXPERIENCE.md (Component Patterns, State Patterns).
+   Layout: one column of 16:9 frames at full width, each a 1920x1080 canvas scaled to fit. */
+:root{color-scheme:dark;
+  --page:#101112; --text:#e4e1d8; --pmuted:#9a988f; --prule:#2c2f31;
+  --world:#070707; --abyss:#000000; --ink:#b9b4aa; --ink-bright:#ddd6c8; --caption:#e9e2d2; --muted:#8d8982; --dim:#5f5d59;
+  --warm:#f0b45a; --plank:#55534f; --rail:#8d8982; --hairline:#3a3835; --dawn-sky:#3b3a3d;
+  --face:"Cormorant Garamond",Garamond,Georgia,serif; --ui:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif}
+body{background:var(--page);color:var(--text);font-family:var(--ui);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:40px 72px;display:flex;flex-direction:column;gap:44px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.intro h1{font-size:26px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance}
+.intro p{max-width:66ch;color:var(--pmuted);margin:0 0 8px}
+figure{margin:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+figure h2{margin:0;font-size:18px;font-weight:600}
+figcaption{color:var(--pmuted);max-width:70ch}
+.scroll{overflow-x:auto}
+.frame{aspect-ratio:16/9;min-width:640px;container-type:inline-size;position:relative;overflow:hidden;background:var(--world);outline:1px solid var(--prule)}
+
+.s{position:absolute;inset:0;font-size:calc(100cqw / 120);color:var(--ink);font-family:var(--face);font-weight:600;
+  font-variant-numeric:lining-nums tabular-nums;padding:3em}
+.s em{font-style:normal}
+.lab{font-size:1.75em;letter-spacing:.16em;text-transform:uppercase;line-height:1.2}
+.lab small,.tool small{font-size:1em;letter-spacing:.04em;text-transform:none;color:var(--muted)}
+.mut{color:var(--muted)}
+.on,.on .lab{color:var(--warm);text-shadow:0 0 .7em var(--warm)}
+.on small{color:var(--warm)}
+.on{text-decoration:underline;text-decoration-thickness:.125em;text-underline-offset:.35em}
+.sg p.on em{text-decoration:none}
+
+.plan{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;gap:1em}
+.span{display:flex;align-items:center;justify-content:center;gap:.6em;min-width:0}
+.end{font-size:1.75em;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.16em;text-transform:uppercase}
+.sec{flex:1 1 0;max-width:15em;display:flex;flex-direction:column;align-items:center;gap:1em;min-width:0}
+.sn{font-size:1.75em;color:var(--muted)}
+.st{font-size:3em;line-height:1;color:var(--ink-bright)}
+.deck{width:100%;aspect-ratio:1;display:flex;gap:4%;padding:0 3%;background:var(--abyss);position:relative;
+  border-top:.4em solid var(--rail);border-bottom:.4em solid var(--rail)}
+.deck.no-top{border-top:.15em dashed var(--dim)}
+.deck.no-bot{border-bottom:.15em dashed var(--dim)}
+.p{flex:1;background:var(--plank)}
+.p.x{background:transparent}
+.rig{position:absolute;inset:-1em -.25em;border:.15em solid var(--ink);display:grid;place-items:center;z-index:2;font-weight:inherit}
+.rig span{font-size:1.75em;letter-spacing:.12em;text-transform:uppercase;background:var(--world);padding:.05em .35em;white-space:nowrap}
+.rig.trap{background:linear-gradient(to top right,transparent 49.4%,var(--ink) 49.4%,var(--ink) 50.6%,transparent 50.6%),
+  linear-gradient(to bottom right,transparent 49.4%,var(--ink) 49.4%,var(--ink) 50.6%,transparent 50.6%)}
+.rig.beam::after{content:"";position:absolute;left:8%;right:8%;bottom:1.1em;height:.9em;background:var(--ink)}
+.reach{position:absolute;left:50%;top:50%;width:200%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side,rgba(240,180,90,.3),transparent);border:.12em dashed var(--warm);z-index:3}
+.lamp{position:absolute;left:50%;top:50%;width:1.3em;height:1.3em;transform:translate(-50%,-50%);border-radius:50%;background:var(--warm);z-index:4}
+.why{font-size:2em;color:var(--muted);text-align:center;letter-spacing:.04em;min-height:1.3em}
+.tray{display:flex;flex-direction:column;gap:1.5em}
+.row{display:flex;align-items:baseline;gap:1em 3.5em;flex-wrap:wrap}
+.grp{display:flex;align-items:baseline;gap:1.5em}
+.cnt{font-size:2em;letter-spacing:.04em}
+.cnt em{font-size:1.5em;color:var(--ink-bright)}
+.tool{font-size:1em;white-space:nowrap}
+.tool small{font-size:2em}
+.tool.off,.tool.off .lab,.tool.off small{color:var(--dim)}
+.ring{margin-left:auto}
+
+.dawn{display:grid;grid-template-columns:64fr 36fr;padding:0}
+.scene{display:flex;flex-direction:column;justify-content:center;gap:5em;padding:3em;background:linear-gradient(var(--world) 0%,var(--dawn-sky) 150%)}
+.dspan{display:flex;gap:.6em}
+.ds{flex:1;aspect-ratio:1.6;background:var(--plank)}
+.ds.gone{background:transparent;outline:.12em dashed var(--dim)}
+.wins{display:grid;grid-template-columns:repeat(12,1fr);gap:1em;padding:0 16% 0 34%}
+.w{aspect-ratio:.7;border:.12em solid var(--dim)}
+.w.lit{background:var(--warm);border-color:var(--warm);box-shadow:0 0 1.6em rgba(240,180,90,.45)}
+.ledger{background:var(--world);border-left:.12em solid var(--hairline);padding:3em 3em 3em 2.5em;display:flex;flex-direction:column;gap:1.5em;min-width:0}
+.ledger p{margin:0;display:flex;flex-direction:column;gap:.2em}
+.ledger em{font-size:2.5em;line-height:1.1;color:var(--ink-bright);letter-spacing:.04em}
+.ledger q{font-size:2em;font-style:italic;quotes:none;color:var(--ink-bright)}
+.vow{font-size:3.5em;font-style:italic;color:var(--ink-bright);letter-spacing:.07em;line-height:1.1}
+.next{margin-top:auto;display:flex;gap:1em 3em;flex-wrap:wrap}
+
+.pause{display:grid;place-items:center}
+.frozen{position:absolute;inset:0;background:radial-gradient(60% 70% at 50% 110%,rgba(240,180,90,.10),transparent)}
+.menu{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.5em;font-size:3.5em;letter-spacing:.07em;line-height:1.1}
+.menu span{font-size:1em}
+.menu small{font-size:.57em;color:var(--muted);letter-spacing:.04em}
+
+.settings{display:block}
+.cols{columns:2;column-gap:6em;height:100%}
+.sg{break-inside:avoid;display:flex;flex-direction:column;gap:.9em;margin-bottom:3em}
+.sg p{margin:0;display:flex;justify-content:space-between;align-items:baseline;gap:1em;font-size:2em;letter-spacing:.04em}
+.sg p em{color:var(--ink-bright)}
+.sg p.on,.sg p.on em{color:var(--warm);text-shadow:0 0 .7em var(--warm)}
+.sg p.note{color:var(--muted);justify-content:flex-start}
+.sl{display:inline-block;width:9em;height:.06em;background:var(--ink);position:relative;vertical-align:middle}
+.sl b{position:absolute;top:-.3em;width:.6em;height:.6em;background:var(--ink-bright);transform:translateX(-50%)}
+
+.journal{display:grid;place-items:center}
+.page{max-width:60ch;font-size:2em;line-height:1.3;letter-spacing:.04em;display:flex;flex-direction:column;gap:1.4em}
+.page p{margin:0}
+.page .new,.page .fresh{color:var(--ink-bright)}
+.pen{display:inline-block;width:.08em;height:1em;background:var(--ink-bright);margin-left:.15em;vertical-align:-.12em}
+.cont{position:absolute;bottom:1.7em;left:0;right:0;text-align:center;color:var(--warm);text-shadow:0 0 .7em var(--warm)}
+</style>
+<div class="wrap">
+<div class="intro">
+  <h1>Key screens in the Lantern light look</h1>
+  <p>Six screens drawn to DESIGN.md's tokens: semibold type, nothing smaller than the 28 px label size on a 1080p canvas, one warm thing per group, marked by a glow and a thin rule as well as by colour. Each frame is a 1920 &times; 1080 canvas scaled down to fit this page, so text here appears smaller than it will in the game.</p>
+  <p>The plan is the same worked example as before: 4 planks and 1 rope in hand after a trapdoor and a swing-beam. The name, the epitaph and the journal hints are stand-ins until the real texts are written.</p>
+</div><figure><h2>Planning</h2><div class="scroll"><div class="frame">
+<div class="s plan">
+  <div class="span"><span class="end">Far pier</span><div class="sec"><span class="sn">1</span><div class="deck no-top"><i class="p x"></i><i class="p x"></i><i class="p x"></i><i class="p x"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></div><span class="st">4</span></div><div class="sec"><span class="sn">2</span><div class="deck"><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><b class="rig trap"><span>Trapdoor</span></b></div><span class="st">8</span></div><div class="sec"><span class="sn">3</span><div class="deck"><i class="p x"></i><i class="p x"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><b class="reach"></b><b class="lamp"></b></div><span class="st">6</span></div><div class="sec"><span class="sn">4</span><div class="deck no-top"><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><b class="rig beam"><span>Swing-beam</span></b></div><span class="st">8</span></div><div class="sec"><span class="sn">5</span><div class="deck no-top"><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></div><span class="st">8</span></div><div class="sec"><span class="sn">6</span><div class="deck no-top no-bot"><i class="p x"></i><i class="p x"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i><i class="p"></i></div><span class="st">6</span></div><span class="end">Town</span></div>
+  <div class="why">Trapdoor needs 2 ropes. You hold 1.</div>
+  <div class="tray">
+    <div class="row">
+      <span class="grp"><span class="lab mut">In hand</span><span class="cnt">Planks <em>4</em></span><span class="cnt">Ropes <em>1</em></span></span>
+      <span class="tool off"><span class="lab">1 Trapdoor</span> <small>2 ropes</small></span>
+      <span class="tool off"><span class="lab">2 Swing-beam</span> <small>4 planks, 2 ropes</small></span>
+      <span class="tool on"><span class="lab">3 Lantern</span> <small>1 left</small></span>
+    </div>
+    <div class="row">
+      <span class="lab">Journal <small>J</small></span><span class="lab">Keys</span><span class="lab">Start over <small>hold</small></span>
+      <span class="lab ring">Ring the bell <small>hold Space</small></span>
+    </div>
+  </div>
+</div></div></div><figcaption>A tool chosen (lantern), two tools out of reach, and the why-line for the one under the pointer. The tray is two lines: choosing above, committing below.</figcaption></figure><figure><h2>Dawn ledger</h2><div class="scroll"><div class="frame">
+<div class="s dawn">
+  <div class="scene"><div class="dspan"><i class="ds gone"></i><i class="ds gone"></i><i class="ds gone"></i><i class="ds"></i><i class="ds"></i><i class="ds"></i></div><div class="wins"><i class="w"></i><i class="w"></i><i class="w lit"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w"></i><i class="w lit"></i><i class="w"></i><i class="w"></i><i class="w lit"></i><i class="w"></i></div></div>
+  <div class="ledger">
+    <p><span class="lab mut">Sections standing</span><em>3 of 6</em></p>
+    <p><span class="lab mut">Windows lit</span><em>3 of 12</em></p>
+    <p><span class="lab mut">Planks and ropes left</span><em>9, 2</em></p>
+    <p><span class="lab mut">Names learned</span><em>Maren Holt</em><q>She kept the ferry light.</q></p>
+    <p><span class="lab mut">Souls released</span><em>One</em></p>
+    <p class="vow">The fallen will return.</p>
+    <p><span class="lab mut">Wounds taken</span><em>2</em></p>
+    <div class="next"><span class="lab on">Another night</span><span class="lab">Leave the bridge</span></div>
+  </div>
+</div></div></div><figcaption>All seven lines written in, the closing choices shown. Three sections standing, three windows lit.</figcaption></figure><figure><h2>Pause</h2><div class="scroll"><div class="frame">
+<div class="s pause"><div class="frozen"></div>
+  <div class="menu"><span class="on">Resume</span><span>Keys</span><span>Journal</span><span>Settings</span><span>Leave the bridge</span></div>
+</div></div></div><figcaption>Over the frozen, silenced night. Resume is chosen when it opens.</figcaption></figure><figure><h2>Settings</h2><div class="scroll"><div class="frame"><div class="s settings"><div class="cols"><div class="sg"><span class="lab mut">Sound</span><p class=""><span>Volume</span><em><i class="sl"><b style="left:70%"></b></i></em></p><p class=""><span>Listening on</span><em>Headphones</em></p><p class=""><span>Swap left and right</span><em>Off</em></p><p class=""><span>Check left and right</span><em>Run</em></p><p class=""><span>Stream-safe sound</span><em>Off</em></p><p class=""><span>Mono sound</span><em>Off</em></p></div><div class="sg"><span class="lab mut">Cues</span><p class="on"><span>Visual cues</span><em>Everywhere</em></p><p class="note">Cues also show in the dark. Flames dip with each toll.</p><p class=""><span>Centre dot</span><em>Off</em></p></div><div class="sg"><span class="lab mut">Controls</span><p class=""><span>Mouse sensitivity</span><em><i class="sl"><b style="left:45%"></b></i></em></p><p class=""><span>Invert look</span><em>Off</em></p><p class=""><span>Holds</span><em>Hold</em></p></div><div class="sg"><span class="lab mut">Display</span><p class=""><span>Screen</span><em>Fullscreen</em></p><p class=""><span>Resolution</span><em>1920 &times; 1080</em></p><p class=""><span>Brightness</span><em><i class="sl"><b style="left:50%"></b></i></em></p><p class=""><span>Field of view</span><em><i class="sl"><b style="left:60%"></b></i></em></p><p class=""><span>Fog quality</span><em>Normal</em></p><p class=""><span>Caption size</span><em>Medium</em></p></div></div></div></div></div><figcaption>The cues row has focus, with its one-line explanation. Values are words, never tick boxes.</figcaption></figure><figure><h2>Lost night</h2><div class="scroll"><div class="frame">
+<div class="s journal"><div class="page">
+  <p class="new">Section 6 carried more than it could hold<span class="pen"></span></p>
+</div><span class="lab cont">Plan again</span></div></div></div><figcaption>The view has gone dark and the new hint is being written in. One action continues to planning.</figcaption></figure><figure><h2>Journal</h2><div class="scroll"><div class="frame">
+<div class="s journal"><div class="page">
+  <p>The ones from below reached the town. A rail with no rope gives them nothing to hook.</p>
+  <p class="fresh">Section 6 carried more than it could hold. Leave it its planks.</p>
+</div><span class="lab cont">Back</span></div></div></div><figcaption>Opened from planning on a later night: the older hint in plain ink, the newest brighter.</figcaption></figure>
+</div>
