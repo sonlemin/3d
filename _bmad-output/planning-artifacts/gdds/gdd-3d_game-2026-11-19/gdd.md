@@ -256,7 +256,7 @@ In the dark there are no visual cues. The safety net there is the ally's call, a
 
 | | In the light (default) | Everywhere | Ears only |
 |---|---|---|---|
-| Cues that point at a cry or the hum: shaking ropes, swirling fog, falling dust, swaying ropes, leaning flames | Where light falls | Also in the dark: the cue itself glows faintly and nothing else is revealed; a flame leans toward the nearest cry even beyond its own light | Off |
+| Cues that point at a cry or the hum: shaking ropes, swirling fog, falling dust, swaying ropes, leaning flames, rattling planks at a hook on the deck | Where light falls | Also in the dark: the cue itself glows faintly and nothing else is revealed; a flame leans toward the nearest cry even beyond its own light | Off |
 | Footsteps of the dead on the deck; bowing planks | Where light falls | Also glow faintly in the dark | Where light falls |
 | A shuttered lantern | No lean | Its seam glow still leans | No lean |
 | Every lit flame dips once for each stroke of the bell | No | Yes | No |

@@ -34,3 +34,113 @@ Two operator features raised by the review, beyond the approved spec:
 - **Abort session:** a button on the pause panel that marks the CSV as aborted (or renames it with an `_aborted` suffix) and returns to setup, so a misconfigured session doesn't leave a partial file that looks genuine.
 
 **Depends on:** nothing; useful before the five outside testers run.
+
+### DW-4: Read GDD draft 0.6 as it stands after the third round of fixes
+
+origin: gds-gdd update run, finalize, 2026-11-19
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md
+owner: gds-game-architecture, as its first step (auto-assigned 2026-11-20)
+severity: medium
+reason: The GD-52 to GD-55 fixes went in after the validator finished, so nobody has read the result; architecture is the next reader anyway.
+status: open
+
+### DW-5: Walk the UX reviews' medium and low findings
+
+origin: gds-ux reviewer gate, 2026-11-19
+location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/review-rubric.md and review-accessibility.md
+owner: a gds-ux Update run before epic 2's stories are created (auto-assigned 2026-11-20)
+severity: medium
+reason: About 33 medium and 32 low findings were never walked one by one; only the high ones and a handful of others were handled.
+status: open
+seen-again: 2026-11-20 (validation-report.md now gives a status per finding: 30 not addressed, 15 partly addressed)
+
+### DW-6: Settle the flame as a direction-finder (carry height, minimum lean)
+
+origin: gds-ux accessibility review H3, 2026-11-19
+location: EXPERIENCE.md, HUD & Diegetic UI; epics.md epic 7 story 4
+owner: epic 7 story 4, checked on the muted night in epic 8 (auto-assigned 2026-11-20)
+severity: medium
+reason: It was left to the art pass without a story naming it; by sight the flame is the only direction-finder in Cues everywhere.
+status: open
+
+### DW-7: Add a per-wave economy line to the GDD
+
+origin: third validation of the GDD, minor 18, 2026-11-19
+location: gdd.md, Economy and Resources
+owner: epic 6 story 5, the tuning pass (auto-assigned 2026-11-20)
+severity: low
+reason: The whole-night worked example stands in for it; per-wave numbers are better written from playtest data.
+status: open
+
+### DW-8: Decide the four accessibility gaps (rebinding, narrated menus, other languages, one-handed play)
+
+origin: gds-ux Accessibility Floor and gdd.md Out of Scope, 2026-11-19
+location: n/a
+owner: Sonlm, when the Fog Season is planned after gate 2 (auto-assigned 2026-11-20)
+severity: low
+reason: Accepted as gaps at hobby stakes and marked "not yet planned"; gamepad arrives with the Fog Season, which is the natural time to decide rebinding.
+status: open
+
+### DW-9: Find a person to record the ally's lines
+
+origin: gdd.md Dependencies, 2026-11-19
+location: n/a
+owner: Sonlm, started during epic 1; final recordings needed by epic 6 (auto-assigned 2026-11-20)
+severity: high
+reason: It has lead time and no date; stand-in recordings carry epics 2 to 5, but gate 2 needs the real ones.
+status: open
+
+### DW-10: Recruit newcomers for the early listen and for gate 2
+
+origin: gdd.md Dependencies, 2026-11-19
+location: n/a
+owner: Sonlm; two or three people by the end of epic 2, five more by epic 6 (auto-assigned 2026-11-20)
+severity: high
+reason: Both checks need people who have never seen the game, split across headphones and speakers, and nobody is lined up.
+status: open
+
+### DW-11: Get the original Freesound downloads of the 11 recordings
+
+origin: gdd.md Dependencies, 2026-11-19
+location: game/audio/cries
+owner: Sonlm, before epic 2 story 1 (auto-assigned 2026-11-20)
+severity: high
+reason: The clips in hand were cut from lossy previews; epic 2 starts by re-cutting them at full quality.
+status: open
+
+### DW-12: Secure a GTX 1050-class machine and an Intel Iris Xe machine
+
+origin: gdd.md Dependencies, 2026-11-19
+location: n/a
+owner: Sonlm, before epic 7 (auto-assigned 2026-11-20)
+severity: medium
+reason: The frame-rate targets can only be measured on them, and nothing says where they come from.
+status: open
+
+### DW-13: Decide caption backing and a Reduce camera motion setting
+
+origin: gds-ux accessibility review cheap wins 12 and 14, 2026-11-19
+location: EXPERIENCE.md, Accessibility Floor
+owner: epic 8, with the accessibility extras, decided after the muted night (auto-assigned 2026-11-20)
+severity: low
+reason: Two reviewer suggestions that were not taken up; each adds a setting, so they belong with the other extras after gate 2.
+status: open
+
+### DW-14: Optional closing steps of the UX and GDD runs
+
+origin: gds-ux and gds-gdd finalize, 2026-11-19; asked for by Sonlm on 2026-11-20 and cut short by a usage limit
+location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/
+owner: Claude, next session (auto-assigned 2026-11-20)
+severity: low
+reason: Still to do: an editorial pass on DESIGN.md and EXPERIENCE.md, the HTML validation report, a visual re-check of the key-screens mock including phone width, and a bmad-help run.
+status: done 2026-11-20
+resolution: All four run on 2026-11-20; details in the UX folder's .decision-log.md. The report lists 30 findings still not addressed, which stay under DW-5.
+
+### DW-15: Push the planning commits
+
+origin: session of 2026-11-19 (commits eab90cd and e709a12 on ear-test-prototype)
+location: n/a
+owner: Sonlm
+severity: low
+reason: Commits are local only; pushing was never asked for.
+status: open

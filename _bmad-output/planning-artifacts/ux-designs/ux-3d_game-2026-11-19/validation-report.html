@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<!-- UX Design Validation Report. Filled from gds-ux/assets/validation-report-template.html
+     from review-rubric.md and review-accessibility.md. Re-running the synthesis overwrites this file. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UX Design Validation: The Mourning Watch (one-night game)</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9em; background: rgba(120,113,108,0.10); padding: 0 3px; border-radius: 3px; }
+  .summary-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px 16px; margin-bottom: 24px; overflow-x: auto; }
+  .summary-block h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .summary-block p { margin: 10px 0 0; font-size: 13.5px; color: var(--muted); }
+  table.summary-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  table.summary-table th, table.summary-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  table.summary-table th:first-child, table.summary-table td:first-child { text-align: left; }
+  table.summary-table thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  table.summary-table tr.total td { font-weight: 600; border-bottom: none; }
+  .finding-status { margin-top: 8px; font-size: 14px; padding: 8px 12px; border-radius: 6px; background: var(--bg); border-left: 3px solid var(--muted); }
+  .status-pill { font-size: 10.5px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.4; margin-right: 6px; white-space: nowrap; }
+  .status-fixed { background: rgba(22,163,74,0.14); color: #15803d; }
+  .status-decided { background: rgba(37,99,235,0.12); color: #1d4ed8; }
+  .status-partly { background: rgba(202,138,4,0.16); color: #a16207; }
+  .status-gap { background: rgba(124,58,237,0.12); color: #6d28d9; }
+  .status-open { background: rgba(220,38,38,0.12); color: #b91c1c; }
+  .status-unverified { background: rgba(100,116,139,0.16); color: #475569; }
+  .finding-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--muted); }
+  .area-heading { margin: 0; padding: 14px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; border-top: 1px solid var(--border); }
+  .area-heading + article.finding { border-top: none; }
+  .dim-judgment ul { margin: 0 0 10px; padding-left: 20px; }
+  .section-counts { font-size: 12px; color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  @media (max-width: 600px) { .container { padding: 20px 16px 48px; } .finding-location { flex-basis: 100%; } }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>The Mourning Watch (one-night game) — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/ · DESIGN.md + EXPERIENCE.md</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>The pair is a usable contract and close to ready. Mechanically it is clean: all 12 colours carry a hex, all 25 distinct token references in DESIGN.md and both in EXPERIENCE.md resolve, the six stated contrast ratios are correct, the 17 component names match one for one across both spines, both <code>sources</code> paths exist, and both spines keep the canonical section order. No critical findings. What stands between it and a clean hand-off is at the edges of the retry loop and the hand-off to the GDD. Two high findings: the "GDD impacts" table leaves out several UX decisions that add to or change the GDD, and the lost-night screen is built around "the new hint being written" with no rule for a loss whose hint is already in the journal. The medium findings are mostly decisions that live only in a Key Flow or only in the mock, five logged decisions that were weakened in distillation, and component frontmatter that is thinner than the component prose.</p>
+      <p>Accessibility reviewer: the screens are in good shape: stated contrast figures are correct, nothing is timed, pause is total, and the caption exception is well reasoned. The night is where the promise slips: "Cues everywhere" as specified does not yet carry a player who cannot hear through a night, the ready pose (the only affordance signal) is not guaranteed to be visible, and two accepted gaps (press-instead-of-hold, keyboard layout) cost less to close than to leave open. No finding is rated critical because none blocks a first-time player outright; the worst cases make a promised mode unreliable, not unusable.</p>
+      <p>Both verdicts describe the drafts as they stood on 2026-11-19, before they were marked final. Since then all nine high findings have been acted on (six by decision UX-38 to UX-41, three by direct fixes; two of the nine only in part) and the documents were corrected again after GDD draft 0.6 (GD-52, GD-53, GD-54). Each finding below carries its status today. Every status is a reading of the documents: nothing has been run in Godot, and Cues everywhere has not been played muted.</p>
+    </div>
+
+    <div class="summary-block">
+      <h3>Findings by severity and by status today</h3>
+      <table class="summary-table">
+        <thead><tr><th>Severity</th><th>Fixed</th><th>Decided</th><th>Partly addressed</th><th>Accepted gap</th><th>Not addressed</th><th>Not verified</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-sev-critical">critical</span></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td><span class="badge badge-sev-high">high</span></td><td>2</td><td>5</td><td>2</td><td>0</td><td>0</td><td>0</td><td>9</td></tr>
+          <tr><td><span class="badge badge-sev-medium">medium</span></td><td>13</td><td>4</td><td>6</td><td>2</td><td>8</td><td>0</td><td>33</td></tr>
+          <tr><td><span class="badge badge-sev-low">low</span></td><td>3</td><td>0</td><td>7</td><td>0</td><td>22</td><td>0</td><td>32</td></tr>
+          <tr class="total"><td>Total</td><td>18</td><td>9</td><td>15</td><td>2</td><td>30</td><td>0</td><td>74</td></tr>
+        </tbody>
+      </table>
+      <p>Rubric walker: 0 critical, 2 high, 14 medium, 23 low. Accessibility: 0 critical, 7 high, 19 medium, 9 low. Severities are the reviewers' own, as rated on 2026-11-19. Status is read from the decision log and the current text of both documents; nothing was run in Godot.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">Flow coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Token completeness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Component coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">State coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Visual reference coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Bloat &amp; overspecification</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Inheritance discipline</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+    </div>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>1. Flow coverage</h2>
+          <span class="section-counts">2 medium · 2 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>The GDD names no player journeys, so the four Key Flows drafted under UX-35 are the whole set. Each has a named protagonist, numbered steps, a marked climax and a marked failure path. Rules cited in the flows were checked against the GDD (trapdoor cost of 2 ropes, the wrong ring's 10 s, the 0.3 s drop and 2 s falling cry, six tolls and 10 s of silence before wave 6, the hatchling half-window).</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R1.1">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R1.1</span>
+              <h3 class="finding-title">Tomas's flow contradicts the logged journey</h3>
+              <span class="finding-location">EXPERIENCE.md, Key Flows, Tomas, step 2</span>
+            </header>
+            <div class="finding-note">UX-35 says he "fails the left/right check, takes the swap"; the flow said "He declines the swap".</div>
+            <div class="finding-fix"><strong>Fix:</strong> Pick one and make the log and the flow agree. Declining fits a listener with one weak ear better, so amending UX-35 is probably the right direction, but it is the developer's call.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>The flow now reads "He takes the swap, so the game's left now reaches his good right ear" (decision log, Finalize: rubric fixes). The log was kept and the flow changed, the opposite of the reviewer's lean.</div>
+          </article>
+          <article class="finding" id="R1.2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R1.2</span>
+              <h3 class="finding-title">The GDD's "first cry within 60 s of Start" is not protected on the first-launch path</h3>
+              <span class="finding-location">EXPERIENCE.md, Key Flows, Linh's first watch, steps 1 to 4; Component Patterns, key-prompt</span>
+            </header>
+            <div class="finding-note">Between "Begin the watch" and the first cry sit two question screens, a left/right check that can be answered wrong twice, and key-prompts for look and walk that stay until the action has been done once. UX-22 argues only that the hands-on part comes after the cries.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State where the 60 s is measured from (entering the dusk lesson is the natural point) and that the first cry starts on a timer whether or not the look and walk prompts have been cleared.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>State Patterns, Dusk lesson, Opening: the first cry starts within 15 s of the lesson opening and is itself the look lesson. Recorded in the log as an [ASSUMPTION], so it is a rule for Sonlm to confirm. Not timed in a build.</div>
+          </article>
+          <article class="finding" id="R1.3">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R1.3</span>
+              <h3 class="finding-title">Three behaviours are committed only inside a flow narrative</h3>
+              <span class="finding-location">EXPERIENCE.md, Key Flows (Tomas step 1; Linh calls the name step 7; Linh's first watch step 9)</span>
+            </header>
+            <div class="finding-note">The speakers "best with headphones" line, the ledger's name line appearing only when a name was learned, and "one key" continuing from the lost-night page sit where an extracting consumer will not look.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Move each into Component Patterns or State Patterns and leave the flow as the illustration.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>All three now have a home outside the flows: the notes under the Information Architecture table (Headphones or speakers?, UX-19), the ledger line formats under Component Patterns ("Names learned", or "None"), and State Patterns, Lost night ("one action continues").</div>
+          </article>
+          <article class="finding" id="R1.4">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R1.4</span>
+              <h3 class="finding-title">No flow walks the returning player or Leave the bridge</h3>
+              <span class="finding-location">EXPERIENCE.md, Key Flows</span>
+            </header>
+            <div class="finding-note">Not required at four flows; noted because those two paths carry the open questions in sections 3 and 4.</div>
+            <div class="finding-fix"><strong>Fix:</strong> None proposed (noted only).</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Still four flows. The rules for both paths were tightened elsewhere (Skip the lesson? row; Leave the bridge asks first from Pause).</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>2. Token completeness</h2>
+          <span class="section-counts">4 medium · 4 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Every frontmatter token was checked against the type rules and every token reference in both files resolved. All 12 colours have a hex. One dark theme only, so no light/dark pairs apply. Contrast on <code>world</code> was recomputed and matches what is stated: ink 9.8, ink-bright 13.9, caption 15.6, warm 10.9, muted 5.8, dim 3.1. UX-32's eight hex values are carried exactly.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R2.1">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R2.1</span>
+              <h3 class="finding-title">Caption sizes small and large exist only as prose</h3>
+              <span class="finding-location">DESIGN.md, Typography, Caption row; EXPERIENCE.md, Accessibility Floor, Settings list</span>
+            </header>
+            <div class="finding-note">"Caption size" is a shipped setting, but a Theme built from the frontmatter has only the medium size.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add <code>typography.caption-small</code> and <code>typography.caption-large</code>.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>Both tokens are in the DESIGN.md frontmatter (36 px and 56 px).</div>
+          </article>
+          <article class="finding" id="R2.2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R2.2</span>
+              <h3 class="finding-title">The <code>components</code> frontmatter is thinner than the Components prose</h3>
+              <span class="finding-location">DESIGN.md, frontmatter <code>components</code> against body Components</span>
+            </header>
+            <div class="finding-note">A consumer that mirrors the frontmatter loses states: tool-tray group label and counts; span-section stripped rail, section number and fallen outline; rig-mark tag; key-card group labels; two-choice gap and question typography; ledger-page vow and epitaph styles; centre-dot opacity; menu-item hover. setting-row disagrees with itself: prose says the row turns warm, frontmatter has only <code>value-color-chosen</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Make the frontmatter the full set and let the prose explain it.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Checked against the current frontmatter: the listed keys are still missing and setting-row still has only <code>value-color-chosen</code>. The menu-item hover item no longer applies because the separate hover state was removed.</div>
+          </article>
+          <article class="finding" id="R2.3">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R2.3</span>
+              <h3 class="finding-title">The effects that carry legibility are described but not quantified or tokenised</h3>
+              <span class="finding-location">DESIGN.md, Elevation &amp; Depth; Shapes; Components</span>
+            </header>
+            <div class="finding-note">The glow ("about 0.7 of the text's height", no opacity), the halo ("tight"), the pause dim ("about 15%"), hairlines ("1 to 2 px"), the centre dot's 60%. The halo matters most: <code>caption</code> on <code>warm</code> is 1.4:1, so over lantern light the halo is the only thing making the one always-on line readable.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add an <code>effects</code> block (glow radius and alpha, halo width in px at 1080p, pause dim, hairline width) and state the halo as the contrast guarantee for text over the 3D view.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>The halo now has numbers (a solid 4 px outline and a soft 12 px spread at 1080p) and the chosen item gained a 2 px warm rule. There is still no <code>effects</code> block; glow opacity, pause dim and hairline width are still approximate.</div>
+          </article>
+          <article class="finding" id="R2.4">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R2.4</span>
+              <h3 class="finding-title">Hover is specified two ways</h3>
+              <span class="finding-location">DESIGN.md, Components, menu-item; EXPERIENCE.md, Component Patterns, menu-item</span>
+            </header>
+            <div class="finding-note">DESIGN.md gave menu-item a separate pointer-hover state in <code>ink-bright</code>; EXPERIENCE.md says hover and keyboard choice are the same state. <code>ink-bright</code> against <code>ink</code> is only 1.4:1 apart.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep EXPERIENCE.md's rule (hover chooses, warm with glow) and delete the separate hover state, or define when hover does not choose.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>DESIGN.md menu-item now reads "Chosen (by keys or by the pointer resting on it)"; the separate hover colour is gone.</div>
+          </article>
+          <article class="finding" id="R2.5">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R2.5</span>
+              <h3 class="finding-title">Contrast is stated for <code>world</code> only</h3>
+              <span class="finding-location">DESIGN.md, Colors; Components, town-window, span-section</span>
+            </header>
+            <div class="finding-note">In the dawn view the gradient runs to <code>dawn-sky</code>, where <code>dim</code> is 1.7:1, <code>plank</code> 1.5:1 and <code>muted</code> 3.2:1. The counts are repeated in the ledger, so nothing is lost, but an out window may not be visible.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Say the span and windows sit in the <code>world</code> end of the gradient, or state the ratios.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>DESIGN.md still states contrast on <code>world</code> only and does not say where the span and windows sit in the gradient. Same ground as accessibility L1.</div>
+          </article>
+          <article class="finding" id="R2.6">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R2.6</span>
+              <h3 class="finding-title">tray-tool's cost is "a smaller run (still at the floor)", but the tray is set at the floor</h3>
+              <span class="finding-location">DESIGN.md, Components, tray-tool against Typography, Floor</span>
+            </header>
+            <div class="finding-note"><code>label</code> is the floor, so a smaller run cannot also be at the floor.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Same size, set in <code>muted</code>.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>tray-tool now sets cost in <code>typography.body</code> lower case and <code>muted</code>; nothing is below the floor.</div>
+          </article>
+          <article class="finding" id="R2.7">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R2.7</span>
+              <h3 class="finding-title">Lining tabular figures depend on OpenType features in the bundled font</h3>
+              <span class="finding-location">DESIGN.md, Typography, Figures; UX-34</span>
+            </header>
+            <div class="finding-note">The requirement is stated; the font-side condition is not.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Note that the Godot font import must enable <code>lnum</code> and <code>tnum</code>, and check the bundled Cormorant Garamond build has them.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>No such note in DESIGN.md. The font file has not been checked.</div>
+          </article>
+          <article class="finding" id="R2.8">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R2.8</span>
+              <h3 class="finding-title">Token housekeeping for the Theme builder</h3>
+              <span class="finding-location">DESIGN.md, frontmatter</span>
+            </header>
+            <div class="finding-note"><code>rail</code> and <code>muted</code> share <code>#8d8982</code>; <code>spacing.4</code> is referenced nowhere; <code>dawn-sky</code> is referenced by no component because the dawn and planning grounds are not components. Harmless.</div>
+            <div class="finding-fix"><strong>Fix:</strong> None proposed (listed for the Theme builder).</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Unchanged in the current frontmatter.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>3. Component coverage</h2>
+          <span class="section-counts">5 medium · 4 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>The 17 component names in DESIGN.md frontmatter, DESIGN.md Components and EXPERIENCE.md Component Patterns are identical, and every row has real rules on both sides. The misses are elements that appear on a surface without belonging to any component.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R3.1">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R3.1</span>
+              <h3 class="finding-title">The ledger's content is not committed in either spine</h3>
+              <span class="finding-location">DESIGN.md, Components, ledger-page; EXPERIENCE.md, Voice and Tone; Component Patterns, ledger-page</span>
+            </header>
+            <div class="finding-note">UX-14 says "its seven lines"; the spines never said seven, never listed them and never pointed at the GDD's list. Label and value formats existed only in the mock. The no-name variant was open. DESIGN.md says label above value; EXPERIENCE.md's Voice example is inline, "Sections standing · 3 of 6".</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add a seven-row table to ledger-page: label, value format, what shows at zero or none, order (cite the GDD for which lines exist).</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>ledger-page now commits seven lines in the GDD's order, with each format and the "None" variants in a numbered list under the Component Patterns table (decision log; GD-53 for the closing line). One thing in the finding is still open in words: DESIGN.md draws the label above the value while EXPERIENCE.md writes the formats inline with " · ".</div>
+          </article>
+          <article class="finding" id="R3.2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R3.2</span>
+              <h3 class="finding-title">The two closing choices at dawn have no component</h3>
+              <span class="finding-location">DESIGN.md, Layout &amp; Spacing, Dawn; EXPERIENCE.md, Component Patterns, hold-control, two-choice, ledger-page</span>
+            </header>
+            <div class="finding-note">Layout put them "at the foot of the page"; hold-control listed Leave the bridge as a 1 s hold without saying where; Linh presses Enter on "Another night"; two-choice binds A and D and has a question line.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Name them (two menu-items, the second a hold-control) and say whether Leave the bridge is held at dawn as it is in Pause.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>Named as two menu-items (Information Architecture, Dawn row; menu-item and ledger-page rows). Leave the bridge is no longer a hold anywhere: from Pause it asks first, at dawn it does not ask.</div>
+          </article>
+          <article class="finding" id="R3.3">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R3.3</span>
+              <h3 class="finding-title">hold-control does not say what is held</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, hold-control; Input Schemes</span>
+            </header>
+            <div class="finding-note">Space is given for Ring the bell; for Start over and Leave the bridge nothing is, nor whether Ring the bell can also be click-held from the tray.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One line per control with its inputs.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>hold-control now states: a full 1 s hold of its key (Space for Ring the bell) or of the left mouse button on the entry (Ring the bell, Start over).</div>
+          </article>
+          <article class="finding" id="R3.4">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R3.4</span>
+              <h3 class="finding-title">Start over's effect is never stated in the spines</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, hold-control; Interaction Primitives</span>
+            </header>
+            <div class="finding-note">UX-17 says it "restores the whole span to dusk"; the spines gave only its position, wording and hold time.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add the effect, and that parts in hand return to zero and every rig and lantern is taken back.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>hold-control: "Start over restores the whole span to dusk: every plank and rope back, every rig and placed lantern removed (UX-17)."</div>
+          </article>
+          <article class="finding" id="R3.5">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R3.5</span>
+              <h3 class="finding-title">Surfaces carry elements that no component covers</h3>
+              <span class="finding-location">EXPERIENCE.md, Information Architecture table; State Patterns, Settings</span>
+            </header>
+            <div class="finding-note">Credits (asset licences and the AI disclosure are long text; no layout, type role or scrolling rule); the swap offer and single-channel warning on Left or right?; one-line notes (the line under the Cues choice, the "best with headphones" note); the title wordmark.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add a <code>credits-page</code> and a <code>note-line</code> component (or widen why-line), and say the swap offer is two menu-items.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Still 17 components. No credits-page or note-line, and the swap offer's component is not named. The log records that Credits and the first-launch questions are "built from spine tables alone".</div>
+          </article>
+          <article class="finding" id="R3.6">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R3.6</span>
+              <h3 class="finding-title">rig-mark and span-section give different undo rules</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns</span>
+            </header>
+            <div class="finding-note">rig-mark says right click on its section removes the rig and returns its cost; span-section and UX-17 say right click undoes the last choice on that section, which may be a plank strip made after the rig.</div>
+            <div class="finding-fix"><strong>Fix:</strong> rig-mark defers to span-section's rule.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Both rows read as they did.</div>
+          </article>
+          <article class="finding" id="R3.7">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R3.7</span>
+              <h3 class="finding-title">why-line's trigger is narrower than the refusals that promise one</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, why-line, span-section</span>
+            </header>
+            <div class="finding-note">The trigger covers an unavailable tool and a section where the chosen tool cannot go, but span-section also promises a why-line for refused strips with no tool chosen (section 6 at 4 planks). A rail that holds a swing-beam cannot be stripped and has no stated response.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Widen the trigger to "any refused click in planning" and add the beam-rail case.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>why-line's trigger is unchanged and the beam-rail case is not written.</div>
+          </article>
+          <article class="finding" id="R3.8">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R3.8</span>
+              <h3 class="finding-title">setting-row covers values only</h3>
+              <span class="finding-location">EXPERIENCE.md, Accessibility Floor, Settings list</span>
+            </header>
+            <div class="finding-note">"Check left and right" is an action, sliders have no step, and Resolution has no stated list.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One line each.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Not written. Two sliders were added since (Brightness, Field of view; UX-39), also without a step or range.</div>
+          </article>
+          <article class="finding" id="R3.9">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R3.9</span>
+              <h3 class="finding-title">two-choice has no Esc rule, and Skip the lesson? has no wording</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, two-choice; Information Architecture</span>
+            </header>
+            <div class="finding-note">The diagram uses Yes and No.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State the Esc rule and the wording.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Neither is stated. The menu-item row now lists "the skip question" among its uses, which gives it menu-item's Esc rule by implication only; the diagram still says Yes and No.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>4. State coverage</h2>
+          <span class="section-counts">1 high · 2 medium · 5 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Every row of the Information Architecture table was walked against the states it should have. Offline, permission-denied and account or save errors do not apply. Covered well: planning (fresh, after a loss, unavailable, nothing to undo), the night (eleven rows), pause, journal before the first hint.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R4.1">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">R4.1</span>
+              <h3 class="finding-title">A lost night with no new hint to write is undefined</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns, Lost night; UX-12</span>
+            </header>
+            <div class="finding-note">The lost-night surface is "the journal page opens on the new hint being written". There are six hints, one per cause, so a second loss to the same cause, the common case for a newcomer and the case Linh's own flow sets up, has no new hint. The GDD does not settle it either.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Commit one behaviour (for example: the page opens on the existing hint for that cause, drawn as already written, with no writing-in), add it as a State Patterns row, and add it to GDD impacts.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-41)</span>UX-41: a repeated loss shows the same hint again, brightened for a moment; nothing new is written. State Patterns row and GDD impacts row both present.</div>
+          </article>
+          <article class="finding" id="R4.2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R4.2</span>
+              <h3 class="finding-title">Journal lifetime is undefined</h3>
+              <span class="finding-location">EXPERIENCE.md, Information Architecture; setting-row; Skip the lesson?</span>
+            </header>
+            <div class="finding-note">"No save" sits beside settings and the lesson flag being kept between launches. Nothing says whether hints survive Another night, Leave the bridge to Title, or quitting. This decides what the architecture persists.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State the scope of each kept thing in one table: settings (machine), lesson-finished flag (machine), journal hints (sitting or machine), the read name (one night).</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>Stated in Assumptions and open items: hints last while the game is running and are gone at the next launch; only settings and the lesson flag are kept on disk. The name is rolled again every night (GD-52). It is an [ASSUMPTION] in the log, not a decision, and a list, not a table.</div>
+          </article>
+          <article class="finding" id="R4.3">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R4.3</span>
+              <h3 class="finding-title">The crossing input lock adds to the GDD and has no trigger</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns, Night, "Knocked down, hanging, crossing a gap"</span>
+            </header>
+            <div class="finding-note">"No input but look until it ends" adds an input lock to two crossings the GDD only times (open section 4 s, fallen gap 8 s), and neither document says how a crossing starts or whether it can be abandoned.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State the trigger (walking onto the edge is the obvious one) or mark it [OPEN] for architecture, and list it under GDD impacts.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The row is unchanged; no trigger, no [OPEN] mark and no GDD impacts row in EXPERIENCE.md. Whether GDD draft 0.6 settles it was not checked here.</div>
+          </article>
+          <article class="finding" id="R4.4">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R4.4</span>
+              <h3 class="finding-title">Left or right? is missing rows</h3>
+              <span class="finding-location">EXPERIENCE.md, Information Architecture table; State Patterns</span>
+            </header>
+            <div class="finding-note">No row for one wrong answer (is the stroke repeated?), for what follows accepting the swap (re-test or continue), or for hearing the stroke again. It can also be opened from Settings during a paused night.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add the rows.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>R rings the bell again (UX-38) and "Either answer continues" covers the swap. What happens after one wrong answer is still not stated.</div>
+          </article>
+          <article class="finding" id="R4.5">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R4.5</span>
+              <h3 class="finding-title">Planning after "Another night" has no row</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns, Planning</span>
+            </header>
+            <div class="finding-note">Span at dusk, nothing in hand, journal kept, a new name section per the GDD; and ringing the bell on an untouched span is not stated as allowed.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add the row.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>GD-52 (every night is a new run: name and section rolled again, forearm blank) is written into the "After a lost night" row, and the journal's lifetime is stated. There is still no "Another night" row, and ringing on an untouched span is not addressed beyond "A lantern still to place".</div>
+          </article>
+          <article class="finding" id="R4.6">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R4.6</span>
+              <h3 class="finding-title">No rule for the window losing focus</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns</span>
+            </header>
+            <div class="finding-note">Alt-tab, a stream overlay. An automatic pause is the usual answer and suits "Mai streams it".</div>
+            <div class="finding-fix"><strong>Fix:</strong> State the rule.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Nothing on focus loss in either spine.</div>
+          </article>
+          <article class="finding" id="R4.7">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R4.7</span>
+              <h3 class="finding-title">Pause pressed during a night hold or with Tab held</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns, Pause</span>
+            </header>
+            <div class="finding-note">Resume "continues from the same instant", but whether the hold survives a released button is not stated.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State it.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>Interaction Primitives now says "Pause freezes a hold and does not cancel it". What happens if the button is up at Resume, and the Tab case, are still unstated.</div>
+          </article>
+          <article class="finding" id="R4.8">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R4.8</span>
+              <h3 class="finding-title">"Nothing is deeper than two steps from play" is not true</h3>
+              <span class="finding-location">EXPERIENCE.md, Information Architecture; DESIGN.md, Elevation &amp; Depth</span>
+            </header>
+            <div class="finding-note">Pause → Settings → Check left and right is three.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Correct the sentence.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The sentence stands in both spines.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>5. Visual reference coverage</h2>
+          <span class="section-counts">3 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>At review time <code>mockups/</code> held one file, <code>directions-1.html</code>; <code>imports/</code> is empty and there is no <code>wireframes/</code>. "Both documents win over any mock on conflict" is stated at the top of each spine. No orphans. Since the review a second mock, <code>mockups/key-screens.html</code>, was added and linked from both spines.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R5.1">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R5.1</span>
+              <h3 class="finding-title">The mock link is unspecific and in one place</h3>
+              <span class="finding-location">DESIGN.md, Brand &amp; Style; Layout &amp; Spacing; EXPERIENCE.md, Information Architecture</span>
+            </header>
+            <div class="finding-note">It does not say which four screens the mock shows, and neither Layout &amp; Spacing nor EXPERIENCE.md links to it.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Link at DESIGN.md Layout &amp; Spacing and at EXPERIENCE.md's planning and dawn rows, naming the screen each time.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>Both spines now link both mocks and name the screens each shows (DESIGN.md, Brand &amp; Style; EXPERIENCE.md, end of Information Architecture). The links are not at Layout &amp; Spacing or on the planning and dawn rows.</div>
+          </article>
+          <article class="finding" id="R5.2">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R5.2</span>
+              <h3 class="finding-title">Known differences from the mock are only partly listed</h3>
+              <span class="finding-location">DESIGN.md, Typography</span>
+            </header>
+            <div class="finding-note">Only the light weight is listed. Also different: the mock has no <code>muted</code> role, sets C in weights 300 and 500, says "Layout is not decided here" although UX-33 later fixed the tray, and uses a stand-in name and epitaph.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One "where the mock differs" list in DESIGN.md.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>No such list. <code>key-screens.html</code> was drawn to the tokens, which reduces the need for the planning and dawn screens.</div>
+          </article>
+          <article class="finding" id="R5.3">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R5.3</span>
+              <h3 class="finding-title"><code>.working/directions-1.html</code> is a byte-identical copy</h3>
+              <span class="finding-location">Workspace; decision log, UX-32</span>
+            </header>
+            <div class="finding-note">UX-32 in the log still points at the <code>.working</code> path. Housekeeping.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Remove the copy or repoint the log.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The copy is still byte-identical and UX-32 still names the <code>.working</code> path. A later log line records the promotion to <code>mockups/</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>6. Bloat &amp; overspecification</h2>
+          <span class="section-counts">2 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Lean for its size. Tables are used where tables work; EXPERIENCE.md prose is plain; the GDD is cited and not restated; the 720p column in Typography earns its place because 720p is a test resolution. DESIGN.md's "Not screen components" paragraph is a useful fence.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R6.1">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R6.1</span>
+              <h3 class="finding-title">The same rule is stated in three or four places</h3>
+              <span class="finding-location">EXPERIENCE.md (Foundation, Component Patterns, HUD &amp; Diegetic UI, Accessibility Floor, Interaction Primitives, Input Schemes, State Patterns, Game Feel, Flow 1)</span>
+            </header>
+            <div class="finding-note">This is where the drift found elsewhere comes from: the caption rule, hold-to-commit, the lost night, undo.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One home per rule; the others cite it.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The repeats remain.</div>
+          </article>
+          <article class="finding" id="R6.2">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R6.2</span>
+              <h3 class="finding-title">Game Feel &amp; Juice restates several GDD outcomes</h3>
+              <span class="finding-location">EXPERIENCE.md, Game Feel &amp; Juice</span>
+            </header>
+            <div class="finding-note">Right ring, wrong ring, rig sprung. They are marked "(GDD)" and short.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Trimming is optional.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Left as written; the reviewer called it optional.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>7. Inheritance discipline</h2>
+          <span class="section-counts">1 high · 1 medium · 2 low</span>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Both <code>sources</code> lists resolve. Component names are identical across every section of both files. EXPERIENCE.md token references resolve by name. GDD terms are used as the GDD uses them. Of UX-1 to UX-37, 24 were carried faithfully; 13 were contradicted, weakened or renamed at review time (see the second finding).</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R7.1">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">R7.1</span>
+              <h3 class="finding-title">"GDD impacts" is incomplete</h3>
+              <span class="finding-location">EXPERIENCE.md, GDD impacts</span>
+            </header>
+            <div class="finding-note">EXPERIENCE.md itself says the GDD should be updated from this table before architecture reads it. Unlisted at review time: UX-12 (where the 3 s replay target is measured); UX-16 (fixed plank order, putting a tool away); UX-17 (Start over); UX-20 (how the left/right check is answered); UX-21 (lesson skip and its flag on disk); new sounds beyond UX-30 and UX-37; new visuals (reservoir and flask, planks drawn singly, self-lit cue objects); rules added to mechanics (Tab, "facing out", the hum's flame condition, a shaken hook gets no ready pose, the input lock while crossing); UX-24 and UX-19 (full pause, playtest log).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add a row for each, or split the table into "changes a GDD statement" and "adds to the GDD (assets, inputs, rules)".</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>The table was split into "Changes a GDD statement" and "Adds to the GDD" and filled in, and GDD draft 0.6 was updated from it (GD-48 to GD-50). The decision log and the earlier report call this fixed. Checked against the current table, three of the listed items still have no row: how the left/right check is answered (UX-20), the shaken hook, and the crossing input lock. The hum's flame condition was corrected in the HUD table after the GDD update, with no row. Marked partly addressed for that reason.</div>
+          </article>
+          <article class="finding" id="R7.2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">R7.2</span>
+              <h3 class="finding-title">Thirteen logged decisions are contradicted, weakened or renamed</h3>
+              <span class="finding-location">EXPERIENCE.md and DESIGN.md, several sections; decision log UX-6, 7, 8, 13, 14, 17, 19, 21, 23, 24, 29, 35, 36</span>
+            </header>
+            <div class="finding-note">Contradicted: UX-35 (Tomas and the swap), UX-24 (Leave the bridge "asks first" became a hold; pause logging missing). Weakened: UX-19, UX-17, UX-14, UX-29, UX-7, UX-8, UX-13, UX-21, UX-36, UX-6 each lost a clause. Renamed: UX-23 ("Start" became "Begin the watch"). The two that change what gets built are UX-24 and UX-35.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Restore the dropped clauses, or record each change in the log's derived list so the log stays canonical.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>Decision log, Finalize: both contradictions reversed, the ten clauses restored, and a naming note added for UX-23. Spot-checked in the current text. For UX-8, the night's plank order has since changed to evenly spread (GD-54), and "the name shows through at 4 or fewer" still appears only in a flow.</div>
+          </article>
+          <article class="finding" id="R7.3">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R7.3</span>
+              <h3 class="finding-title">Terms drift a little</h3>
+              <span class="finding-location">EXPERIENCE.md; decision log</span>
+            </header>
+            <div class="finding-note">"Key card" against "Keys"; "Start" against "Begin the watch"; "why not line" against "why-line".</div>
+            <div class="finding-fix"><strong>Fix:</strong> A short glossary line in EXPERIENCE.md.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>Voice and Tone now marks "Begin the watch" as the title's Start entry and the log carries a naming note. No glossary line; the other two pairs are unreconciled.</div>
+          </article>
+          <article class="finding" id="R7.4">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R7.4</span>
+              <h3 class="finding-title"><code>epics.md</code> is cited but not in <code>sources</code></h3>
+              <span class="finding-location">Both spines, frontmatter <code>sources</code></span>
+            </header>
+            <div class="finding-note">The spines cite "GDD epic 5" and "GDD epic 7", which live in <code>epics.md</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add it.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span><code>sources</code> is unchanged in both files.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>8. Shape fit</h2>
+          <span class="section-counts">1 low</span>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>DESIGN.md runs its eight sections in canonical order. EXPERIENCE.md has all eight required defaults plus the three game sections (HUD &amp; Diegetic UI, Input Schemes, Game Feel &amp; Juice). The two invented sections, "GDD impacts" and "Assumptions and open items", earn their place. No Responsive section is defensible: one device class, and the 1080p to 720p scaling rule is stated.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding" id="R8.1">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">R8.1</span>
+              <h3 class="finding-title">There is no Inspiration section</h3>
+              <span class="finding-location">EXPERIENCE.md</span>
+            </header>
+            <div class="finding-note">It is required when the sources or log show reference products or rejects, and both do: the GDD names Thronefall, Dome Keeper and Kingdom Two Crowns, and UX-32 declines three directions (chalk on slate, ledger paper, engraved plate).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Four or five lines in EXPERIENCE.md: the three declined directions and why, so a later contributor does not re-propose them.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>No Inspiration section in either spine.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details>
+        <summary>
+          <h2>Accessibility review</h2>
+          <span class="section-counts">7 high · 19 medium · 9 low</span>
+          <span class="reviewer-source">review-accessibility.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>The screens are in good shape: stated contrast figures are correct, nothing is timed, pause is total, and the caption exception is well reasoned. The night is where the promise slips: "Cues everywhere" as specified does not yet carry a player who cannot hear through a night, the ready pose (the only affordance signal) is not guaranteed to be visible, and two accepted gaps (press-instead-of-hold, keyboard layout) cost less to close than to leave open. No finding is rated critical because none blocks a first-time player outright; the worst cases make a promised mode unreliable, not unusable.</p>
+            <p>Nothing was run; this is a review of the documents. Contrast figures were recomputed (WCAG relative luminance). Accepted gaps are not re-listed; where one appears below it is because the fix looks cheap enough that accepting it is the wrong trade. The reviewer's walk of the "player needs to know" table for a player with no usable hearing, and its list of seventeen cheap wins, are in the review file.</p>
+            <p>What holds up:</p>
+            <ul>
+              <li>Contrast on <code>world</code> checks out exactly: ink 9.76, ink-bright 13.93, caption 15.61, warm 10.92, muted 5.79, dim 3.07.</li>
+              <li>Full pause in every phase, no timed reading, untimed planning, undo plus Start over.</li>
+              <li>The carved name is read by dwell and then held on the forearm, so nobody has to read carving in firelight.</li>
+              <li>Lit and out windows differ by shape (solid against outline), not only colour.</li>
+              <li>Planning's tray numbers (1, 2, 3) match the night's build keys, which reinforces the mapping.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="findings-list">
+          <h4 class="area-heading">Deaf and hard-of-hearing play, with Cues everywhere on</h4>
+          <article class="finding" id="H1">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H1</span>
+              <h3 class="finding-title">The dead on the deck, and the lifetime of a cue, have no visual in the dark</h3>
+              <span class="finding-location">EXPERIENCE.md, HUD &amp; Diegetic UI (table and cue-mode table); UX-27</span>
+            </header>
+            <div class="finding-note">A hearing player tracks walkers in the dark by a cry every 8 s plus footsteps. The table that claims to be "the whole of what the player can know at night" has no row for this. Once a Grappler is on the planks and walking through an unlit section, a deaf player has nothing until it enters lantern or gate light. The spec also never says whether a level cue lasts for the warning or for as long as the threat is there.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add the row. In Cues everywhere, give footfalls the same pale glow as the other cue objects. State the lifetime rule: a level cue runs for the whole warning and stops when the threat lands.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-38)</span>UX-38: in Cues everywhere, footsteps on the deck and bowing planks also glow faintly in the dark; "A pointer cue lasts for the whole of its warning". Both are in the cue-mode table. Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="H2">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H2</span>
+              <h3 class="finding-title">The way into deaf play is hidden, and the first-launch flow cannot be answered without hearing</h3>
+              <span class="finding-location">EXPERIENCE.md, Information Architecture (first-launch chain); State Patterns, Left or right?; Key Flows, Tomas, step 3; UX-20, UX-21</span>
+            </header>
+            <div class="finding-note">Nothing on the dark screen says a sound was played, the stroke cannot be replayed, and a guess passes half the time with no offer made. After two wrong answers the offer is "Swap left and right", which is the wrong remedy for someone who heard nothing. Cues everywhere is never offered; Tomas only finds it by pressing Esc in planning, after the lesson he needed it for. The lesson itself does not say whether the three cries show their visual cue, and the pairing of sign to level is taught nowhere.</div>
+            <div class="finding-fix"><strong>Fix:</strong> On the check screen add one plain line ("A bell rings on one side.") and a third answer, "I can't hear it", plus a key to ring again. That answer, and the wrong-twice state, both offer "Show cues everywhere" beside the swap. State that the dusk lesson always shows each cry's visual cue and that "points it out" is the glowing cue plus a caption.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-38)</span>UX-38: "I can't hear it" offers "Show cues everywhere"; R rings again; the wrong-twice state makes the same offer. The key card's Signs group now teaches sign to level. Not picked up: the plain line on the check screen, and a statement that the lesson shows each cry's cue for a player in Cues everywhere (State Patterns still has the lesson hold the cue back until three playings go unfaced). Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="H3">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H3</span>
+              <h3 class="finding-title">The flame is the only direction-finder, and it is weak at exactly that job</h3>
+              <span class="finding-location">EXPERIENCE.md, HUD table "A cry's side", cue-mode table; UX-27; GDD GD-28, GD-16</span>
+            </header>
+            <div class="finding-note">A cue glowing behind the warden, or 25 m off in fog, is invisible until faced. The only thing that says "turn round" is the carried flame leaning. It points at the nearest cry only, while up to four sound at once; the span is a line, and a lean toward or away from the camera is the one direction a first-person view foreshortens to nothing; and the flame is gone whenever the carried lantern is shuttered, empty, or hung. For a hearing player oil is light; for a deaf player oil is also hearing.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Specify the carry pose so the lantern is held low and seen from above, with a stated minimum lean angle. In Cues everywhere, let a shuttered lantern's seam glow, or an empty one's wick ember, keep leaning and dipping. Then test it: one muted night in Cues everywhere, judged by "face each warning within 4 s".</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed (UX-38)</span>UX-38: a shuttered lantern's seam glow still leans in Cues everywhere. Carrying height and a minimum lean angle are left to the art pass, an empty lantern still gives nothing, and the muted test night has not been played (it is listed as a known gap in the Accessibility Floor).</div>
+          </article>
+          <article class="finding" id="H4">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H4</span>
+              <h3 class="finding-title">From wave 4 the caption reaches a deaf player late by design</h3>
+              <span class="finding-location">EXPERIENCE.md, Accessibility Floor, known gaps; GDD GD-39</span>
+            </header>
+            <div class="finding-note">Partly an accepted gap; reconsider. From wave 4 the ally calls only when the warden has not turned within 4 s of a cry starting, and drops calls that would be late. A player who cannot hear never turns in time, so every caption arrives at least 4 s into a warning (a Grappler's is 6 s long). GD-39's reason ("so that the ear has to lead") does not apply to someone who chose this mode.</div>
+            <div class="finding-fix"><strong>Fix:</strong> In Cues everywhere, keep the waves 1 to 3 rule all night: every cry called 2 s in. One condition, no new lines to record.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-38)</span>UX-38: in Cues everywhere the ally calls every warning, 2 s in, all night; GD-39's fade applies to the other two modes only. With four warnings at once a call can still be dropped (known gap). Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="M1">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M1</span>
+              <h3 class="finding-title">The hum, the tune and the bell: the name is close to unreachable without hearing</h3>
+              <span class="finding-location">EXPERIENCE.md, HUD table ("The name's section", "The one who keeps coming back is here", "Left as the GDD has it"); Game Feel, Right ring, Wrong ring</span>
+            </header>
+            <div class="finding-note">The hum's cue is the same flame lean as a cry's. The returning one's cue is ropes that "sway in time" where a Grappler's "shake"; in a faint glow at distance that difference carries the whole "ring now" decision, and a wrong ring quickens the dead. The result of a ring is visible only in light. The night still completes, but the game's signature moment is not available. Separately, "whether the bell would work now is heard in the tune and not shown" contradicts the table row that gives the tune a visual cue.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Give sway and shake numbers that cannot be confused. Make the hum lean distinct from a cry lean (straight down toward the deck) and say the hum lean yields only to cries inside the flame's own light. On a right ring, let the tune's ropes fall still and their glow fade over the 2 s of the resolving note.</div>
+            <div class="finding-status"><span class="status-pill status-gap">Accepted gap</span>Stated as a known gap in the Accessibility Floor ("Calling the name is hard to do by sight alone"). One part moved: the HUD table now says the flame leans to the hum only while no cry is sounding. No numbers for sway against shake, nothing on the right ring, and the "not shown" sentence still sits beside the table row.</div>
+          </article>
+          <article class="finding" id="M2">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M2</span>
+              <h3 class="finding-title">A window going out has a sound but no cue in view</h3>
+              <span class="finding-location">UX-30, UX-37; EXPERIENCE.md, HUD table "Windows left"; Game Feel "Window out"</span>
+            </header>
+            <div class="finding-note">UX-30 added the sound because the windows are behind the warden. Its "visual cue" is the window itself, which is behind the warden. A deaf player learns of each loss only by turning. Windows are the loss condition.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Tie the town's warm spill on the deck near section 6, or a brief dim-and-recover of the gate light, to the window count. If that is too subtle, in Cues everywhere add one slow lean of the carried flame toward the town.</div>
+            <div class="finding-status"><span class="status-pill status-gap">Accepted gap</span>Stated as a known gap in the Accessibility Floor: "a window going out behind the warden has no cue in view". No cue was added.</div>
+          </article>
+          <article class="finding" id="M3">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M3</span>
+              <h3 class="finding-title">The toll cue is easy to miss or miscount, and the flame now means five things</h3>
+              <span class="finding-location">UX-28; EXPERIENCE.md, cue-mode table; UX-7</span>
+            </header>
+            <div class="finding-note">Counting up to six dips needs a lit flame in view at that moment, during a fight, and cannot be re-read short of walking to the tally board. A single flame carries side (lean), the hum (lean), tolls (dip) and oil (sputter).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Make each signal a different kind of movement and write that down in one table: lean = direction, dip = toll, sputter = oil, with the dip slow and deep and the sputter small and irregular. Let the tally board's chalk glow in Cues everywhere.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>The Accessibility Floor now gives a toll dip about 0.8 s and keeps the sputter on the flame itself, which separates the two in practice. There is no table of flame movements and the tally board does not glow in Cues everywhere.</div>
+          </article>
+          <article class="finding" id="M4">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M4</span>
+              <h3 class="finding-title">A groaning section in the dark shows nothing</h3>
+              <span class="finding-location">EXPERIENCE.md, cue-mode table</span>
+            </header>
+            <div class="finding-note">Bowing planks are not in the glow list, so the 2 s groan before a collapse has no visual in the dark. Sections 1 to 5 are not under the gate light, and a collapse there costs rigs and a wound.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add bowing planks to UX-27's glow list.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-38)</span>UX-38: bowing planks glow faintly in the dark in Cues everywhere (cue-mode table). Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="M5">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M5</span>
+              <h3 class="finding-title">Single-ear listeners on headphones lose every cry on one side</h3>
+              <span class="finding-location">EXPERIENCE.md, Accessibility Floor, known gaps</span>
+            </header>
+            <div class="finding-note">Accepted gap; reconsider. With stereo placement and one working ear on headphones, cries on the deaf side are quiet or absent, so even the kind of cry is lost. A wound on the good side removes the rest for 20 s.</div>
+            <div class="finding-fix"><strong>Fix:</strong> A "Mono sound" toggle next to Swap left and right, paired in its help line with Cues everywhere.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-39)</span>UX-39: Mono sound is a setting; choosing it suggests Cues everywhere. The Godot downmix is an [ASSUMPTION] for architecture to confirm. Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="L6">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L6</span>
+              <h3 class="finding-title">The two silences have no visual and no stated length</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns "Dawn"; Game Feel "Dawn"</span>
+            </header>
+            <div class="finding-note">The 10 s hush before wave 6, and dawn's silence.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State the dawn pause (about 3 to 4 s) and that all cue glows fade together as the cries stop. Leave the pre-wave-6 hush as it is.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>GD-53 fixed the order at dawn (silence, the ally's line, then the ledger), but EXPERIENCE.md gives the silence no length and says nothing about the glows fading.</div>
+          </article>
+          <article class="finding" id="L9">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L9</span>
+              <h3 class="finding-title">Two identical calls in a row look like one</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, caption-line</span>
+            </header>
+            <div class="finding-note">"Below!" followed by "Below!" for a second Grappler is one unbroken caption.</div>
+            <div class="finding-fix"><strong>Fix:</strong> A blank gap of about 0.3 s and a fresh fade-in between any two captions.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>caption-line: "with at least 0.3 s between two captions".</div>
+          </article>
+          <h4 class="area-heading">Low vision and colour</h4>
+          <article class="finding" id="H5">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H5</span>
+              <h3 class="finding-title">The ready pose and the forearm are not guaranteed to be visible</h3>
+              <span class="finding-location">EXPERIENCE.md, Interaction Primitives "Ready pose"; HUD table; State Patterns "Night"</span>
+            </header>
+            <div class="finding-note">The ready pose is the only sign that an action is available, the hold animation is the only progress read-out, the "can't" gesture is the only refusal, and the forearm is the only count of parts. All four are 3D objects that need light. With the carried lantern shuttered, empty or hung, the hands are black on near-black. For a deaf player the paired sounds are gone too, so nothing at all is left.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One rule: the warden's hands and forearm never fall below a fixed minimum brightness and the forearm's ink is exempt from the hatching pass. Applies to the gray-box hands at gate 2 as well.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>In both spines: EXPERIENCE.md, HUD &amp; Diegetic UI, "Seen without a lantern"; DESIGN.md, closing paragraph of Components (minimum brightness; ink kept clear of hatching). No brightness value is given, and the gray-box hands are not named.</div>
+          </article>
+          <article class="finding" id="M6">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M6</span>
+              <h3 class="finding-title">"Chosen" and "hold filling" rest on hue and a glow; the two documents disagree on hover</h3>
+              <span class="finding-location">DESIGN.md, Colors; Components menu-item, hold-control; Do's; EXPERIENCE.md, Component Patterns, menu-item</span>
+            </header>
+            <div class="finding-note">Warm against ink is 1.12:1 in luminance, so in greyscale the chosen item differs only by its halo. A hold filling from ink to warm is the same step and is invisible in greyscale, which breaks DESIGN.md's own rule. DESIGN.md also gave pointer hover an <code>ink-bright</code> state brighter than warm, so a hovered item could outshine the item Enter will act on.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Follow EXPERIENCE.md (hover = chosen) and delete the hover colour. Add a 2 px warm rule under the chosen item. For hold-control, grow that rule left to right with the fill.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>All three done in DESIGN.md: hover equals chosen, a 2 px warm rule under the chosen item, and the hold shown by that rule growing.</div>
+          </article>
+          <article class="finding" id="M7">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M7</span>
+              <h3 class="finding-title">The planning tray does not fit on one strip at the type floor</h3>
+              <span class="finding-location">DESIGN.md, Layout &amp; Spacing "Planning"; Typography "Floor"; Components tray-tool; UX-33</span>
+            </header>
+            <div class="finding-note">The tray's text at the floor comes to well over the 1,824 px inside the safe margins. The mock fits it by going under the floor and by wrapping. Whoever builds this will shrink the text.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Allow two rows in the spec (parts and tools above; Journal, Keys, Start over, Ring the bell below), costs in <code>muted</code>. Measure once in Godot at 720p.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>DESIGN.md Layout now specifies a two-line strip. The log leaves it "for Sonlm to confirm". Not measured in Godot.</div>
+          </article>
+          <article class="finding" id="M8">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M8</span>
+              <h3 class="finding-title">Body text at 720p is thin, and there is no way to enlarge it</h3>
+              <span class="finding-location">DESIGN.md, Typography; UX-34</span>
+            </header>
+            <div class="finding-note">Cormorant Garamond has a low x-height and hairline strokes. <code>body</code> at 720p is 21 px, an x-height of about 8 px, used for the why-line, journal hints, settings labels and key card actions. Caption size is adjustable; nothing else is.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep the face. Add "Text size: normal / large" under Display that scales the theme by about 1.25, and check the tray and ledger at that size.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>No Text size setting in the Settings list.</div>
+          </article>
+          <article class="finding" id="M9">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M9</span>
+              <h3 class="finding-title">Captions and dusk prompts sit over the brightest part of the frame with only a tight halo</h3>
+              <span class="finding-location">DESIGN.md, Elevation "Halo"; Layout "Caption"; Components caption-line, key-prompt</span>
+            </header>
+            <div class="finding-note">Bottom centre is where the hands and the carried lantern are. Caption colour against lantern warm is 1.43:1, so legibility is the halo alone, on a thin serif. The dusk key prompts are worse: 32 px over a dusk scene brighter than night, and they are the only controls teaching.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Give the halo numbers. Add "Caption backing: off / on" under Display. State that the forearm's marks sit above the caption band.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>The halo has numbers (4 px outline, 12 px spread at 1080p). Caption backing was explicitly not taken up (decision log), and the forearm against the caption band is not stated. Not checked against a bright frame.</div>
+          </article>
+          <article class="finding" id="M10">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M10</span>
+              <h3 class="finding-title">Tallies must be countable, and nothing says how big they are</h3>
+              <span class="finding-location">DESIGN.md, Components (closing paragraph); EXPERIENCE.md, HUD table; UX-6</span>
+            </header>
+            <div class="finding-note">Up to 48 planks and 12 ropes as strokes on skin, read while the night keeps running. Past about fifteen, fives are slow to count and easy to lose.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State a minimum: the raised forearm fills at least 40% of view height; strokes at least 6 px wide at 1080p; planks and ropes on separate rows with a small drawn plank and rope at the head of each; every second bundle of five set apart.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>DESIGN.md still says only "tally strokes in fives".</div>
+          </article>
+          <article class="finding" id="M11">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M11</span>
+              <h3 class="finding-title">No brightness control in a near-black game whose cues "glow faintly"</h3>
+              <span class="finding-location">EXPERIENCE.md, Accessibility Floor, Settings list; UX-27</span>
+            </header>
+            <div class="finding-note"><code>world</code> against <code>abyss</code> is 1.04:1 and the Cues everywhere glow has no minimum. On a laptop panel in daylight the cue disappears; on a crushed-black display the dark sections do. Nobody raised this.</div>
+            <div class="finding-fix"><strong>Fix:</strong> A Brightness slider under Display with one calibration line, and a stated floor for the cue glow (about 3:1 against fogged dark at default brightness).</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-39)</span>UX-39: Brightness slider with a "barely visible" calibration mark. The cue glow still has no stated minimum.</div>
+          </article>
+          <article class="finding" id="L1">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L1</span>
+              <h3 class="finding-title">Graphic states below 3:1</h3>
+              <span class="finding-location">DESIGN.md, Colors; Components span-section, town-window</span>
+            </header>
+            <div class="finding-note"><code>dim</code> on <code>dawn-sky</code> is 1.72:1, so out windows and fallen-section outlines fade into the upper dawn gradient. In planning, <code>plank</code> on <code>world</code> is 2.62:1 and a stripped rail is a thin dashed 3.1:1 line. The ledger and strength numbers repeat most of this in words.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Draw out windows, fallen outlines and stripped rails in <code>muted</code> at 2 px. Keep the dawn gradient at <code>world</code> behind anything that carries a count.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Out windows and stripped rails are still <code>dim</code>.</div>
+          </article>
+          <article class="finding" id="L7">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L7</span>
+              <h3 class="finding-title">An unavailable tool's cost is in <code>dim</code>, and the why-line needs a pointer</h3>
+              <span class="finding-location">DESIGN.md, Colors; tray-tool; EXPERIENCE.md, why-line</span>
+            </header>
+            <div class="finding-note">The cost is the thing the player must read to make the tool available. Pressing 1 on an unavailable tool does nothing that is specified.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep the name <code>dim</code>, set the cost in <code>muted</code>. Pressing an unavailable tool's number shows its why-line until the next input.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>tray-tool now sets the cost in <code>muted</code>, but does not say the cost stays <code>muted</code> when the tool is unavailable. The key press on an unavailable tool is still unspecified.</div>
+          </article>
+          <article class="finding" id="L8">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L8</span>
+              <h3 class="finding-title">The name "in a written hand"</h3>
+              <span class="finding-location">DESIGN.md, closing paragraph of Components; EXPERIENCE.md, HUD table "Windows left"</span>
+            </header>
+            <div class="finding-note">A looped script on skin is hard to read. (Counting twelve far windows: no change beyond M2.)</div>
+            <div class="finding-fix"><strong>Fix:</strong> Pick a clear upright hand, not a looped script.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Still "a written hand"; the art pass (GDD epic 7) owns it.</div>
+          </article>
+          <h4 class="area-heading">Motor</h4>
+          <article class="finding" id="H6">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H6</span>
+              <h3 class="finding-title">Press-instead-of-hold is cheap enough that leaving it out is a mistake</h3>
+              <span class="finding-location">UX-25; EXPERIENCE.md, Input Schemes; Accessibility Floor, known gaps</span>
+            </header>
+            <div class="finding-note">Accepted gap; reconsider. A night is built from holds of 2 to 12 s, several of them on a mouse button gripped while the same hand looks around. That is painful for far more people than "limited hand strength or one hand": RSI, tremor, arthritis, a trackpad. Rebinding needs a screen of its own and is fairly left out. This does not.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One setting under Controls, "Holds: hold / press once". Durations, cancel rules and balance are unchanged. Offer the same for Tab.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-39)</span>UX-39: Holds: Hold / Press once; Tab becomes a toggle. Reverses the hold-toggle half of UX-25's declined option; rebinding stays out. Decided in the documents only: GDD GD-50 puts this build work in epic 8, after gate 2.</div>
+          </article>
+          <article class="finding" id="H7">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <span class="finding-id">H7</span>
+              <h3 class="finding-title">Keyboard layout is not addressed; without rebinding it decides who can play</h3>
+              <span class="finding-location">EXPERIENCE.md, Input Schemes; DESIGN.md, key-card, key-prompt; UX-20</span>
+            </header>
+            <div class="finding-note">If keys are matched by character, an AZERTY player gets W A on Z Q positions and the digit row gives &amp; and é without Shift, so walking and building break with no remedy. If matched by position, play works but the prompts print the wrong names. The spec does not say which.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State both halves: bind every action by physical key position, and print key names through the layout.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>Accessibility Floor, "Keys by position", and Input Schemes. The Godot specifics are an [ASSUMPTION] for architecture to confirm against 4.7.</div>
+          </article>
+          <article class="finding" id="M12">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M12</span>
+              <h3 class="finding-title">A hold is fragile in ways the spec leaves open</h3>
+              <span class="finding-location">EXPERIENCE.md, Interaction Primitives "Hold"; State Patterns "Hold cancelled", "Pause"</span>
+            </header>
+            <div class="finding-note">At 3.5 m/s, 0.5 m is about 0.14 s of a movement key, so a brush of W ends a 12 s build. Not stated: whether looking away cancels; whether parts are spent at the start or the end; what happens to a hold when the game is paused and the key released.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Write four lines: look is free during a hold; a movement key must be held about 0.3 s before it breaks a hold; parts are spent on the final beat; a hold survives pause.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>Three of the four are written (free look, parts spent when the hold completes, pause freezes and does not cancel). The cancel is still 0.5 m of movement with no grace time, so the brush of W still ends a build.</div>
+          </article>
+          <article class="finding" id="M13">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M13</span>
+              <h3 class="finding-title">Aim and click targets have no stated tolerance</h3>
+              <span class="finding-location">EXPERIENCE.md, Interaction Primitives "Look decides", "Dwell to read"; Component Patterns span-section</span>
+            </header>
+            <div class="finding-note">No reticle by default, targets the size of a pin or a rope, a 1 s dwell on letters seen through gaps, and in planning a rail drawn as a thin line that must be clicked.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Night: pick targets with a fat ray (a sphere of about 0.25 m), and let dwell time build up across small wobbles. Planning: a rail's click zone is the outer quarter of its section, at least 48 px deep at 1080p. Say that hold-controls can be held with the mouse as well as the key.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>No tolerances anywhere. Only the last sentence was picked up: hold-control now names the left mouse button.</div>
+          </article>
+          <h4 class="area-heading">Cognitive and learning</h4>
+          <article class="finding" id="M14">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M14</span>
+              <h3 class="finding-title">The hardest inputs are never taught</h3>
+              <span class="finding-location">UX-22, UX-4; EXPERIENCE.md, State Patterns "Dusk lesson / Hands-on part"; Component Patterns key-card</span>
+            </header>
+            <div class="finding-note">The hands-on part does not cover building (1, 2), dismantling (R), the stand-face-look rule, hauling a trapdoor back up, re-hanging a beam, re-laying a plank, refilling, or the bell rope. These are the long, conditional ones, met for the first time under pressure with no prompt.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Put the conditions on the key card. Add a short "Signs" group to the same card. One build in the hands-on part would be better still, but costs lesson time.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>key-card now lists each key's condition and has a fourth group, Signs. The hands-on part did not gain a build (the reviewer's optional extra).</div>
+          </article>
+          <article class="finding" id="M15">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M15</span>
+              <h3 class="finding-title">E and F change meaning with nothing to say which meaning is live</h3>
+              <span class="finding-location">UX-36; EXPERIENCE.md, Input Schemes (E); Interaction Primitives "Look decides"</span>
+            </header>
+            <div class="finding-note">E has three look-dependent meanings and no ready pose. "Re-lay the plank under it" and "take the lantern down" sit in the same view; the wrong one removes a light. F is specified by distance, not look: with a lantern in hand and another hung within 2 m, the spec does not say which shutter closes.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Give the lantern-and-rope hand three small ready poses for E. State F's rule: the hung lantern if it is looked at, otherwise the carried one. Enumerate the full pose list once.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The E row was rewritten for GD-49 (one lantern in hand; hang, take or swap at a pole), which changes E's meanings but adds no ready pose for E and no rule for F.</div>
+          </article>
+          <article class="finding" id="M16">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M16</span>
+              <h3 class="finding-title">A lost night wipes the plan</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns "Planning / After a lost night"</span>
+            </header>
+            <div class="finding-note">The player gets one hint and must then rebuild four minutes of planning from memory, click by click, to change one thing. That works against the "replay within 3 s" target.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Open planning after a lost night with the previous plan still in place; Start over already returns the span to dusk.</div>
+            <div class="finding-status"><span class="status-pill status-decided">Decided (UX-40)</span>UX-40: the plan the lost night was started with is restored exactly; Start over wipes it. Since GD-52 the name and its section are rolled again and the forearm is blank.</div>
+          </article>
+          <article class="finding" id="L3">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L3</span>
+              <h3 class="finding-title">The lost-night hint can be skipped by a stray key</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns "Lost night"</span>
+            </header>
+            <div class="finding-note">The player is mid-fight, keys down, when the night ends. The hint is still in the Journal, so the cost is small.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Ignore input until the line has finished writing, then continue on Enter, Space or click.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Still "one action continues".</div>
+          </article>
+          <article class="finding" id="L4">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L4</span>
+              <h3 class="finding-title">The left/right check should not open with an answer already chosen</h3>
+              <span class="finding-location">EXPERIENCE.md, Component Patterns, menu-item against two-choice</span>
+            </header>
+            <div class="finding-note">"The first entry is chosen when a menu opens."</div>
+            <div class="finding-fix"><strong>Fix:</strong> Two-choice screens open with neither word warm.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>two-choice does not say how it opens.</div>
+          </article>
+          <h4 class="area-heading">Vestibular and photosensitivity</h4>
+          <article class="finding" id="M17">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M17</span>
+              <h3 class="finding-title">"No flashing" is claimed but the flame effects have no limits</h3>
+              <span class="finding-location">EXPERIENCE.md, Accessibility Floor; State Patterns "Lantern near empty"; cue-mode table; UX-7, UX-28, UX-37</span>
+            </header>
+            <div class="finding-note">A lantern is most of the light in a near-black frame, so anything it does is a large-area brightness change. A sputter runs for the last 60 s of every tank. All flames dipping together is a whole-scene change up to six times in a row. None of these has a rate or depth.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Three numbers. The sputter animates the flame itself while the light it casts stays steady. Nothing changes brightness more than three times a second. A toll dip takes about 0.8 s end to end.</div>
+            <div class="finding-status"><span class="status-pill status-fixed">Fixed</span>All three are in the Accessibility Floor, and the claim was reworded to "No full-screen flash".</div>
+          </article>
+          <article class="finding" id="M18">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M18</span>
+              <h3 class="finding-title">Forced camera movement is unspecified, and the floor's claim about it is wrong</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns "Knocked down, hanging, crossing a gap", "Dawn"; Accessibility Floor; Settings list</span>
+            </header>
+            <div class="finding-note">Knock-down, a fall and climb back, hand-over-hand crossings and the rise at dawn are all camera moves the player does not control, the usual trigger for motion sickness. There is no field-of-view setting and no statement on head bob. The floor's sentence ("The only full-view change is the wound's darkened side") is contradicted.</div>
+            <div class="finding-fix"><strong>Fix:</strong> No camera roll, no head bob, forced moves eased and slow. Add a field-of-view slider. Add "Reduce camera motion" that swaps knock-down, the climb and the dawn rise for a short fade. Correct the sentence in the floor.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed (UX-39)</span>Field of view slider added (UX-39); "The camera has no bob and no roll"; the floor's sentence was corrected. "Reduce camera motion" was explicitly not taken up (decision log), and nothing says forced moves are eased and slow.</div>
+          </article>
+          <article class="finding" id="M19">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <span class="finding-id">M19</span>
+              <h3 class="finding-title">The wound's darkening has no extent, and it can cover the caption</h3>
+              <span class="finding-location">EXPERIENCE.md, State Patterns "Wounded"; Game Feel</span>
+            </header>
+            <div class="finding-note">Half the view dark and one ear dulled for 20 s is disorienting for some players and close to blindness for anyone whose usable vision is on that side. Nothing says how dark, how wide, or whether the caption is drawn above it.</div>
+            <div class="finding-fix"><strong>Fix:</strong> State it: an edge gradient covering at most the outer third of that side, at most about 60% dark, fading over 1 s or more, always drawn under the caption line.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>The Accessibility Floor now calls it a slow fade; extent, depth and drawing order against the caption are not stated.</div>
+          </article>
+          <article class="finding" id="L2">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L2</span>
+              <h3 class="finding-title">The centre dot is too small and faint to do its job</h3>
+              <span class="finding-location">DESIGN.md, Components centre-dot</span>
+            </header>
+            <div class="finding-note">At 720p it is under 3 px, and grey at 60% vanishes over lantern-lit wood, where a fixation point is most needed.</div>
+            <div class="finding-fix"><strong>Fix:</strong> 6 px at full opacity with a 1 px abyss ring.</div>
+            <div class="finding-status"><span class="status-pill status-open">Not addressed</span>Still 4 px at 60%.</div>
+          </article>
+          <h4 class="area-heading">Internal consistency</h4>
+          <article class="finding" id="L5">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <span class="finding-id">L5</span>
+              <h3 class="finding-title">Smaller mismatches between the log and the spines</h3>
+              <span class="finding-location">Decision log UX-3, UX-4, UX-22, UX-24, UX-35; EXPERIENCE.md, hold-control, Key Flows, cue-mode table, Accessibility Floor; DESIGN.md, Components</span>
+            </header>
+            <div class="finding-note">Six of them: Leave the bridge "asks first" in the log but was a hold in the spine; Tomas takes the swap in the log but declined it in the flow; UX-4 puts the key card on pause only and reads as stale; the gray-box forearm is "a flat panel with the same text" in the log, "the same marks" in EXPERIENCE.md and "never a screen-style panel" in DESIGN.md; the cue-mode table does not name the hum lean; "A visual cue for every sound" is listed under Provided without qualification.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Pick one reading for each.</div>
+            <div class="finding-status"><span class="status-pill status-partly">Partly addressed</span>Two fixed (Leave the bridge asks first; Tomas takes the swap). The hum's condition is now stated in the HUD table. Three stand: UX-4 is unchanged in the log, the gray-box forearm is still described three ways, and "A visual cue for every sound" is still unqualified beside the known gaps.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li>References: DESIGN.md has 25 distinct token references and EXPERIENCE.md has 2; all resolved at review time.</li>
+        <li>Frontmatter: types are as the spec asks. The font-family fallbacks (Garamond, Georgia, serif) mean nothing in a Godot Theme with a bundled font; harmless.</li>
+        <li>Mermaid: the node id <code>LR</code> reused the direction keyword. Fixed: the node is now <code>LRC</code>. The diagram was not rendered in the review and still leaves out Pause, Journal and Keys; the table under it covers them.</li>
+        <li>Cross-file conflicts found at review: menu-item hover (fixed), rig-mark against span-section undo (stands), ledger label above value against inline (stands), tray-tool "smaller run" against the type floor (fixed).</li>
+        <li>Numbers checked against the GDD and found right at review time: 48 planks and 12 ropes; trapdoor 2 ropes; section 6 stops at 4 planks and takes no rig; lantern reach; wound 20 s; 2 m context range; holds of 2 to 12 s.</li>
+        <li>Type table order: at review time Typography listed Value (40 px) above Number (48 px). Fixed: the rows now descend by size.</li>
+        <li>Not raised as findings, as instructed: the Key Flows are not inherited from the GDD; controller, couch and handheld coverage is absent by design; the night has no HUD; names, epitaphs and journal hint texts are open under GDD epic 5.</li>
+        <li>The accessibility reviewer's Godot API names were given from memory and are to be checked against the 4.7 docs.</li>
+      </ul>
+    </div>
+
+    <div class="mechanical">
+      <h3>Not addressed, and limits of this report</h3>
+      <ul>
+        <li>Nothing was run in Godot. The reviews, the fixes and every status in this report are readings of the documents.</li>
+        <li>Cues everywhere has not been played muted. EXPERIENCE.md, Accessibility Floor, asks for one muted test night (face each warning within 4 s) before any deaf-playable claim.</li>
+        <li>Without hearing, the hum, the tune and a window going out behind the warden remain hard to reach. Stated as a known gap (accessibility M1, M2).</li>
+        <li>Optional caption backing and a "Reduce camera motion" setting were considered and not taken up (accessibility M9, M18).</li>
+        <li>The accessibility extras of UX-28, UX-38 and UX-39 (Holds, Mono sound) and the muted night are built in epic 8, after gate 2 (GDD GD-50). "Decided" below means decided on paper.</li>
+        <li>Statuses were set from the decision log, then from the current text of DESIGN.md and EXPERIENCE.md. The GDD itself (draft 0.6) was not re-read, so a finding marked "Not addressed" may have been settled there.</li>
+        <li>30 findings are marked "Not addressed" (8 medium, 22 low); none is high. They are listed by name at the end of validation-report.md.</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: review-rubric.md</span>
+        <span>Accessibility: review-accessibility.md</span>
+        <span>Decisions: .decision-log.md (UX-1 to UX-41; GD-49, GD-50, GD-52 to GD-54)</span>
+        <span>Reviews run: 2026-11-19</span>
+        <span>Generated: 2026-11-20T00:27:45+07:00</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
