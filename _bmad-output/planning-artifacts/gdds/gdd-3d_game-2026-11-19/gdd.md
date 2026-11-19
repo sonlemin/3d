@@ -5,7 +5,8 @@ secondary_game_type: horror
 platforms: [Windows, Linux]
 created: 2026-11-19
 updated: 2026-11-19
-status: draft 0.5 (second validation applied)
+status: draft 0.6 (UX decisions and third validation applied)
+ux_documents: ../../ux-designs/ux-3d_game-2026-11-19/
 ---
 
 # The Mourning Watch - Game Design Document
@@ -20,8 +21,9 @@ status: draft 0.5 (second validation applied)
 - Every number is a starting value to tune at gate 2, unless it is marked as measured.
 - What still has to be proven by playtest is listed under Assumptions and Dependencies.
 - Decision IDs (GD-n) point to `decision-log.md`. Brainstorm IDs (for example ST4, G11) point to the brainstorming session.
+- Screens, the night's surfaces (hands, forearm, flames, captions) and the details of input are specified in `../../ux-designs/ux-3d_game-2026-11-19/EXPERIENCE.md` and `DESIGN.md`. UX-n IDs point to that folder's `.decision-log.md`. This document keeps the rules of play and cites them.
 - "The dead" are the enemies. A "section" is one of the six parts of the span. The dead "fall" (gone until dawn) or are "released" (gone for good, by name).
-- A lantern is "lit" when its shutter is open and its tank is not empty. A section is "open" when nothing can stand on it.
+- A lantern is "lit" when its shutter is open and its tank is not empty. A section is "open" when nothing can stand on it. A "placed" lantern is one hung on a pole. A "toll" is the town bell's tolling at the start of a wave, made of one to six strokes. A "run" is one night: every night start is a new run (GD-52).
 - "The tune" is the voice of the one who keeps coming back. "The hum" is that same tune, faint, heard over the carved name.
 - Named here but not specified, because they are later content: the Carrion Choir (an enemy whose singing covers other cries), wave-breakers (boss-scale dead), the holdout (an ally who knows the truth).
 
@@ -43,7 +45,7 @@ By day the warden plans from above: strips the bridge for parts and sets rigs an
 
 | Tier | Contents | Depth here |
 |---|---|---|
-| One-night game (public, free) | One span, three enemy types, two rigs, one ally, the bell, one name. One sitting of about 20 minutes. | Full |
+| One-night game (public, free) | One span, three enemy types, two rigs, one ally, the bell, one name. One sitting of about 21 minutes. | Full |
 | The Fog Season (first full release) | Prologue, 5 nights and a closing night. About five spans, four enemy types, 1 to 2 allies, a handful of names. About 2 to 3 hours. | Outline |
 | Later seasons (free updates, "if it lands") | Swell and Wind seasons, the full truth, three endings, Endless mode. | Out of scope |
 
@@ -52,7 +54,7 @@ By day the warden plans from above: strips the bridge for parts and sets rigs an
 - **Primary:** day/night strategy players aged 16 and older with some strategy experience (tower defense not required) who love *Thronefall*, *Dome Keeper* or *Kingdom Two Crowns*. Their want: "When I have an evening to myself, I want a strategy game that keeps me on edge, so I can feel clever for barely surviving."
 - **Secondary:** story players, then atmosphere and horror players ("headphones in the dark").
 - **How word spreads:** streamers, who "want tense moments and choices that chat will argue about", and free-game hunters, who "decide in the first minute". They are a channel, not an audience. Consequence: the first cry sounds inside the first minute.
-- **Session:** the one-night game is one sitting of about 20 minutes. In the full game one day-and-night cycle is 20 to 30 minutes and dawn is the save point.
+- **Session:** the one-night game is one sitting of about 21 minutes. In the full game one day-and-night cycle is 20 to 30 minutes and dawn is the save point.
 
 ### Unique Selling Points (USPs)
 
@@ -110,7 +112,7 @@ The test changed three things for Sonlm, and each became a mechanic (GD-4):
 
 1. **Level is the weak cue.** Three extra cues now carry level: place, the bridge, and the ally (GD-7).
 2. **It takes practice.** The night opens with a dusk lesson (GD-8).
-3. **Ears alone aren't enough.** Visual cues are on for everyone, inside lantern light (GD-9).
+3. **Ears alone aren't enough.** Visual cues are on for everyone, wherever light falls (GD-9, UX-29).
 
 **Timing.** The ear test ran from 12 to 19 November 2026, against the brief's guess of about 2 months. Hours were not recorded.
 
@@ -133,20 +135,22 @@ How the one-night game answers each pillar:
 | Pillar | In the one-night game |
 |---|---|
 | 1 | Two rigs sprung by a hammer blow. No way to harm the dead directly: a blow on a hook only delays. |
-| 2 | Each level has its own cry and its own place. The town bell is the clock. Visual cues exist only where a lantern reaches. |
+| 2 | Each level has its own cry and its own place. The town bell is the clock. Visual cues exist only where light falls. |
 | 3 | 48 planks and 12 ropes, all of them on the span. Every spring of a rig spends one. Section strength is the health bar. |
 | 4 | One name, found by stripping the bridge. The dawn ledger lists the name learned and the soul released, with no count of the fallen. |
 
 ### Core Gameplay Loop
 
-**One sitting, about 20 minutes:**
+**One sitting, about 21 minutes:**
 
 | Phase | Length | View | What happens |
 |---|---|---|---|
-| Dusk lesson | 2 min | First person | One stroke of the town bell: which side? Two wrong answers offer a setting that swaps left and right, and warn that the sound may be single-channel (brainstorm JB4). Then three harmless dead, one per level. Each cry repeats until the warden faces within 45° of it; the ally says whether that was right, and points it out after three tries. |
-| Planning | About 4 min, untimed | From above | No dead. The warden strips sections and places rigs and lanterns, then rings the bell. |
+| Dusk lesson | 3 min | First person | On a dark screen, one stroke of the town bell: left or right? The player can ring it again, or answer "I can't hear it", which offers the Cues everywhere setting (UX-20, UX-38). Two wrong answers offer a setting that swaps left and right, warn that the sound may be single-channel (brainstorm JB4), and make the same offer. Then three harmless dead, one per level; the first cry starts within 15 s. Each cry repeats until the warden faces within 45° of it; the ally confirms a right turn. After each playing the warden has not faced, the ally says "listen again"; after three, the place shows its cue (the ropes shake, the fog swirls or the dust falls), which the lesson holds back until then. The first cry is also the lesson in looking, and walking is prompted once it has been faced. Then about a minute of hands, each step with a one-line key prompt: strike a practice pin on the landing, strip a plank, hang and shutter the lantern, raise the forearm (UX-22). That part ends when all four are done, and the span and lanterns are put back before planning. |
+| Planning | About 4 min, untimed | From above | No dead. The warden strips sections and places rigs and lanterns, then rings the bell, a 1 s hold. |
 | The night | 12 min | First person | Six waves. The night loop below. |
 | Dawn | 2 min | From above | Silence, then the ledger. |
+
+On a first launch one question comes before the lesson: headphones or speakers? The answer changes no cue (UX-19). Once the lesson has been finished on this machine, Begin the watch offers to skip it, and the left/right check with it (UX-21).
 
 **The night loop, once per wave:**
 
@@ -166,22 +170,23 @@ The loop closes because parts come only from the bridge and every spring spends 
   - section 6, the last section at the town pier, falls for good; or
   - the last of the town's 12 lit windows goes dark.
 - **Crossing.** One of the dead crosses when it steps off section 6 onto the town pier landing.
-- **Windows.** Each crossing puts one window out. Hatchlings put one out for every two that cross, counted across the night; one left over puts out nothing. The windows are behind the warden and visible from the deck.
-- **A lost night** replays from the planning phase, with one new hint in the journal. The dusk lesson can be skipped.
-- **Journal hints.** There are six, one per cause. The hint added is for whichever cost the most that night: Grapplers crossing; Divers crossing; hatchlings crossing; section 6 overloaded; section 6 torn up by hooks; the one who keeps coming back crossing three or more times.
+- **Windows.** Each crossing puts one window out. Hatchlings put one out for every two that cross, counted across the night; one left over puts out nothing. The windows are behind the warden and visible from the deck. Each window going out makes one small sound from the town side. After a single hatchling's crossing, the next window to go flickers low until a second hatchling puts it out (UX-30, UX-37). A full crossing during a flicker puts that window out, and the next window takes up the flicker.
+- **A lost night** replays from the planning phase, with one new hint in the journal. Planning opens on the plan that night was started with (UX-40). Every night start is a new run: the name and its section are rolled again and the forearm is blank, while the journal carries over (GD-52). The lesson is not replayed. At the moment of loss the cries cut to wind, the view goes dark, and the journal opens on the hint (UX-12).
+- **Journal hints.** There are six, one per cause. The hint added is for whichever cost the most that night: Grapplers crossing; Divers crossing; hatchlings crossing; section 6 overloaded; section 6 torn up by hooks; the one who keeps coming back crossing three or more times. The cause is found in this order. If section 6 fell: torn up by hooks if a hook tore any plank from it that night, otherwise overloaded. Otherwise the kind that put out the most windows: Grapplers, Divers or hatchlings, a tie going to the earlier in that list. Crossings by the one who keeps coming back count with the Grapplers', unless it crossed three or more times, in which case its own hint is the one. Each hint is one or two plain sentences about the cause, never about a score (UX-31).
+- **A repeated cause.** If that cause's hint is already in the journal, it is shown again and nothing new is written (UX-41). Hints last for as long as the game is running.
 - **Not a loss:** sections 1 to 5 falling; the warden being caught (a wound, below); running out of oil.
 
-**The dawn ledger.** Dawn opens with every cry stopped: an earned silence. Then the ledger lists:
+**The dawn ledger.** Dawn opens with every cry stopped: an earned silence. The ally speaks their one dawn line. Then the ledger lists, in this order (GD-53):
 
 - sections standing, of 6
 - windows lit, of 12
 - planks and ropes left
-- names learned: the name and its one-line epitaph, or nothing
-- souls released: one, or none
-- "The fallen will return." No number.
 - wounds taken
+- names learned: the name and its one-line epitaph, or "None"
+- souls released: "One", or "None"
+- "The fallen will return." No number. It is always the last line.
 
-It never shows a kill count or a score. Its purpose is the brief's dawn feeling: "I barely made it, and I was clever enough."
+The ledger is a page beside the span, written in one line at a time while the bridge stays in view. It ends with two choices: another night, which opens planning on a fresh span (GD-52), or leave (UX-14). It never shows a kill count or a score. Its purpose is the brief's dawn feeling: "I barely made it, and I was clever enough."
 
 ---
 
@@ -201,6 +206,8 @@ It never shows a kill count or a score. Its purpose is the brief's dawn feeling:
 
 **One named exception.** The one who keeps coming back sings a low, wordless tune where a Grappler would whisper. The tune is a fourth voice on the level below, at the same kind of place. The ear re-check covers it.
 
+**A hook on the deck.** A Grappler with no free rail hooks the deck (Game Mechanics 3). It picks the left or right edge of that section at random; its warning sounds from under that edge, and that edge's planks rattle, in the same cue modes as the shaking ropes.
+
 **Direction and distance.**
 
 - **Side** comes from stereo placement that follows the warden's head as it turns. (Measured.)
@@ -215,7 +222,7 @@ It never shows a kill count or a score. Its purpose is the brief's dawn feeling:
 |---|---|---|
 | Grappler | 6 s | One whisper, then 1.7 s of straining rope |
 | Diver | 8 s | Two shrieks, the second starting 3.7 s after the first |
-| Nest | 40 s | Seven sobs, the gaps between them closing from about 4 s to none. The sobs quicken; they do not get louder. |
+| Nest | 40 s | Seven sobs, the gaps between them closing from about 3.3 s to none. The sobs quicken; they do not get louder. |
 | The one who keeps coming back | 6 s | One phrase of the tune, then 1.7 s of straining rope |
 
 A warning sounds from where the threat will arrive: under the chosen rail, over the chosen section, inside the pier.
@@ -227,21 +234,36 @@ A warning sounds from where the threat will arrive: under the chosen rail, over 
 - Anything that falls lets out a cry that fades into the dark over 2 s. "That sound is the payoff for a perfectly sprung trap" (brainstorm #14). It does not count toward the limit.
 - Ambience (creaks, wind, the town bell) sits at least 6 dB under the quietest a cry can be, which is far and behind: 23 dB under a near one. There is no music.
 
-**Every sound has a visual cue.** The brief promises this. Cues show inside lantern light (GD-9). The three level cues extend the brainstorm's G11; the leaning flame is G11 itself.
+**Every sound has a visual cue.** The brief promises this. Cues show wherever light falls: the three lanterns and the town gate (GD-9, UX-29). A cue lasts for the whole of its warning. The three level cues extend the brainstorm's G11; the leaning flame is G11 itself.
 
 | Sound | Visual cue |
 |---|---|
-| A cry's level | The table above: shaking ropes, swirling fog, falling dust |
+| A cry's level | The table above: shaking ropes, swirling fog, falling dust; rattling planks for a hook on the deck |
 | A cry's side | A lit lantern's flame leans toward the nearest cry sounding inside its own light |
-| The hum over the carved name | The carried lantern's flame leans toward that section within 3 m |
+| The hum over the carved name | The carried lantern's flame leans toward that section within 3 m, only while the hum can be heard: that is, while no cry is sounding |
 | The tune of the one who keeps coming back | Its rail's ropes sway in time with it |
 | Footsteps, a hook landing, a fall | The event itself, seen in the light |
 | A section's creak and groan | Its planks bow |
-| A toll of the town bell | The ally chalks one tally on the board at the town pier |
-| The ally's calls | Text on screen |
+| The town bell's toll | The ally chalks one tally on the board at the town pier, one for each wave |
+| A window going out | The window itself; a lone hatchling's crossing makes one flicker low |
+| A flame sputtering near empty | The flame shrinks, and the lantern's glass shows the level |
+| The ally's calls | A caption on screen, always, in every cue mode (UX-1) |
 | A wounded ear | The view darkens on that side |
 
-In the dark there are no visual cues. The safety net there is the ally's call, and the "cues everywhere" setting.
+In the dark there are no visual cues. The safety net there is the ally's call, and the Cues everywhere setting.
+
+**One setting, three cue modes** (UX-3, UX-25, UX-27, UX-28, UX-38). Cues everywhere is for players who cannot rely on hearing. Ears only is a challenge.
+
+| | In the light (default) | Everywhere | Ears only |
+|---|---|---|---|
+| Cues that point at a cry or the hum: shaking ropes, swirling fog, falling dust, swaying ropes, leaning flames | Where light falls | Also in the dark: the cue itself glows faintly and nothing else is revealed; a flame leans toward the nearest cry even beyond its own light | Off |
+| Footsteps of the dead on the deck; bowing planks | Where light falls | Also glow faintly in the dark | Where light falls |
+| A shuttered lantern | No lean | Its seam glow still leans | No lean |
+| Every lit flame dips once for each stroke of the bell | No | Yes | No |
+| The ally's calls | By wave (Game Mechanics 8) | Every warning, 2 s in, all night | By wave |
+| Captions, the wound's darkened side, chalk tallies, anything seen in the light | On | On | On |
+
+Starting value for the glow: it can be made out from 15 m, half the span, at default brightness. It is tuned on the muted night.
 
 #### 2. The span
 
@@ -249,7 +271,7 @@ In the dark there are no visual cues. The safety net there is the ally's call, a
 
 - The span is the Gorge Causeway's last span before the town: 6 sections, each 5 m long and 5 m wide, 30 m in all. Section 1 touches the far pier, section 6 the town pier.
 - Each section has 8 planks and 2 rail ropes (left and right). The span holds 48 planks and 12 ropes. The warden starts with none in hand.
-- Planks are a count per section, not positions.
+- Planks are a count per section, not positions. A section is drawn with that many planks. They leave in a fixed order that keeps the rest evenly spaced, so a weakened section looks sparse and its strength can be read by eye wherever light falls (UX-8, GD-54). A section with one or more planks can be walked over its whole length.
 - **Strength** = planks left on the section, 0 to 8.
 - **Load** on a section:
 
@@ -265,9 +287,9 @@ In the dark there are no visual cues. The safety net there is the ally's call, a
 - **Collapse.** When load is above strength the section groans for 2 s, then falls for good. If the load drops back within the 2 s, it holds.
 - **A Diver's landing** counts 5 on top of whatever already stands there. If that total is above strength, the section falls at once. An empty section breaks at 4 planks or fewer.
 - **What falls with it:** the dead on it, a rig on it, any lantern hung on it, and the planks and ropes still on it. A warden on it catches the edge and climbs back onto the nearest standing section toward the town in 5 s, with a wound.
-- **An open section** has its trapdoor down, or no planks left. Nothing can stand on it. Crossing it along its side beams takes a Grappler or Diver 12 s, a hatchling 6 s and the warden 4 s. The side beams carry a load of 2; more than that for 2 s and the section falls.
+- **An open section** has its trapdoor down, or no planks left. Nothing can stand on it. Crossing it along its side beams takes a Grappler or Diver 12 s, a hatchling 6 s and the warden 4 s. The side beams carry a load of 2; more than that for 2 s and the section falls. Whoever stands on a section when its last plank is taken is on its side beams from that moment and finishes the crossing from where they stand.
 - **A fallen section** is a 5 m gap. A Grappler throws a hook across and crosses in 12 s. A Diver stranded beyond it takes off and dives again 8 s later, picking by the same rule among the sections on the town side. Stranded hatchlings fall. The warden crosses hand over hand in 8 s.
-- **Section 6** stands inside the light of the town gate. It cannot be stripped below 4 planks and nothing can be built on it. Grapplers do not hook its rails and Divers do not pick it, so its two rails are spare rope. It is reached on foot from section 5, or by the brood of the town pier's nest. The exception: when no other section has planks, deck hooks and Divers come to section 6.
+- **Section 6** stands inside the light of the town gate. It cannot be stripped below 4 planks and nothing can be built on it. Grapplers do not hook its rails and Divers do not pick it, so its two rails are spare rope. It is reached on foot from section 5, or by the brood of the town pier's nest. The exceptions: when no other section has planks, deck hooks and Divers come to section 6; and a Diver that dives again from beyond a gap comes to section 6 when no section between the gap and the town can be picked (Game Mechanics 6).
 - **Falling** (GD-13). Any of the dead that falls is gone until dawn. Nothing in the one-night game ends one of the dead on the deck.
 
 #### 3. Stripping and re-laying
@@ -279,12 +301,12 @@ In the dark there are no visual cues. The safety net there is the ally's call, a
 | Re-lay a plank | 3 s | −1 plank in hand; that section's strength +1 |
 | Dismantle a rig | 4 s | Its planks return; one of its ropes is lost |
 
-- The warden carries stripped parts, with no limit. The forearm shows tallies of planks and ropes in hand.
+- The warden carries stripped parts, with no limit. Parts in hand are kept through every wound, climb and crossing. The forearm shows tallies of planks and ropes in hand.
 - In the planning phase stripping and placing cost no time.
 - A rail is locked, and cannot be stripped, from the moment a Grappler's warning starts under it until that Grappler is on the deck or has fallen.
 - A rail that holds a swing-beam cannot be stripped.
 
-**No rail, no hook** (GD-20). Grapplers hook only a rail that still stands, on sections 1 to 5, and a rail holds at most 2 hooks. Fewer rails means they bunch on those sections and overload them. A Grappler that finds no free rail hooks the deck instead: the edge of the section with the most planks (the one nearer the far pier if several are equal), tearing one plank off as the hook lands.
+**No rail, no hook** (GD-20). Grapplers hook only a rail that still stands, on sections 1 to 5, and a rail holds at most 2 hooks, counting a warning that has started under it. Fewer rails means they bunch on those sections and overload them. A Grappler that finds no free rail hooks the deck instead: the edge of the section with the most planks (the one nearer the far pier if several are equal), tearing one plank off as the hook lands. It picks the left or right edge of that section at random.
 
 **Striking a hook** (GD-38). A hammer blow on a set hook, 0.5 s, makes the Grappler lose its grip and start its 6 s haul again. The hook stays set and keeps its load. Each Grappler can be shaken loose once; after that its hook holds. Nothing is removed by hand.
 
@@ -300,12 +322,12 @@ The hook is gone once the Grappler is on the deck. If its section falls or is sw
 
 #### 4. Rigs
 
-One rig per section, on sections 1 to 5. Section 6 cannot hold a rig. Each rig is sprung from its section's town-side edge, so the warden stands on the next section toward the town.
+One rig per section, on sections 1 to 5. Section 6 cannot hold a rig. Each rig is sprung from its section's town-side edge, so the warden stands on the next section toward the town. A rig is built, hauled up, re-hung and dismantled from that same edge: the warden stands within 2 m of it on the next section toward the town and looks at the section ahead (UX-9). While that next section is open or fallen there is nowhere to stand, and the rig cannot be worked. A blow struck from the rig's own section still springs it.
 
 | | Trapdoor | Swing-beam |
 |---|---|---|
 | Cost to build | 2 ropes | 4 planks + 2 ropes |
-| Needs | 4 or more planks on its section | A standing rail on its section, picked when it is built; the beam hangs from it |
+| Needs | 4 or more planks on its section | A standing rail on its section, picked when it is built: at night the rail on the side the warden is looking toward when the hold starts, in planning the rail that is clicked (UX-9). The beam hangs from it |
 | Build time at night | 8 s | 12 s |
 | Sprung by | A hammer blow on its pin | A hammer blow that cuts its holding rope |
 | Effect | The planks drop within 0.3 s. Everything on the section falls. | The beam sweeps the section in 1.5 s. Everything standing on it or edging along its side beams, and every hook on its rails or deck edge, is knocked off. |
@@ -313,35 +335,38 @@ One rig per section, on sections 1 to 5. Section 6 cannot hold a rig. Each rig i
 | Reset | Haul it up: hold for 6 s | Re-hang: hold for 10 s, with a rope in hand |
 | While sprung | The section is open | The section is clear and can be walked on |
 | Cannot be sprung when | Its section has fewer than 4 planks | It has not been re-hung |
-| Danger | None to the warden | A warden on the section is knocked down and wounded |
+| Danger | A warden standing on it when it drops catches the edge, climbs back toward the town in 5 s and is wounded | A warden on the section is knocked down and wounded |
 
 The warden can also use the bridge with no rig: strip a section to just under the weight of what is about to stand on it, and it collapses under them. That section is then lost for good.
 
 #### 5. The wedge
 
-A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge into the cracked stone: 3 s of unbroken hammering, 1 plank. The nest stays shut for the rest of that wave. (GD-17, GD-19)
+A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge into the cracked stone: 3 s of unbroken hammering, 1 plank. The nest stays shut for the rest of that wave. A wedge can only be driven while the nest is sobbing. (GD-17, GD-19)
 
 #### 6. Lanterns and light
 
 (GD-9, GD-28; reach corrected at finalize)
 
-- 3 lanterns: one carried, two placed during planning. A placed lantern hangs on a pole fixed to a side beam, over the middle of its section. It can be taken down and moved at night.
+- 3 lanterns: one carried, two placed during planning. Each of the six sections has one pole. It stands on a side beam and holds the lantern over the centre of the section, 2.5 m from each edge; a placed lantern hangs there.
+- **One lantern in hand** (GD-49). At a pole the warden hangs the lantern in hand, takes the one hanging there, or swaps the two. With no lantern in hand the warden carries no light. Hanging, taking and swapping are each one press. The warden keeps the lantern in hand, lit, through every hold, wound, climb and crossing, and it still counts as carried. A lantern over an open section cannot be reached until that section can be stood on again.
+- **At the start of the night** both placed lanterns are hung, the third is in the warden's hand, and all three are full and lit.
 - Light reaches 4 m from the carried lantern and 5 m from a placed one. A placed lantern lights its own section and about half of each neighbour.
-- A full tank burns for 6 minutes. There is 1 spare flask; a refill takes 4 s and fills one tank. That is 24 lantern-minutes for a 12-minute night: enough for two lanterns all night, which light at most 20 m of the 30 m span.
+- A full tank burns for 6 minutes. There is 1 spare flask. It stays at the town pier and is never carried: the warden brings a lantern to it, and a refill takes 4 s and fills that lantern's tank, once (UX-36). From the pole on section 1 the trip home and back is 55 m, about 16 s of walking. That is 24 lantern-minutes for a 12-minute night: enough for two lanterns all night, which light at most 20 m of the 30 m span.
+- **Reading oil** (UX-7). Each lantern has a glass reservoir whose level can be seen up close. In the last 60 s of a tank the flame shrinks and sputters; its reach does not change. A shuttered lantern glows through its seams; an empty one is dark.
 - **Shutter.** A closed lantern gives no light, burns no oil, and cannot be seen by Divers.
-- **Visual cues show only inside lantern light.** The dark is sound only.
+- **Visual cues show only where light falls:** the three lanterns, and the town gate's light on section 6, which cannot be shuttered or moved (UX-29). The dark is sound only, unless Cues everywhere is on.
 - A hung lantern survives a trapdoor drop and a beam's sweep. It is lost if its section falls.
 
 **Divers and light.** A Diver picks its section when its warning starts, and its shrieks and the swirling fog come from over that section:
 
-1. The section with a lit hung lantern. If two are lit, the one nearer the town.
+1. The section with a lit hung lantern. If more than one is lit, the one nearest the town.
 2. Otherwise the section the warden stands on, if the carried lantern is lit.
 3. Otherwise the section with the fewest planks; if several are equal, the one nearer the town.
 
-- Only sections 1 to 5 that have planks can be picked. A lantern on section 6 or on the landing is ignored.
+- Only sections 1 to 5 that have planks and are not open when the warning starts can be picked. A lantern on section 6 or on the landing is ignored.
 - If no such section exists, the Diver comes down on section 6.
 - Once the warning has started, moving or shuttering a lantern does not change the pick.
-- If the picked section is open or fallen when the warning ends, the Diver lands on the nearest section toward the town that has planks.
+- If the picked section is open or fallen when the warning ends, the Diver lands on the nearest of sections 1 to 5 that has planks and is not open, looking toward the town first and then toward the far pier. Only if there is none does it come down on section 6.
 
 #### 7. The bell and the name
 
@@ -349,7 +374,7 @@ A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge
 
 - One section, chosen at random from sections 2 to 5 each run, has a name carved in the timber under its planks.
 - The hum, 12 dB under a cry, can be heard within 3 m of that section whenever no cry is sounding. It is the tune of the one who keeps coming back, which is how the player connects the two.
-- The name is uncovered when that section is down to 4 planks or fewer. It can only be read on foot, at night, by lantern light: the planning view never shows what lies under the planks. Once read, it is inked on the warden's forearm.
+- The name is uncovered when that section is down to 4 planks or fewer. It can only be read on foot, at night, by lantern light: the warden looks at it from within 2 m for about 1 s (UX-10). The planning view never shows what lies under the planks. Once read, it is inked on the warden's forearm, which rises once on its own to show it.
 - **The one who keeps coming back** arrives once per wave from wave 2. It behaves as a Grappler but sings the tune. Whether it falls or crosses, it is back in the next wave.
 - **Calling the name:** one pull of the bell rope at the town pier (1 s), after the name has been read, while its owner is on or under the span. The owner stops and passes in peace, and never returns. Every other one of the dead on the span stands still for 20 s. The ledger records one name learned and one soul released.
 - **A wrong ring** (GD-42). A pull that calls no one, because the name is unread or the owner is absent, is only noise. Every one of the dead on the span walks half again as fast for 10 s.
@@ -360,17 +385,18 @@ A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge
 
 - Stands at the town pier and cannot be hurt in the one-night game.
 - **Waves 1 to 3:** calls the level about 2 s after each warning starts: "Below!", "Above!", "In the walls!".
-- **Waves 4 to 6:** calls only when the warden has not turned to within 45° of a cry 4 s after it starts. The ear leads and the ally catches what it misses.
-- One call at a time. A call that would be more than 4 s late is dropped.
-- About 10 recorded lines, each with matching text on screen:
+- **Waves 4 to 6:** calls only when the warden has not turned to within 45° of a warning 4 s after it starts. The ear leads and the ally catches what it misses.
+- One call at a time. A call is due 2 s after its warning starts in waves 1 to 3, and 4 s after in waves 4 to 6. A call that cannot start within 4 s of when it was due is dropped.
+- **In Cues everywhere** the waves 1 to 3 rule runs all night: every warning is called 2 s in (UX-38). The fade from wave 4 belongs to the other two cue modes.
+- About 10 recorded lines, each with a matching caption: one line at the bottom centre of the view, shown for as long as the line is spoken and at least 2 s, in every cue mode (UX-1, UX-26):
 
 | Lines | Purpose |
 |---|---|
 | 3 | The level calls |
-| 3 | The dusk lesson: an opening line, "right", and "listen again" |
+| 3 | The dusk lesson: an opening line, a confirming word, and "listen again". The confirming word is not "right", which reads as a direction straight after the left/right check. |
 | 1 | The first time the one who keeps coming back returns |
 | 2 | Warmth in a lull, not information (the brief's "warmth between the waves") |
-| 1 | Dawn |
+| 1 | Dawn, after the silence and before the ledger (GD-53) |
 
 #### 9. Wounds
 
@@ -378,6 +404,7 @@ A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge
 
 - One that reaches the warden shoves past. The warden is knocked down for 1.5 s. For 20 s everything on that side is 12 dB quieter and dulled above 1 kHz, and the view darkens on that side.
 - The same wound follows a hit from the warden's own swing-beam, a Diver landing on the warden's section, or a section falling under the warden.
+- The warden is knocked down where they stand. The wound is on the side the blow came from; a fall or a landing has no side, so its side is picked at random. A new wound starts its own 20 s on its own side, and both sides can be wounded at once.
 - There is no health bar. The warden cannot die in the one-night game.
 
 #### 10. Planning from above
@@ -385,15 +412,18 @@ A nest sobs inside a pier for 40 s before it hatches. The warden hammers a wedge
 (GD-11)
 
 - An overhead view of the whole span, with no dead and no time limit.
-- The warden strips planks and rail ropes, places trapdoors and swing-beams on sections 1 to 5, and hangs the two placed lanterns. Every choice can be undone until the night starts.
-- The view shows each section's planks, rails and strength directly. It does not show what lies under the planks, and it does not use the woodcut look.
-- Ringing the bell ends planning and starts the night.
+- The warden strips planks and rail ropes, places trapdoors and swing-beams on sections 1 to 5, and hangs the two placed lanterns. Every choice can be undone until the night starts: right click takes back the last choice on a section, and Start over, a 1 s hold, restores the whole span (UX-17). An undo that needs a part no longer in hand, because it was spent on a rig elsewhere, is refused and says why.
+- The view shows each section's planks and rails, and its strength as a number. A tray shows the planks and ropes in hand, the three tools with their costs, and the lanterns left to place. A tool that cannot be afforded is dimmed; pointing at it, or at a section where the chosen tool cannot go, says why (UX-15).
+- A click on a section's deck strips its next plank, in the same fixed order the night draws, which keeps the rest evenly spaced. A click on a rail strips that rail (UX-16, GD-54).
+- The view does not show what lies under the planks, and it does not use the woodcut look.
+- Ringing the bell, a 1 s hold of Space, ends planning and starts the night. It cannot be rung until both placed lanterns are hung, and it says why. The night starts with the warden on the town pier landing. The warden's bell rings and the town bell answers with the single toll of wave 1 (UX-18).
+- After a lost night, planning opens on the plan that night was started with (UX-40). It can be undone in the same way. After a dawn, Another night opens a fresh span (GD-52).
 
 ### Controls and Input
 
 Keyboard and mouse only in the one-night game. Gamepad arrives with the Fog Season. (GD-22)
 
-**Context hands.** The left mouse button is the hammer hand and the right is the lantern and rope hand. The game picks the action from what the warden is looking at within 2 m, and the hands show that action before the click.
+**Context hands.** The left mouse button is the hammer hand and the right is the lantern and rope hand. The game picks the action from what the warden is looking at within 2 m, and the hands show that action before the click: a hand that can act moves to a ready pose, and no pose means no action there (UX-5).
 
 Night, first person:
 
@@ -402,28 +432,36 @@ Night, first person:
 | W A S D | Walk at 3.5 m/s. No sprint, no jump. |
 | Mouse | Look |
 | Left mouse (hammer hand) | Strike a pin, a holding rope or a hook (0.5 s); strip a plank (hold 2 s); hammer a wedge (hold 3 s) |
-| Right mouse (rope and lantern hand) | Strip a rail rope (hold 3 s); haul a trapdoor (hold 6 s); re-hang a beam (hold 10 s); pull the bell rope (1 s) |
-| E | Hang or take down a lantern; re-lay a plank (hold 3 s); refill a lantern (hold 4 s) |
-| F | Open or close a shutter: the carried lantern's, or that of a hung lantern within 2 m |
+| Right mouse (rope and lantern hand) | Strip a rail rope (hold 3 s); haul a trapdoor (hold 6 s); re-hang a beam (hold 10 s); pull the bell rope (hold 1 s) |
+| E | Acts on what the warden looks at (UX-36). At a pole: hang, take or swap a lantern (one press). At a standing section with fewer than 8 planks, with a plank in hand: re-lay one (hold 3 s). At the flask on the town pier, with a lantern in hand: refill it (hold 4 s). |
+| F | Open or close a shutter: that of a hung lantern the warden is looking at within 2 m, otherwise that of the lantern in hand |
 | 1 (hold 8 s) | Build a trapdoor on the section ahead |
-| 2 (hold 12 s) | Build a swing-beam on the section ahead |
+| 2 (hold 12 s) | Build a swing-beam on the section ahead, on the rail the warden is looking toward |
 | R (hold 4 s) | Dismantle the rig ahead |
-| Tab (hold) | Raise the forearm: the name, if read, and the tallies of planks and ropes in hand |
-| Esc | Pause and settings |
+| Tab (hold) | Raise the forearm: the name, if read, and the tallies of planks and ropes in hand. The warden can still walk and look; neither hand can act until it is lowered; ignored during a hold (UX-11). |
+| Esc | Pause: everything stops and falls silent (UX-24) |
 
-"The section ahead" is the one whose town-side edge the warden stands at.
+"The section ahead" is the one whose town-side edge the warden stands at: within 2 m of that edge, on the next section toward the town, looking at it. There the hands take out the tool, which is the sign that 1, 2 and R will act (UX-9).
 
 Planning, from above:
 
 | Input | Action |
 |---|---|
-| Left click on a plank or rail | Strip it |
-| Left click on a section, with a rig or lantern chosen | Place it there |
+| Left click on a section's deck, with no tool chosen | Strip its next plank |
+| Left click on a rail, with no tool chosen | Strip it |
+| Left click on a section, with a rig or lantern chosen | Place it there. A swing-beam is placed by clicking the rail it will hang from. |
 | Right click | Undo the last choice on that section |
-| 1, 2, 3 | Choose trapdoor, swing-beam, lantern |
-| Space | Ring the bell: start the night |
+| 1, 2, 3 | Choose trapdoor, swing-beam, lantern. The same key again, or Esc, puts the tool away. |
+| Space (hold 1 s) | Ring the bell: start the night |
+| Start over (hold 1 s, on the tray) | Restore the whole span to dusk |
+| J | Open the journal, once it holds a hint |
+| Esc | Pause, when no tool is chosen |
 
-Held actions are cancelled by moving more than 0.5 m or by a wound.
+Held actions are cancelled by moving more than 0.5 m, by a wound, by letting go, or the moment the action becomes impossible (a rail locks, a section falls or opens, a nest hatches); looking around is free. Only one action runs at a time. Parts are gained or spent when a hold completes, and a pause freezes a hold without cancelling it. With the Holds setting on Press once, a press starts a hold and a second press stops it; the times are the same, and Tab becomes a toggle (UX-39). Planning's two 1 s holds stay holds in both settings, because they exist to stop a stray press. The blow of a strike lands at the end of its 0.5 s.
+
+**What the player sees and hears of an action at night** (UX-2, UX-4, UX-6). There are no prompts, bars or rings. A hold is its own progress: counted hammer blows, rope coming in hand over hand, a plank levering up, each closing on a heavier final beat. A cancelled hold drops from the hand with a slack-rope or dropped-tool sound. An impossible action makes the hand reach, stop short and open empty, with a dull knock; a second strike on a hook already shaken once is one such. The dusk lesson practises look, walk, strike, strip, hang, shutter and the forearm. Every other key (haul, re-hang, build, dismantle, the wedge, the bell rope) is learned from the key card, which can be read in planning and on the pause screen.
+
+Keys are bound by physical position, so they sit in the same place on any keyboard layout. There is no key rebinding in the one-night game.
 
 ---
 
@@ -445,7 +483,7 @@ What answers what:
 
 Combinations the design expects players to find:
 
-- **Bait.** An open lantern hung on a trapdoor section brings a Diver down onto it.
+- **Bait.** A lit lantern hung on a trapdoor section, with the trapdoor up, brings a Diver down onto it.
 - **Funnel.** Stripping every rail except those beside a swing-beam makes Grapplers come up into it.
 - **Slow.** An open or fully stripped section ahead of a rig costs walkers 6 to 12 s, which is time to haul or re-hang the rig behind it.
 
@@ -470,11 +508,11 @@ Light-hunting Divers combine two brainstorm ideas: A2 (they drop on the bridge's
 
 Time from first sound to the town, with nothing in the way:
 
-- Grappler at section 6: about 14 s. At section 1: about 35 s.
-- Diver on section 6: about 14 s. On section 1: about 39 s.
+- Grappler at section 5, the nearest it normally arrives: about 18 s. At section 1: about 35 s. (At section 6, in the exception case: about 14 s.)
+- Diver on section 5: about 19 s. On section 1: about 39 s. (On section 6, in the exception case: about 14 s.)
 - Hatchlings from the far pier: 40 s of sobbing, then 10 s. From the town pier: 40 s of sobbing, then 2 s. A town-pier brood can only be answered by the wedge.
 
-**The six waves** (GD-23). Each lasts 2 minutes: warnings start in the first 75 s, and no warning starts in the 45 s lull that follows. The town bell tolls at the start of each wave: once for wave 1, six times for wave 6 (GD-24).
+**The six waves** (GD-23). Each lasts 2 minutes: warnings start in the first 75 s, and no warning starts in the 45 s lull that follows. The town bell tolls at the start of each wave: one stroke for wave 1, six for wave 6, 1.5 s apart (GD-24). A wave's clock starts at its first stroke. The toll for wave 1 answers the warden's own bell, rung to end planning (UX-18).
 
 | Wave | Grapplers | Divers | Nests | New this wave |
 |---|---|---|---|---|
@@ -487,7 +525,7 @@ Time from first sound to the town, with nothing in the way:
 
 Totals: 23 Grapplers, 8 Divers, 4 nests (16 hatchlings), and 5 visits from the one who keeps coming back. That is 44 possible crossings, counting two hatchlings as one.
 
-**Timetable.** Seconds after the toll at which each warning starts. G = Grappler, D = Diver, N = nest, R = the one who keeps coming back.
+**Timetable.** Seconds after the toll's first stroke at which each warning starts. G = Grappler, D = Diver, N = nest, R = the one who keeps coming back.
 
 | Wave | Warnings start at |
 |---|---|
@@ -518,7 +556,7 @@ Totals: 23 Grapplers, 8 Divers, 4 nests (16 hatchlings), and 5 visits from the o
 - **Placement rules.** One rig per section, on sections 1 to 5 only. A trapdoor needs 4 or more planks; a swing-beam needs a standing rail. Piers cannot be stripped (brainstorm Y8).
 - **The last line.** Section 6 holds no rig, so the last rig is on section 5 at the nearest. Anything that gets past it reaches the town. In exchange, nothing arrives on section 6 directly while any other section has planks.
 - **Choke points.** Section 6, which everything must cross. The two piers, where nests hatch.
-- **What the player can see.** In planning, each rig shows the section it covers and each lantern shows its reach. At night nothing is marked; light shows only what it falls on.
+- **What the player can see.** In planning, each section shows its strength as a number, each rig shows the section it covers and each lantern shows its reach. At night nothing is marked; light shows only what it falls on.
 
 ### Economy and Resources
 
@@ -528,7 +566,7 @@ No gold, no shop, no income per wave or per kill (pillar 3; brainstorm Y9).
 |---|---|---|---|
 | Planks | 48, all on the span | Stripping (1 per 2 s) | Swing-beam 4; wedge 1; re-laying 1; each trapdoor drop 1 |
 | Rope | 12, all on the span as rails | Stripping a rail (1 per 3 s) | Trapdoor 2; swing-beam 2; each re-hang 1; dismantling 1 |
-| Oil | 3 full tanks and 1 flask: 24 lantern-minutes | Nothing | Burning: 1 lantern-minute per open lantern per minute |
+| Oil | 3 full tanks, and 1 flask at the town pier: 24 lantern-minutes | Nothing | Burning: 1 lantern-minute per lit lantern per minute |
 | The name | 0 | Stripping its section to 4 planks and reading it | Calling it, once |
 
 - **Nothing is refunded in full.** Dismantling a rig returns its planks and loses one of its ropes. A fallen section takes its planks, ropes, rig and lantern with it.
@@ -545,7 +583,7 @@ There are no cooldowns and no ability bar. Each action below costs time, parts o
 | Ring the bell wrongly | Nothing spent | The dead on the span walk half again as fast for 10 s |
 | Wedge a nest | 1 plank, 3 s | That nest stays shut for the wave |
 | Strike a hook | 0.5 s, at that rail; once per Grappler | That Grappler starts its 6 s haul again |
-| Shutter a lantern | Nothing | No light, no cues, no burn; Divers cannot see it |
+| Shutter a lantern | Nothing | No light, no cues, no burn; Divers cannot see it. In Cues everywhere its seam glow still leans. |
 | Move a lantern | Travel time | Moves the lit area and the Divers' target |
 | Overload a section | The section, for good | Everything on it falls |
 
@@ -555,9 +593,11 @@ There are no cooldowns and no ability bar. Each action below costs time, parts o
 - **Target band** (GD-23, GD-29; windows corrected at finalize). Of 44 possible crossings a first-time player stops about 35, and reaches dawn with about 3 of 6 sections and 3 of 12 windows left. 3 of 5 newcomers reach dawn within two tries.
 - **The aim of the tuning:** "each night is a puzzle with scarce parts, and surviving feels earned, never lucky." Nothing in the night is random except which rail a Grappler picks and where the name lies.
 - **What changes between runs:** the section hiding the name; which name it is, from a pool of 6; which rails the Grapplers choose; and the player's own plan.
-- **Settings that change the challenge:**
-  - **Ears only:** all visual cues off (GD-35). A first step toward the brainstorm's Blind Watch, which is a later update.
-  - **Cues everywhere:** visual cues show in the dark too (accessibility, GD-9).
+- **Settings that change the challenge.** One setting, Visual cues, has three values. The table is in Game Mechanics 1.
+  - **In the light:** the default.
+  - **Ears only:** the cues that point at a cry are off; captions and physical events stay (GD-35, UX-3). A first step toward the brainstorm's Blind Watch, which is a later update.
+  - **Cues everywhere:** those cues show in the dark too, and the ally calls every warning (accessibility; GD-9, UX-27, UX-38).
+- **Settings that do not change the rules** (UX-25, UX-39): volume; headphones or speakers; swap left and right; check left and right; stream-safe sound; mono sound; centre dot; mouse sensitivity; invert look; Holds (Hold or Press once); fullscreen or window; resolution; brightness; field of view; fog quality; caption size.
 - **Assists** for wave speed, numbers and structural forgiveness arrive with the Fog Season (brainstorm G12).
 
 ---
@@ -577,7 +617,7 @@ The horror guide's Enemy and Threat Design is covered under Enemy Wave Design. I
 
 ### Fear Mechanics
 
-- **Darkness.** Visual cues exist only inside lantern light, and there is oil for two of three lanterns. The player is always choosing what to leave dark.
+- **Darkness.** Visual cues exist only where light falls, and there is oil for two of three lanterns. The player is always choosing what to leave dark.
 - **Light is also a target.** Divers come down where the light is, including the lantern in the warden's hand.
 - **Vulnerability.** The warden has no weapon and cannot harm the dead directly. Being caught costs hearing (wounds, GD-27).
 - **Noise has a price.** A bell rung for no one hurries the dead (GD-42).
@@ -588,7 +628,7 @@ The horror guide's Enemy and Threat Design is covered under Enemy Wave Design. I
 - **Oil:** 24 lantern-minutes for a 12-minute night with three lanterns. Nothing restocks.
 - **Planks** are the building material, the trapdoor's fuel and the health bar.
 - **Rope** is rig parts, the swing-beam's fuel and the rails. Each rope spent is a rail gone.
-- **Saving.** The one-night game is one sitting with no save. In the full game dawn is the save point.
+- **Saving.** The one-night game is one sitting with no save. In the full game dawn is the save point. Between launches the one-night game keeps only its settings and a note that the lesson has been finished (UX-21).
 
 ### Safe Zones and Respite
 
@@ -606,9 +646,9 @@ The horror guide's Enemy and Threat Design is covered under Enemy Wave Design. I
 
 **One-night game.** The warden gains no power. What progresses is the player:
 
-1. In the dusk lesson the player learns the three cries with feedback.
-2. In waves 1 to 3 the ally's call confirms each cry 2 s after it starts.
-3. From wave 4 the ally calls only the cries the player has not turned toward within 4 s.
+1. In the dusk lesson the player learns the three cries with feedback, then the hands, the lantern and the forearm.
+2. In waves 1 to 3 the ally's call confirms each warning 2 s after it starts.
+3. From wave 4 the ally calls only the warnings the player has not turned toward within 4 s.
 
 The player also learns the bridge: that a stripped rail steers Grapplers, that a lantern steers Divers, and that a weak section is a trap.
 
@@ -641,7 +681,7 @@ Rates and costs are in Tower Defense Specific Design, Economy and Resources. The
 
 - The span: the last 6 sections of the Gorge Causeway before the town.
 - The far pier, with a nest inside it.
-- The town pier, with a nest inside it, and its landing: the gate, the bell, the tally board, the ally.
+- The town pier, with a nest inside it, and its landing: the gate, the bell, the tally board, the spare flask, the ally.
 - The town behind: 12 lit windows, seen and never entered.
 - The Far Side ahead: never seen.
 
@@ -681,8 +721,10 @@ The Fog Season outline, to be detailed after gate 2 (GD-34):
 
 - **Look:** "stylized, leaning to woodcut." A full-screen ink-and-hatching treatment "makes mismatched free models read as one engraving."
 - **Palette:** near-black world; warm living things; colorless dead; a true black abyss.
-- **No HUD at night.** Information is carried by the warden's hands, the forearm (the name, and the tallies of parts in hand), the tally board, and the bridge itself. The hands show the action a click will perform.
+- **No HUD at night.** Information is carried by the warden's hands, the forearm (the name, and the tallies of parts in hand), the tally board, and the bridge itself. The hands show the action a click will perform. One thing is drawn over the night view: the ally's caption (UX-1). A centre dot can be switched on in settings (UX-5). The hands and forearm keep a minimum brightness, enough to tell the ready pose with every lantern shuttered, and the forearm's ink stays clear of the hatching.
 - **The overhead view** is clean and readable, without the woodcut treatment.
+- **Screens** (title, planning tray, pause, settings, journal, ledger, captions) use the Lantern light look: no panels, text straight on near-black, the chosen thing glowing warm, everything else colourless grey. Its colours, type and components are in `DESIGN.md` (UX-32, UX-34).
+- **Comfort limits** (`EXPERIENCE.md`, Accessibility Floor). No full-screen flash and no screen shake; full-view changes are slow fades only. Nothing flickers faster than 3 times a second: a sputter stays on the flame, and a stroke's dip takes about 0.8 s. The camera has no bob and no roll.
 - **The ally** is a silhouette: a lantern, tools and a voice (brainstorm X9, CJ5).
 - **Order of work** (GD-32): gray boxes until gate 2 is passed, then the look test on the same span.
 
@@ -700,8 +742,9 @@ The Fog Season outline, to be detailed after gate 2 (GD-34):
 | Below | Distant, with a long cave echo | Mostly what is below 2500 Hz |
 
 - **The falling cry:** a cry that fades into the dark over 2 s whenever one of the dead falls.
-- **Spoken lines:** about 10, all the ally's, recorded by a person, each with on-screen text (GD-26).
-- **Stream-safe sound:** a setting that lifts the cries 6 dB above everything else and always shows the ally's calls as text.
+- **Spoken lines:** about 10, all the ally's, recorded by a person, each with a caption (GD-26, UX-1).
+- **Stream-safe sound:** a setting that lifts the cries 6 dB above everything else. The ally's calls are captioned in every mode, so viewers always see them.
+- **Small sounds of the town, the hands and the screens** (UX-6, UX-7, UX-10, UX-12, UX-30, UX-37): a window going out, and a fainter one for a window flickering low, both from the town side, at the level of the ambience (at least 6 dB under the quietest cry) and outside the 4-cry limit; a cancelled hold (slack rope, a dropped tool); an impossible action (a dull knock); the flame's sputter; a pen-scratch when the name is inked and when a hint is written; a dry sound for each strip, placement and undo in planning.
 - **Clip moments** (brainstorm SP2): three moments are meant to read in a 10 to 30 second clip: a loaded trapdoor dropping, a section collapsing under a Diver, and the name being called.
 
 ---
@@ -715,7 +758,7 @@ The Fog Season outline, to be detailed after gate 2 (GD-34):
   - On integrated graphics (Intel Iris Xe) at 720p with the fog-sprite fallback: an average of 30 FPS or more, with 1% lows of 24 or more.
 - **Peak scene:** wave 6, with up to 18 of the dead on the span, three lanterns and fog.
 - Cold start to the menu in 10 s or less on the GTX 1050 machine.
-- Replaying a lost night starts in 3 s or less.
+- Replaying a lost night starts in 3 s or less, measured from the player's action on the lost-night page (UX-12).
 - A sprung rig reacts within 0.3 s of the hammer blow.
 - Download size 300 MB or less.
 - No crash in 20 nights played back to back.
@@ -724,8 +767,8 @@ The Fog Season outline, to be detailed after gate 2 (GD-34):
 
 - **Platforms:** Windows 10 and 11 (64-bit) and Linux (x86-64), distributed on itch.io.
 - **Engine:** Godot 4.7.2, pinned, with the Forward+ renderer (the fog needs it).
-- **Input:** keyboard and mouse.
-- **Sound output:** stereo, on headphones or speakers. The game asks which at first launch. No HRTF plugin (3D audio for headphones) in the base game.
+- **Input:** keyboard and mouse. Keys are bound by physical position and named as the player's keyboard prints them.
+- **Sound output:** stereo, on headphones or speakers. The game asks which at first launch; the answer changes no cue, is kept in settings and is written to the playtest log (UX-19). A Mono sound setting folds both channels into one for single-ear listeners. Choosing it suggests Cues everywhere. No HRTF plugin (3D audio for headphones) in the base game.
 - **Fog:** a low setting and a fog-sprite fallback are both required.
 - **Network:** none. The public build collects nothing. The playtest build writes its log to a local file.
 
@@ -735,12 +778,13 @@ Everything must allow commercial use (such as CC0 or CC-BY). Gray boxes stand in
 
 | Kind | Needed for the one-night game |
 |---|---|
-| Cries | The 13 clips in hand, re-cut from the original downloads (they were cut from lossy previews). The tune in 3 variations, and its faint hum. Falling cries that fade. |
-| Other sounds | Footsteps on planks; hook landing; straining rope; plank creak and section groan; section collapse; trapdoor; swing-beam; hammer on wood, iron and stone; the warden's bell; the town bell; lantern shutter, refill and flame; wind and fog bed. |
+| Cries | The 13 clips in hand, re-cut from the original downloads (they were cut from lossy previews). The tune in 3 variations, its resolving last phrase for the moment the name is called, and its faint hum. Falling cries that fade. |
+| Other sounds | Footsteps on planks; hook landing; straining rope; plank creak and section groan; section collapse; trapdoor; swing-beam; hammer on wood, iron and stone; the warden's bell; the town bell; lantern shutter, refill and flame, and the flame's sputter; wind and fog bed; a window going out and a window flickering; rope hauled hand over hand, a plank levering up and the heavier last beat of each hold; slack rope and a dropped tool; a dull knock; a pen-scratch; rattling planks for a hook on the deck; planning's strip, place and undo. |
 | Spoken lines | About 10, recorded by a person. |
-| Models | Span kit (plank, beam, rail post, rope, pier stone, gate); Grappler, Diver, hatchling; warden's arms and hands with hammer and lantern; lantern; bell; tally board; the town with 12 windows; the ally's silhouette. |
-| Effects | Fog; dust from stone; shaking rope; swirling fog overhead; leaning flame; bowing planks. |
-| Text | 6 names with one-line epitaphs (the brief's "names with one-line epitaphs"); 6 journal hints; the ally's lines; menu and settings. |
+| Models | Span kit (plank, beam, rail post, rope, pier stone, gate); Grappler, Diver, hatchling; warden's arms and hands with hammer and lantern, and their moves (a ready pose for each action, each hold, the cancel, the "can't", the forearm raised and being inked); lantern with a glass reservoir; lantern pole; oil flask; bell; tally board; a practice pin on the landing; the six names, carved in timber and in a written hand for the forearm; the town with 12 windows; the ally's silhouette. |
+| Effects | Fog; dust from stone; shaking rope; swirling fog overhead; leaning flame; bowing planks; the flame's dip and sputter; a window flickering low; a faint self-lit version of each cue, and of footfalls, for Cues everywhere. A shuttered lantern's seam glow. Rattling planks at a hook on the deck. |
+| Text | 6 names with one-line epitaphs (the brief's "names with one-line epitaphs"); 6 journal hints; the ally's lines; menu and settings; the lesson's key prompts; planning's why-not lines; the key card; the listening round's instruction, read aloud from the session script. |
+| Type | One typeface for every screen: Cormorant Garamond (SIL Open Font License), bundled with the game. |
 
 ---
 
@@ -753,17 +797,17 @@ Eight epics for the one-night game (GD-36). Each ends in something playable. Det
 | # | Epic | Ends with | Rough size |
 |---|---|---|---|
 | 1 | The span | Walk the span, strip it, overload a section and watch it fall | 30 to 50 h |
-| 2 | The ear | The dusk lesson, playable, and tried by two or three newcomers | 50 to 70 h |
+| 2 | The ear | The listening lesson, playable, and tried by two or three newcomers | 55 to 75 h |
 | 3 | The dead | Grapplers, Divers and nests cross an undefended span and put the windows out | 40 to 60 h |
-| 4 | Rigs and hands | One wave held with a trapdoor, a swing-beam, a wedge and lanterns | 40 to 60 h |
-| 5 | The night | The full sitting: lesson, planning, six waves, the name, the ledger, replay | 50 to 70 h |
+| 4 | Rigs and hands | One wave held with a trapdoor, a swing-beam, a wedge and lanterns | 45 to 70 h |
+| 5 | The night | The full sitting, with every screen: lesson, planning, six waves, the name, the ledger, replay | 65 to 90 h |
 | 6 | Gate 2 | Five newcomers have played; the three checks and the ear re-check are scored | 20 to 40 h |
 | 7 | The look | The same night in the woodcut look, at the performance target | 40 to 80 h |
-| 8 | Going public | The itch.io release for Windows and Linux | 20 to 30 h |
+| 8 | Going public | The itch.io release for Windows and Linux, with the accessibility extras | 30 to 45 h |
 
 **Sequence.** 1 and 2 first, in either order: they carry the two biggest risks. Epic 2 ends with the early listen (GD-43). Then 3, 4, 5. Epic 6 is the gate: 7 and 8 start only when it passes. The Fog Season is planned after gate 2.
 
-Total: about 290 to 460 hours, against the brief's 250 to 500 hours in a year.
+Total: about 325 to 510 hours, against the brief's 250 to 500 hours in a year. The UX decisions added about 35 to 50 hours (GD-50), and the top of the range is now 10 hours over the brief's. Gate 2 is reached after about 255 to 385 hours.
 
 ---
 
@@ -775,13 +819,13 @@ Total: about 290 to 460 hours, against the brief's 250 to 500 hours in a year.
 - Any two cries at the same distance within 1 LU, re-measured after any change to a clip or a sound setting.
 - No crash in 20 nights played back to back.
 - **Fairness:** in the playtest logs, no threat affects the bridge before its full warning has sounded (6 s, 8 s or 40 s).
-- The first cry sounds within 60 s of pressing Start.
+- The first cry starts within 15 s of the lesson opening. On a first launch the two sound questions come first and are not timed; the playtest log records the time from Begin the watch to the first cry, and its median should be 60 s or less.
 
 ### Gameplay Metrics
 
-**The early listen** (GD-43). At the end of epic 2, two or three newcomers, at least one on headphones and one on speakers, try the dusk lesson and the listening round described below. It is a check, not a gate. If they face the right way on fewer than 80% of cries, the design is rethought before epic 3.
+**The early listen** (GD-43). At the end of epic 2, two or three newcomers, at least one on headphones and one on speakers, try the listening lesson and the listening round described below. It is a check, not a gate. If they face the right way on fewer than 80% of cries, the design is rethought before epic 3.
 
-**Gate 2** (GD-29). Five people who have never seen the game play the one-night game in gray boxes. All three checks must pass:
+**Gate 2** (GD-29). Five people who have never seen the game play the one-night game in gray boxes, at the default settings: Visual cues on In the light, Holds on Hold. The log records both settings for every night. A newcomer who switches Visual cues plays on and is reported separately; the ear re-check's marks are taken over those who kept the default. All three checks must pass:
 
 1. **Want more:** 4 of 5 choose to play again or ask what comes next.
 2. **Barely:** 3 of 5 reach dawn within two tries, having lost at least 2 sections or 5 windows. (5 of 12 is the same share as the 2 of 5 first chosen.)
@@ -793,7 +837,7 @@ Also recorded, not scored: how many of the five found the name, and how many cal
 
 **The ear re-check** (GD-30, GD-46) has two parts.
 
-*The listening round* carries the pass marks. Before their first night, each of the five gate 2 newcomers spends 5 minutes on the span: 12 warnings from places they cannot predict, 4 from each level, in the dark, with no ally and nothing to defend. They turn and walk to where they hear each one.
+*The listening round* carries the pass marks. Before their first night, each of the five gate 2 newcomers spends 5 minutes on the span: 12 warnings from places they cannot predict, 4 from each level, in the dark, with no ally and nothing to defend. They turn and walk to where they hear each one. The round comes after the lesson. The warden carries no lantern and the pointer cues are off, as in Ears only, so the gate's light shows nothing. Each trial ends 15 s after its warning starts, which cuts a nest's sobbing short; twelve trials take about 5 minutes. The person running the session reads the instruction from the session script.
 
 | Score | A warning counts as right when | Pass |
 |---|---|---|
@@ -805,9 +849,11 @@ Also recorded, not scored: how many of the five found the name, and how many cal
   - Speakers below the mark, headphones above: the store page says "best with headphones", and "cues everywhere" is on by default for speaker players.
   - Headphones below the mark too: trial the HRTF plugin on headphones, after checking it against Godot 4.7.2; if that fails, design Plan B, where the lantern scouts.
 
-*The night log* is supporting data, with no pass mark, because a good plan makes arrivals predictable. For every warning in waves 4 to 6 it records: whether the warden turned to within 45° in 4 s; whether the warden was heading toward the arrival point at 4 s; dark or lit; the section; and whether the ally called it. It also records how long the warden spends on each section, to show whether players camp at the town end.
+*The night log* is supporting data, with no pass mark, because a good plan makes arrivals predictable. For every warning in waves 4 to 6 it records: whether the warden turned to within 45° in 4 s; whether the warden was heading toward the arrival point at 4 s; dark or lit; the section; and whether the ally called it. It also records how long the warden spends on each section, to show whether players camp at the town end. The playtest log also records the headphones-or-speakers answer and every pause (UX-19, UX-24).
 
 **Shape of the sitting.** Median length 18 to 25 minutes. A first-time player reaches dawn with about 3 of 6 sections and 3 of 12 windows left.
+
+**The muted night** (GD-50, UX-38). In epic 8, before the public release, one night is played with the sound off and Visual cues on Everywhere. It is a check, not a gate: the warden should face each warning within 4 s. Until it passes, the store page does not say the game can be played without sound.
 
 **The look test**, after gate 2, on the same span:
 
@@ -834,6 +880,8 @@ Also recorded, not scored: how many of the five found the name, and how many cal
 - The player writing a name's epitaph (ST19).
 - Classic Watch (D2): safe days are the Fog Season's own rhythm, so it is not a separate mode.
 
+**Not in the one-night game, and not yet planned:** key rebinding; narrated menus; languages other than English; a one-handed scheme. These are the accessibility gaps accepted at hobby stakes (`EXPERIENCE.md`, Accessibility Floor).
+
 **Later updates, "if it lands":**
 
 - The Swell and Wind seasons; the full truth and three endings; more enemies and allies.
@@ -859,19 +907,30 @@ These have to be proven by playtest or by the work itself. Each names where it i
 | 3 | A 3 dB step per section is enough to hear how far along the span a cry is, on speakers as well as headphones. People judge loudness coarsely, so this may give near, middle and far, not six sections. | The early listen, then the listening round's "place" score |
 | 4 | The tune reads as "below" and as a different voice from the whispers. | The night log |
 | 5 | The woodcut look stays readable in the dark and holds the performance targets. | The look test, epic 7 |
-| 6 | Free libraries hold enough material: models and animation for three kinds of dead, the tune, and the other sounds. | Epics 5 and 7 |
-| 7 | The one-night game fits in about 290 to 460 hours. | Hours logged epic by epic |
+| 6 | Free libraries hold enough material: models and animation for three kinds of dead and for the warden's hands, the tune, and the other sounds. | Epics 5 and 7 |
+| 7 | The one-night game fits in about 325 to 510 hours. | Hours logged epic by epic |
 | 8 | Every number in this document is a workable starting value. | Tuning in epic 6 |
+| 9 | The hands alone tell a newcomer what an action will do and how far along it is, with no prompts at night: the ready pose, the hold as its own progress, the "can't" gesture. In gray boxes they are block hands holding a recognisable tool. The lesson practises seven actions; the key card has to carry the rest. | Gate 2 |
+| 10 | Cues everywhere carries a player who cannot hear through a night. By sight the flame is the only direction-finder, and it shows the nearest cry only. | The muted night, epic 8 |
+| 11 | Godot 4.7.2 can bind keys by physical position, name them as the player's keyboard prints them, and fold stereo to mono. | Architecture |
 
 ### Notes for the designer
 
-- **Is listening still needed?** Level has four cues (the cry, the place, the bridge, the ally) and direction has visual help in lantern light. The ally's calls fade to a safety net from wave 4 (GD-39) so that the ear has to lead. The ear re-check keeps warnings in the dark apart from those in the light: if players pass in the light and fail in the dark, the game works but pillar 2 is doing less than it claims.
+- **Is listening still needed?** Level has four cues (the cry, the place, the bridge, the ally) and direction has visual help in lantern light. The ally's calls fade to a safety net from wave 4 (GD-39) so that the ear has to lead. The ear re-check keeps warnings in the dark apart from those in the light: if players pass in the light and fail in the dark, the game works but pillar 2 is doing less than it claims. Cues everywhere stands outside this question on purpose: there the ally calls every warning and the eye leads (UX-38).
 - **Camping at the town end.** With no rig on section 6 the last line is section 5, but a player can still hold sections 4 and 5 and never walk the span. The playtest log shows time per section. If camping wins, forward sections need a reason to be held.
 - **Planks may follow the fight.** Stripping and re-laying lose nothing but time. If playtests show planks being moved to wherever the next threat is, add a loss on stripping at night (brainstorm Y5).
 - **The Fog Season outline holds more than one new thing on nights 1 and 5.** When it is detailed after gate 2, either thin those nights or restate "one new thing each night".
 - **Every option chosen in this session was the facilitator's recommendation.** The numbers are starting values from one proposal, not the result of comparison. Gate 2 is where they are tested.
-- **Two validators have read this document, and neither has read this draft.** The first found 2 critical and 14 major problems in draft 0.3. The second found 1 critical and 8 major in draft 0.4, almost all missing cases in the rules for Grapplers, Divers and stripping. Draft 0.5 applies them. Expect architecture to find more missing cases.
+- **Three validators have read this document.** The first found 2 critical and 14 major problems in draft 0.3. The second found 1 critical and 8 major in draft 0.4. The third read draft 0.6 after the UX decisions went in and found no critical and 12 major, almost all missing cases where lanterns, holds, rigs, Divers and replays meet; a fourth reader checked the UX decisions against it. Their fixes are applied here, and nobody has read the result. Expect architecture to find more missing cases.
 - **The three clip moments are candidates.** They are confirmed in epic 8 by recording them.
+- **The ear re-check's first fallback now means more.** "Cues everywhere on by default for speaker players" was written when that setting only showed cues in the dark. It now also has the ally call every warning all night. If the fallback is ever used, decide then whether speaker players get the whole setting or only its dark cues. That fallback would also make the headphones-or-speakers answer change a default, which today it does not.
+- **Which plank goes.** Planks leave a section in a fixed order that keeps the rest evenly spaced, wherever the warden stands to pry one up (GD-54). The carved name must show only at 4 planks or fewer.
+- **Hours.** The top of the estimate is 10 hours over the brief's ceiling. The accessibility extras sit in epic 8, after gate 2, so they are the first thing to cut or move to an update if the logged hours run over.
+- **The UX was reviewed on paper.** Two reviewers read the UX documents and nothing has been played. Their findings that were not taken up are in the UX folder's two review files.
+- **Rigs lock each other out.** A rig is worked from the next section toward the town, so a trapdoor dropped there, or that section's fall, puts the rig beyond it out of reach. Two trapdoors side by side must be hauled up town side first. If playtests read this as a bug, let the warden work a rig from the side beams.
+- **A lantern over an open section cannot be reached.** A bait lantern on a dropped trapdoor burns until the trapdoor is hauled up.
+- **Both placed lanterns start lit.** With oil for two of three, the player's first act may be to shutter one. If that reads as a chore, let planning set each placed lantern lit or shuttered.
+- **Not done from the third validation:** a per-wave economy line; the worked night stands in for it.
 
 ### Dependencies
 
@@ -881,6 +940,7 @@ These have to be proven by playtest or by the work itself. Each names where it i
 - Models and animation that allow commercial use, for the look test.
 - A GTX 1050-class machine and an Intel Iris Xe machine to measure on.
 - Godot 4.7.2 staying usable for the length of the project.
+- The typeface Cormorant Garamond, under the SIL Open Font License, for every screen.
 - Before anything goes public: the title checked on itch.io by hand, and the *LAST STAGE* demo watched for new overlaps.
 
 ### Deferred

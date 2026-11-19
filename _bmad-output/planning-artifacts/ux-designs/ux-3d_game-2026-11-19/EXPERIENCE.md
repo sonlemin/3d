@@ -98,7 +98,7 @@ Visual specs are in DESIGN.md, Components, under the same names.
 | **rig-mark** | Shows which section the rig covers. Right click on its section removes it and returns its cost. |
 | **lantern-reach** | Appears while the lantern tool is chosen (as a preview under the pointer) and stays for each placed lantern. |
 | **caption-line** | Shown for every spoken ally line, always, in every cue mode (UX-1, UX-3). On for as long as the line is spoken and at least 2 s. One at a time, matching the ally's one-call rule, with at least 0.3 s between two captions. Says only what the voice says (UX-26). |
-| **ledger-page** | Seven lines in the GDD's order (Win/Loss Conditions), written in one at a time, top to bottom, about one per 1.5 s; any key or click completes the page at once. Formats: "Sections standing · n of 6"; "Windows lit · n of 12"; "Planks and ropes left · n, n"; "Names learned · " the name with its epitaph beneath, or "None"; "Souls released · One" or "None"; "The fallen will return." (no value, never a number); "Wounds taken · n". The two closing menu-items appear only when the last line is in; Another night is chosen. |
+| **ledger-page** | Seven lines in the GDD's order (Win/Loss Conditions), written in one at a time, top to bottom, about one per 1.5 s; any key or click completes the page at once. Formats: "Sections standing · n of 6"; "Windows lit · n of 12"; "Planks and ropes left · n, n"; "Wounds taken · n"; "Names learned · " the name with its epitaph beneath, or "None"; "Souls released · One" or "None"; and last, "The fallen will return." (no value, never a number) (GDD GD-53). The two closing menu-items appear only when the last line is in; Another night is chosen. |
 | **journal-page** | Opens on the newest hint. Does not exist (no tray entry, no pause entry) until the first hint is written (UX-13). |
 | **key-card** | Read-only. Lists every key under Night, Planning, Always, each with its condition where it has one (for example "1, 2, R: at a section's town-side edge, facing out"). A fourth group, Signs, lists what the world is saying: shaking ropes, swirling fog, falling dust, a leaning flame, bowing planks, a sputtering flame. |
 | **key-prompt** | Dusk lesson only (UX-22). Each prompt stays until its action has been done once, then never returns. |
@@ -114,10 +114,11 @@ Visual specs are in DESIGN.md, Components, under the same names.
 | Title | Cold start | Reached in 10 s or less (GDD). "Begin the watch" is chosen. |
 | Left or right? | Wrong twice | Offers "Swap left and right" and warns that sound may be single-channel (GDD). Either answer continues. |
 | Dusk lesson | Opening | The first cry starts within 15 s of the lesson opening and is itself the look lesson: the look key-prompt shows while it repeats. Walking is prompted after the first cry is faced. With the two first-launch questions this keeps the GDD's "first cry within 60 s of Start". |
-| Dusk lesson | A cry not yet faced | It repeats until the warden faces within 45°; after three tries the ally points it out (GDD). |
-| Dusk lesson | Hands-on part | After the three cries: strike, strip a plank, hang and shutter the lantern, raise the forearm, each with a key-prompt (UX-22). |
+| Dusk lesson | A cry not yet faced | It repeats until the warden faces within 45°. After each playing not faced the ally says "listen again"; after three, the place shows its cue, which the lesson holds back until then (GDD). |
+| Dusk lesson | Hands-on part | After the three cries: strike a practice pin on the landing, strip a plank, hang and shutter the lantern, raise the forearm, each with a key-prompt (UX-22). |
 | Planning | Fresh span | 48 planks, 12 ropes on the span; nothing in hand; no tool chosen; tools 1 and 2 unavailable until parts are stripped. |
-| Planning | After a lost night | The plan the lost night was started with is restored exactly: stripped parts, rigs, lanterns (UX-40). Start over wipes it. The Journal entry is in the tray. |
+| Planning | After a lost night | The plan the lost night was started with is restored exactly: stripped parts, rigs, lanterns (UX-40). Start over wipes it. The Journal entry is in the tray. The name and its section are rolled again and the forearm is blank (GDD GD-52). |
+| Planning | A lantern still to place | Ring the bell is unavailable and says why (GDD mechanic 10). |
 | Planning | Tool unavailable | `{colors.dim}`; why-line on point. |
 | Planning | Nothing left to undo on a section | Right click does nothing. |
 | Night | Usable thing within 2 m | The matching hand moves to its ready pose (UX-5). |
@@ -132,7 +133,7 @@ Visual specs are in DESIGN.md, Components, under the same names.
 | Night | Name uncovered and lit | Looking at it within 2 m for about 1 s reads it; the forearm rises once on its own (UX-10). |
 | Lost night | New hint | Cries cut to wind, the view goes dark, the journal page opens on the new hint being written; one action continues (UX-12). Planning is ready within 3 s of that action (GDD). |
 | Lost night | Cause already has its hint | Same beat, but nothing is written: the journal opens on that cause's hint, already there, brightened for a moment (UX-41). |
-| Dawn | — | Every cry stops. The view rises over the span. After the silence, the ledger is written in (UX-14). |
+| Dawn | — | Every cry stops. The view rises over the span. After the silence the ally speaks one line, then the ledger is written in, ending on "The fallen will return." (UX-14, GDD GD-53). |
 | Pause | Any | Clock, the dead and every sound stop. Resume continues from the same instant. The playtest build writes each pause to its log (UX-24). |
 | Journal | No hints yet | Not offered anywhere. |
 | Settings | Cues set to Ears only or Everywhere | One line under the choice says what it changes. |
@@ -141,7 +142,7 @@ Visual specs are in DESIGN.md, Components, under the same names.
 
 - **Look decides.** At night the action comes from what the warden looks at within 2 m (GDD). This holds for both mouse hands and for E (UX-36).
 - **Ready pose.** A hand that can act shows it before the input: hammer raised to a pin, rope hand open to a rope, tool taken out at a build spot. No pose means no action there (UX-5, UX-9).
-- **Hold.** Most night actions are holds of 2 to 12 s (GDD key map). A hold cancels on moving more than 0.5 m or on a wound; looking around is free. Parts are spent when the hold completes, not when it starts. Pause freezes a hold and does not cancel it. Progress is the animation and its sound, ending on a distinct final beat (UX-2). With Holds set to Press once, a press starts the hold and a second press stops it (UX-39).
+- **Hold.** Most night actions are holds of 2 to 12 s (GDD key map). A hold cancels on moving more than 0.5 m or on a wound; looking around is free. Parts are spent when the hold completes, not when it starts. Pause freezes a hold and does not cancel it. Progress is the animation and its sound, ending on a distinct final beat (UX-2). With Holds set to Press once, a press starts the hold and a second press stops it (UX-39). Planning's two 1 s holds stay holds.
 - **Stand, face, look.** 1, 2 and R act on the section ahead when the warden stands at its town-side edge facing out. A swing-beam takes the rail on the side the warden is looking toward when the hold starts (UX-9).
 - **Dwell to read.** About 1 s of looking reads the carved name (UX-10). Nothing else in the game uses dwell.
 - **Raise to read.** Tab held raises the forearm (UX-11).
@@ -156,7 +157,7 @@ The night has no HUD. The table is the whole of what the player can know at nigh
 | The player needs to know | Carried by | Decision |
 |---|---|---|
 | What a click will do | The hands' ready pose | GDD, UX-5 |
-| What E, F, 1, 2, R will do | Learned at dusk; the key card; the ready pose at a build spot; a "can't" gesture when impossible | UX-4, UX-6, UX-9 |
+| What E, F, 1, 2, R will do | Partly practised at dusk, otherwise learned from the key card; the ready pose at a build spot; a "can't" gesture when impossible | UX-4, UX-6, UX-9 |
 | Progress of a hold | The action's own animation and sound | UX-2 |
 | Planks and ropes in hand | Tally strokes inked on the forearm (Tab) | GDD, UX-11 |
 | The name, once read | Written on the forearm (Tab) | GDD, UX-10 |
@@ -164,9 +165,9 @@ The night has no HUD. The table is the whole of what the player can know at nigh
 | A section near breaking | Creak and groan; planks bow, in light | GDD |
 | Oil left | The lantern's reservoir, and a shrinking, sputtering flame | UX-7 |
 | The spare flask | Seen at the town pier, full or empty; it is never carried and refills one lantern once | UX-36 |
-| A cry's level | Kind of cry; shaking ropes, swirling fog, falling dust, in light; the ally's call with caption | GDD, UX-1 |
+| A cry's level | Kind of cry; shaking ropes, swirling fog, falling dust (rattling planks for a hook on the deck), in light; the ally's call with caption | GDD, UX-1 |
 | A cry's side | Stereo; a lit flame leaning toward it, in its own light | GDD |
-| The name's section | The hum; the carried flame leaning, when no cry sounds in its light | GDD, UX log |
+| The name's section | The hum; the carried flame leaning toward it within 3 m, only while the hum can be heard (no cry sounding) | GDD, UX log |
 | The one who keeps coming back is here | The tune; its rail's ropes swaying in time, in light | GDD |
 | Which wave | Count of tolls; chalk tallies on the board at the town pier | GDD |
 | Which way is home | The bell's side; the warm windows | GDD |
@@ -182,10 +183,10 @@ The night has no HUD. The table is the whole of what the player can know at nigh
 | | In the light (default) | Everywhere | Ears only |
 |---|---|---|---|
 | Pointer cues: shaking ropes, swirling fog, falling dust, swaying ropes, leaning flames | Where light falls | Everywhere: the cue itself glows faintly in the dark and nothing else is revealed; flames lean to cries beyond their light (UX-27) | Off (UX-3) |
-| Flames dip once per toll | No | Yes (UX-28) | No |
+| Flames dip once for each stroke of the bell | No | Yes (UX-28) | No |
 | Footsteps of the dead on the deck; bowing planks | Where light falls | Also glow faintly in the dark (UX-38) | Where light falls |
 | A shuttered lantern | No lean | Its seam glow still leans (UX-38) | No lean |
-| The ally's calls | Every cry in waves 1 to 3; from wave 4 only cries the warden has not turned to (GDD) | Every cry, 2 s in, all night (UX-38) | As default |
+| The ally's calls | Every warning in waves 1 to 3; from wave 4 only warnings the warden has not turned to (GDD) | Every warning, 2 s in, all night (UX-38) | As default |
 | Captions, wound darkening, chalk tallies, bowing planks, things seen in the light | On | On | On |
 
 A pointer cue lasts for the whole of its warning, in every mode that shows it.
@@ -200,7 +201,7 @@ Keyboard and mouse only. The bindings are the GDD's key map (Controls and Input)
 
 | Input | Where | Adds to the GDD |
 |---|---|---|
-| E | Night | Acts on what is looked at: pole or hung lantern (hang or take); deck gap with a plank in hand (re-lay); the flask at the town pier with a lantern in hand (refill). (UX-36) |
+| E | Night | Acts on what is looked at: a pole (hang the lantern in hand, take the one hanging there, or swap the two; one lantern in hand, GDD GD-49); a standing section with fewer than 8 planks, with a plank in hand (re-lay); the flask at the town pier with a lantern in hand (refill). (UX-36) |
 | 1, 2, R | Night | Valid only at a section's town-side edge, facing out; the ready pose says so. 2 takes the rail looked toward. (UX-9) |
 | Tab | Night | Walk and look allowed; hands busy; ignored during a hold. (UX-11) |
 | Space | Planning | A 1 s hold, not a tap. (UX-18) |
@@ -230,7 +231,7 @@ Feedback is physical and audible; nothing flashes on the screen.
 | Window out | One short, quiet sound from the town side, well under the cries, outside the four-cry limit (UX-30). |
 | Start of the night | The warden's bell under the held Space, then the town's bell answers with one toll (UX-18). |
 | Lost night | Every cry cuts to wind; dark; the scratch of the hint being written. |
-| Dawn | Silence first. Then the ledger, a line at a time. |
+| Dawn | Silence first. Then the ally's one line. Then the ledger, a line at a time, closing on the vow. |
 | Planning | A strip, a placement and an undo each have a short dry sound (wood, rope, iron). No music anywhere (GDD). |
 
 No screen shake, no hit-stop, no vignette other than the wound's darkened side, no controller haptics (no controller).
@@ -283,7 +284,7 @@ Linh plays day/night strategy games and found this on itch.io. Headphones on, ev
 1. Title. "Begin the watch" is already warm; she presses Enter.
 2. "Headphones or speakers?" She picks Headphones.
 3. A dark screen and one bell stroke. "Left or right?" She presses D. Right.
-4. Dusk, first person. A key-prompt teaches look, then walk. Inside the first minute a whisper comes from the left rail; she turns to it and the ally says "Right." Two more cries, one per level.
+4. Dusk, first person. A key-prompt teaches look, then walk. Inside the first minute a whisper comes from the left rail; she turns to it and the ally confirms it. Two more cries, one per level.
 5. The hands-on part: she strikes, strips a plank, hangs and shutters the lantern, and holds Tab to see one tally stroke on her forearm.
 6. Planning. She strips section 1 and reads the strength numbers fall. She points at Trapdoor while it is dim: "Trapdoor needs 2 ropes. You hold 1." She strips a rail, places it, hangs two lanterns and watches their reach.
 7. She holds Space. Her bell, then the town's single toll.
@@ -291,7 +292,7 @@ Linh plays day/night strategy games and found this on itch.io. Headphones on, ev
 9. **Failure path.** The cries cut to wind. Dark. The journal opens and a line writes itself in about section 6 carrying too much. One key, and within three seconds she is back above the span, her plan exactly as she left it and "Journal" now in the tray.
 10. She changes one thing: the planks go back on section 6.
 11. Wave 6. Ten seconds of silence, then six tolls. The sky pales.
-12. **Climax.** Every cry stops at once. The view lifts off the deck and over the span in silence. Then the ledger writes itself in beside the bridge she can still see: "Sections standing · 3 of 6", "Windows lit · 3 of 12", and, alone on its line, "The fallen will return."
+12. **Climax.** Every cry stops at once. The view lifts off the deck and over the span in silence. The ally says one quiet thing. Then the ledger writes itself in beside the bridge she can still see: "Sections standing · 3 of 6", "Windows lit · 3 of 12", and last, alone on its line, "The fallen will return."
 13. "Another night" is warm. She presses Enter.
 
 ### Linh calls the name
@@ -316,7 +317,7 @@ Tomas is hard of hearing in his left ear and plays on laptop speakers.
 4. Night, wave 2. Beyond his lantern's reach, on section 2, a rail's ropes glow faintly and shake. Nothing else out there is visible. The caption reads "Below!"
 5. He walks to the town-side edge of section 2; his hammer hand rises to the trapdoor's pin.
 6. Each toll, every flame dips once. He counts three dips for wave 3 without walking back to the tally board.
-7. **Failure path.** In wave 5 two cries overlap in the dark and the ally calls only one. He catches the second by its glowing dust at the far pier, late, and loses a window: a flicker, then dark, seen when he turns.
+7. **Failure path.** In wave 6 two warnings overlap in the dark and the ally calls only one. He catches the other by the glowing dust at the far pier, late, and loses a window: a flicker, then dark, seen when he turns.
 8. **Climax.** A Grappler he never heard hauls itself onto section 2 in the dark, ropes still shaking pale. He strikes the pin. The planks drop, and in his good ear the falling cry fades for two full seconds.
 
 ### Mai streams it
@@ -324,7 +325,7 @@ Tomas is hard of hearing in his left ear and plays on laptop speakers.
 Mai streams small free games and gives each one a minute.
 
 1. Before going live she opens Settings from the title and switches on Stream-safe sound.
-2. She skips nothing: the first cry lands inside the first minute, the caption "Right." under it for viewers who have her muted.
+2. She skips nothing: the first cry lands inside the first minute, the ally's confirming word captioned under it for viewers who have her muted.
 3. Planning takes her four minutes of thinking aloud; the strength numbers and the why-line give chat something to argue about.
 4. **Failure path.** Her phone rings in wave 3. Esc: everything stops and falls silent. She resumes on the same instant.
 5. **Climax.** Wave 4. Three of the dead are on section 2 and the planks are bowing in the lantern light. One hammer blow. The trapdoor drops within a third of a second, three falling cries fade into the dark, and nothing appears on screen to say so. The clip is twelve seconds long.
@@ -332,7 +333,7 @@ Mai streams small free games and gives each one a minute.
 
 ## GDD impacts
 
-The GDD should be updated before architecture reads it.
+Applied in GDD draft 0.6 on 2026-11-19 (GDD decisions GD-48 to GD-50). The tables are kept as the record of what changed.
 
 **Changes a GDD statement**
 

@@ -12,6 +12,7 @@ IDs: **IN** = inherited from an earlier document, **GD** = decided in this GDD s
 | 0.3 | 2026-11-19 | Review applied (GD-37 to GD-39): proposals accepted, tags removed, hammer-and-hook and ally-fade rules added. |
 | 0.4 | 2026-11-19 | Finalize checks run (three input reconciliations, one validator: 2 critical, 14 major, 2 minor). GD-40 to GD-44 applied; `gdd.md` and `epics.md` rewritten. Committed as 74deb48. |
 | 0.5 | 2026-11-19 | Second validator read draft 0.4: 1 critical, 8 major, minor items; 31 of the 38 first-round fixes confirmed as logged. GD-46 and GD-47 applied. Draft 0.5 has not been read by a validator. Finalized. |
+| 0.6 | 2026-11-19 | Update run: UX decisions UX-1 to UX-41 applied (GD-48 to GD-51). Third validator read it: 0 critical, 12 major, 18 minor; a fourth reader checked the UX decisions: 35 of 41 landed, 2 weakened, none contradicted. GD-52 to GD-55 applied. Nobody has read the result. Finalized. |
 
 ## Inputs read (2026-11-19)
 
@@ -278,4 +279,106 @@ Corrections to the first list: in item 12 the "fourth voice" on the level below 
 - External handoffs: none configured.
 - Still open, none blocking architecture: the seven notes under "Notes for the designer" and the four items under "Deferred" in `gdd.md`.
 - Owed: no validator has read draft 0.5. The second validator expects Grappler, Diver and stripping rules to need more cases; architecture is the next place they will surface.
+- Next step: `gds-game-architecture`.
+
+## UX reconciliation (2026-11-19, toward draft 0.6)
+
+Update run. Change signal: the UX documents at `../../ux-designs/ux-3d_game-2026-11-19/` (`EXPERIENCE.md`, `DESIGN.md`, and their `.decision-log.md`, UX-1 to UX-41), in particular the "GDD impacts" table in `EXPERIENCE.md`. No pillar and no part of the core loop is rethought, so draft 0.5 is patched. Working mode: express, because the decisions were made in the UX run.
+
+Earlier decisions the UX run changes (surfaced to Sonlm before editing):
+
+| Earlier | Change |
+|---|---|
+| GD-8, lesson about 2 min | About 3 min with a hands-on part and key prompts (UX-22). The sitting is about 21 minutes. |
+| GD-39, the ally's calls fade from wave 4 | Unchanged in the default and Ears only modes. In Cues everywhere the ally calls every warning all night (UX-38). |
+| GD-9, cues inside lantern light | Wherever light falls, which adds the town gate's light on section 6 (UX-29). |
+| GD-35, Ears only is all visual cues off | Narrowed: captions and physical events stay (UX-3). Ears only and Cues everywhere are two values of one setting (UX-25). |
+| P4, the key map | Space is a 1 s hold (UX-18); Esc puts a tool away before it pauses (UX-16); J opens the journal (UX-13); E acts on what is looked at (UX-36). |
+| P11, replay from planning | Planning opens on the last plan (UX-40); a repeated cause shows its hint again (UX-41). |
+| P18, replay in 3 s | Measured from the player's action on the lost-night page (UX-12). |
+
+Found in this run, not in the UX run:
+
+- The lesson's hands-on part needs the hammer and the lantern (epic 4), so it is built in epic 5. Epic 2 keeps the listening lesson, and the early listen tests only that.
+- The ear re-check's first fallback ("cues everywhere on by default for speaker players") now also turns on a call for every warning. Kept as a note for the designer, to be decided only if that fallback is used.
+
+| ID | Date | Decision | Closes |
+|---|---|---|---|
+| GD-48 | 2026-11-19 | The UX decisions UX-1 to UX-41 are adopted. The GDD keeps the rules of play and cites the UX documents for screens, the night's surfaces and input details. | |
+| GD-49 | 2026-11-19 | Lanterns: one in hand. Each of the six sections has one pole. E at a pole hangs the lantern in hand, takes the one hanging there, or swaps the two. The flask stays at the town pier and refills the lantern in hand, once. (Declined: one in hand with no swap; carrying two.) | The case the flask rule exposed |
+| GD-50 | 2026-11-19 | The accessibility extras (stronger Cues everywhere, Holds: Press once, Mono sound, the muted night) are built in epic 8, after gate 2. The UX decisions add about 35 to 50 hours: epic 2 to 55-75, epic 4 to 45-70, epic 5 to 65-90, epic 8 to 30-45; total about 325 to 510 hours, 10 over the brief's ceiling at the top. Gate 2 is reached after about 255 to 385 hours. (Declined: the extras in epic 5; the extras as a first update after release, 315 to 495 hours.) | |
+| GD-51 | 2026-11-19 | Finalize checks for draft 0.6: a full validation and a check that every UX decision landed. | The validation owed from draft 0.5 |
+
+Changes applied in draft 0.6 (GD-48):
+
+`gdd.md`:
+
+1. Frontmatter and "How to read": draft 0.6; the UX documents named as the home of screens, the night's surfaces and input details.
+2. Session shape: lesson 3 min, sitting about 21 minutes; the left/right check on a dark screen with ring-again and "I can't hear it"; the hands-on part; the first-launch question and the skip rule (UX-19 to UX-22, UX-38).
+3. Win/Loss: the window's sound and the flicker for a lone hatchling (UX-30, UX-37); the lost-night moment, the last plan, a repeated cause (UX-12, UX-40, UX-41); the ledger's form (UX-14).
+4. Mechanics 1: cues wherever light falls; a cue lasts for its warning; captions; the table of the three cue modes (UX-1, UX-3, UX-25 to UX-29, UX-38).
+5. Mechanics 2, 4, 6, 7, 8, 10: planks drawn to the count; rigs built from the town-side edge and the beam's rail chosen by look or click; one pole per section, one lantern in hand, the flask at the town pier, reading oil (GD-49, UX-7, UX-36); reading the name (UX-10); the ally in Cues everywhere and the caption (UX-38, UX-26); the planning tray, strip order, Start over, the 1 s bell hold (UX-15 to UX-18).
+6. Controls and Input: E by look; 2 by look; Tab; Esc; planning rows for Start over, J and Esc; hold rules and Press once; what the player sees and hears of an action; keys by physical position (UX-2, UX-4 to UX-6, UX-9, UX-11, UX-13, UX-16, UX-24, UX-36, UX-39).
+7. Genre sections: the pillar table, the bell's answer, planning's strength numbers, oil, the settings lists, darkness, saving, progression, the landing.
+8. Art and Audio: the caption as the one thing over the night view, the centre dot, hands and forearm brightness, the Lantern light look for screens, the small sounds.
+9. Technical: the replay target's start point, keys by position, the sound-output answer, Mono sound; assets for the new sounds, models, effects, text and the typeface.
+10. Epics summary, metrics, scope, assumptions, notes, dependencies: sizes and total (GD-50); the first-cry target on a first launch; gate 2 at default settings; the playtest log; the muted night; the gaps not yet planned; assumptions 9 and 10; four notes for the designer; the typeface.
+
+`epics.md`:
+
+11. Sizes: epic 2 to 55-75 h, 4 to 45-70 h, 5 to 65-90 h, 8 to 30-45 h; total about 325 to 510 h.
+12. Epic 1: planks drawn to the count, the forearm on Tab, the hold rules. Epic 2: the listening lesson only, the dark-screen check, captions. Epic 3: the window's sound and flicker. Epic 4: the hands' feedback, the build spot, poles and swap, the flask, reading oil, E by look. Epic 5: the planning tray, the journal and ledger pages, title, pause, key card, settings, the lesson's hands-on part, the Lantern light look. Epic 6: the log's two additions, default settings. Epic 7: forearm ink and brightness, the lantern's glass. Epic 8: the accessibility extras and the muted night.
+13. Coverage table: rows for the hands, the lesson's two parts, the screens, the settings list and the extras.
+
+Not changed: pillars, the core loop, the wave tables and timetable, the dead, costs and timings, the Fog Season outline.
+
+## Third validation and UX check (2026-11-19, of draft 0.6)
+
+Two independent readers (GD-51). Findings stayed in the conversation; no report file.
+
+- **Validator** (the GDD checklist, plus rule completeness for architecture): 0 critical, 12 major, 18 minor. Sound: structure, the six tower-defense and four horror sections, no engine leakage, every recomputed sum (sitting 21 min; 24 lantern-minutes; 55 m in about 16 s; wave totals and 44 crossings; hours 325 to 510 and 255 to 385), the timetable, all timings across sections, the cue-mode table against mechanics 6 and 8 and the 17 settings.
+- **UX check** (every UX decision against `gdd.md` and `epics.md`): 35 of 41 landed, 4 are look or wording only and not contradicted, 2 weakened (UX-24, UX-27), none contradicted. GD-49 and GD-50 consistent across the three documents.
+
+Decided by Sonlm from their findings:
+
+| ID | Date | Decision | Closes |
+|---|---|---|---|
+| GD-52 | 2026-11-19 | Every night is a new run. Each night start, after a loss or after "Another night", rolls the name and its section again and clears the forearm. The journal carries over; after a loss, so does the plan. "Another night" after dawn opens a fresh span. (Declined: a replay as the same night; the same section with the name read again.) | Validator major 7; what "each run" means after UX-40 |
+| GD-53 | 2026-11-19 | Dawn: silence, the ally's one line, then the ledger in this order: sections standing, windows lit, planks and ropes left, wounds taken, names learned, souls released, and last "The fallen will return." Changes P12's order. (Declined: no ally line; the ally after the ledger; the old order.) | UX check T1, T3 |
+| GD-54 | 2026-11-19 | Missing planks are drawn evenly spread: planks leave in a fixed order that keeps the rest evenly spaced, and a section with any plank can be walked over its whole length. Replaces the facilitator's far-pier-first order. (Declined: far-pier-first as mocked; a bare part that really is bare.) | Validator major 3 |
+| GD-55 | 2026-11-19 | The fixes below, applied by the facilitator where the answer followed from an existing rule or from the reviewer's own suggestion. | |
+
+Fixes applied (GD-55), `gdd.md`:
+
+1. Night-start state: the bell cannot be rung until both placed lanterns are hung; the night starts on the town pier landing, third lantern in hand, all three full and lit. (A note for the designer records that planning could set each lantern lit or shuttered.)
+2. Holds: also cancelled by letting go, or the moment the action becomes impossible; one action at a time; planning's two 1 s holds are holds in both Holds settings; a strike's blow lands at the end of its 0.5 s.
+3. A section with any plank is walkable over its whole length; whoever stands on a section when its last plank is taken is on its side beams from there.
+4. Rigs are built, hauled, re-hung and dismantled from within 2 m of the town-side edge, on the next section toward the town; a rig cannot be worked while that section is open or fallen; a blow from the rig's own section still springs it; a warden on a dropping trapdoor catches the edge and is wounded.
+5. Divers: "more than one" lit lantern; a section must have planks and not be open when the warning starts; a redirected Diver lands within sections 1 to 5 when it can; section 6's exceptions restated to include the re-dive from beyond a gap.
+6. The warden keeps the lantern (lit, counted as carried) and all parts through every hold, wound, climb and crossing. Hang, take and swap are one press. F acts on the hung lantern looked at, otherwise on the lantern in hand. The pole holds the lantern over the centre of the section; a lantern over an open section cannot be reached.
+7. Planning: an undo that needs a spent part is refused with a reason; a restored plan can be undone in the same way.
+8. A hook on the deck picks an edge at random; its warning sounds under that edge and rattles its planks, in the same cue modes as the ropes. The 2-hook cap counts a pending warning.
+9. The lesson: a practice pin on the landing for the strike; the hands-on part ends when all four steps are done; the span and lanterns are put back; "listen again" after each playing not faced, and the place's cue shown after three; the first cry doubles as the look lesson. The ally's confirming word is not "right".
+10. The listening round: after the lesson, no lantern, pointer cues off, each trial ends 15 s after its warning starts, about 5 minutes, instruction read from the session script.
+11. Tolls and strokes: one tally per wave, one flame dip per stroke, strokes 1.5 s apart, a wave's clock from its first stroke.
+12. Wounds: knocked down in place; a side for sideless causes picked at random; wounds stack per side. The wedge only while the nest sobs. The ally's "late" call defined against when it was due. The journal's cause found in a stated order.
+13. The flame leans to the hum only while the hum can be heard. In Cues everywhere a flame leans to cries beyond its own light. A full crossing during a window's flicker puts it out and the flicker moves on.
+14. Numbers: nest gaps close from about 3.3 s, not 4 s; nearest normal arrivals are at section 5 (about 18 s and 19 s), with section 6 as the exception case; the first-cry target restated as 15 s into the lesson plus a logged median.
+15. Assets and limits: the hands' moves and the hold sounds; the tune's resolving phrase; the six names carved and written; the seam glow; the comfort limits (no flash, no shake, flicker under 3 a second, no bob or roll); the window sounds at ambience level.
+16. Assumptions 9 and 11, and notes for the designer on rigs locking each other out, the unreachable lantern, lanterns starting lit, and the fallback's effect on the headphones answer.
+
+`epics.md`: ambience corrected to the GDD's rule (missed since draft 0.5); the hold rules split across epics 1, 4 and 5; minimum brightness of hands and forearm moved to epic 4, before gate 2; the pause screen's five entries; "headphones or speakers" in the settings list; "I can't hear it" recorded in epic 2 and wired in epic 5; the playtest log's settings and first-cry time; the remaining targets and a frame-rate re-measure in epic 8; Coverage rows for the hold rules, the screens and the targets.
+
+UX documents, kept in step: the hum's flame condition, "warning" for "cry" in the ally's rule, strokes for tolls, the ledger order, the dawn beat, the confirming word, the practice pin, the bell waiting for both lanterns, even plank spacing, four key-card groups, and one journey step that put a far-pier nest in wave 5.
+
+Not done: a per-wave economy line (validator minor 18). Several starting values were set by the facilitator and are tuned at gate 2: strokes 1.5 s apart, the glow readable from 15 m, the 2 m build spot.
+
+## Finalized (2026-11-19, draft 0.6)
+
+- `gdd.md` and `epics.md` are at draft 0.6.
+- Decision log audit: GD-48 to GD-55 are all captured in `gdd.md` or `epics.md`.
+- Polish: no document standards are configured for this skill, so none were applied.
+- Narrative design: unchanged from GD-45. Architecture first; the night's few texts are written in epic 5.
+- External handoffs: none configured.
+- Owed: nobody has read the draft after the third round of fixes.
 - Next step: `gds-game-architecture`.
