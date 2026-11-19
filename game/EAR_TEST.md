@@ -1,5 +1,9 @@
 # Ear test: tester protocol
 
+> **Closed 2026-11-19.** Gate 1 was closed on Sonlm's own sessions; the outside testers were
+> skipped. Results, caveats and what the one-night game takes from this:
+> `_bmad-output/implementation-artifacts/ear-test-outcome.md`.
+
 Can a player tell where a cry comes from by ear: which direction (town, far bank, left rail,
 right rail) and which level (above, inside, below)? This gray-box Godot project measures that.
 
