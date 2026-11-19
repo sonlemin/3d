@@ -3,7 +3,7 @@ title: The Mourning Watch - Development Epics
 scope: the one-night game
 created: 2026-11-19
 updated: 2026-11-19
-status: draft 0.4 (finalize fixes applied)
+status: draft 0.5 (second validation applied)
 ---
 
 # The Mourning Watch - Development Epics
@@ -53,7 +53,8 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 - Strip a plank (2 s), strip a rail rope (3 s), re-lay a plank (3 s). Parts are carried; the forearm shows the tallies.
 - Strength = planks left, as a count. Load from test weights.
 - A section creaks at its limit, groans for 2 s above it, then falls for good with what is on it.
-- An open section (no planks) cannot be stood on; the warden edges round it in 4 s.
+- An open section (no planks) cannot be stood on; the warden edges round it in 4 s; its side beams carry a load of 2.
+- Section 6 cannot be stripped below 4 planks.
 - A fallen section is a gap the warden crosses hand over hand in 8 s. A warden on a falling section catches the edge and climbs back in 5 s.
 - An overhead read-out of every section's planks, rails and strength.
 
@@ -82,22 +83,23 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 - The cries re-cut from the original downloads at full quality, with loudness re-measured.
 - The ear test's rules carried into the game: one kind of cry per level, the rear shadow, equal loudness at equal distance, the three room sounds.
-- Farther is quieter: 2 dB per section, up to 10 dB.
+- Farther is quieter: 3 dB per section, up to 15 dB.
 - Cries that come from places: the rails, the piers, overhead.
-- The four warnings, built from whole clips: Grappler, Diver, nest (sobs that quicken), and the hummed tune.
+- The four warnings, built from whole clips: Grappler, Diver, nest (sobs that quicken), and the tune of the one who keeps coming back.
 - Several cries at once: never more than 4, warnings at least 1.5 s apart, ambience 12 dB under.
 - The ally's calls with on-screen text: every cry 2 s in, or only the cries the player has not turned toward within 4 s.
-- The bridge shows where, inside the carried lantern's light: shaking rope, falling dust, swirling fog, and the flame leaning toward the nearest cry.
+- The bridge shows where, inside the carried lantern's light: shaking rope, falling dust, swirling fog, and the flame leaning toward the nearest cry inside its light.
 - The town bell, and a tally chalked at each toll.
-- The dusk lesson: one bell stroke to check left and right; then three harmless dead, one per level; face each cry; the ally says whether that was right.
+- The dusk lesson: one bell stroke to check left and right, with a setting to swap them; then three harmless dead, one per level; each cry repeats until faced; the ally says whether that was right.
+- The listening round: 12 warnings from unpredictable places, 4 from each level, in the dark with no ally; scored for direction (within 45° in 4 s) and place (within 5 m in 15 s).
 - A per-warning log: did the player turn to within 45° within 4 s; in the dark or in the light; did the ally call it.
-- **The early listen** (GD-43): two or three newcomers, at least one on headphones and one on speakers, try the lesson and the listening yard.
+- **The early listen** (GD-43): two or three newcomers, at least one on headphones and one on speakers, try the lesson and the listening round.
 
 **Out.** What the dead do after they arrive; rigs; oil and hung lanterns.
 
 **Needs.** The ally's recorded lines (stand-in recordings are fine until epic 6). The original downloads of the 11 recordings. Two or three newcomers.
 
-**Playable at the end.** The dusk lesson, and a listening yard where several cries sound at once along the span.
+**Playable at the end.** The dusk lesson and the listening round.
 
 **Stories**
 
@@ -110,8 +112,9 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 7. The bridge shows where, inside the carried lantern's light, and the flame leans.
 8. The town bell tolls from the town side, and the tally is chalked.
 9. The dusk lesson runs from the left/right check to the last cry, with feedback.
-10. Every warning is logged: turn, dark or lit, called or not.
-11. The early listen is run and written up.
+10. The listening round runs and scores direction and place.
+11. Every warning is logged: turn, dark or lit, called or not.
+12. The early listen is run and written up.
 
 **Delivers.** GDD Game Mechanics 1 and 8; the early listen in Success Metrics. Decisions GD-7, GD-8, GD-9 (carried lantern only), GD-24, GD-26, GD-39 (the rule), GD-40, GD-43; IN-19, IN-20.
 
@@ -123,13 +126,14 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **In**
 
-- Grapplers: the warning, a hook on a standing rail (at most 2 hooks per rail), 6 s to haul up, then a walk to the town.
-- No rail, no hook; with no rail anywhere, a hook on the deck that tears off a plank.
-- Divers: the warning, a drop onto the weakest standing section (the light rule arrives in epic 4), 5 more load on landing, then a walk.
+- Grapplers, step by step: the warning under a rail on sections 1 to 5 (the rail locks); the hook lands (at most 2 per rail) and the Grappler hangs for 6 s with a load of 1; then it walks to the town.
+- No rail, no hook; with no free rail, a hook on the deck of the section with the most planks, tearing one off.
+- Section 6 takes no hooks and no Divers while any other section has planks.
+- Divers: a section picked when the warning starts, and the shrieks come from over it; here the section with the fewest planks (the light rule arrives in epic 4); a landing that counts 5; then a walk.
 - Hollow Nesters: 40 s of quickening sobs in a pier, then 4 hatchlings at 3.0 m/s.
 - On the deck each of the dead repeats its cry every 8 s with footsteps; anything that falls lets out a cry that fades.
 - Loads on sections from every body and every set hook.
-- The town's 12 windows; each crossing puts one out; two hatchlings count as one.
+- The town's 12 windows; a crossing is stepping off section 6 onto the landing; each puts one window out; hatchlings put one out per two.
 - Losing the night: section 6 falls, or the last window goes dark.
 - Falling: gone until dawn.
 - What each kind does at an open section and at a gap.
@@ -162,14 +166,14 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 - Context hands: the hammer hand and the rope and lantern hand show the action before the click.
 - Trapdoor: build (8 s at night), spring, drop, haul up; each drop loses 1 plank; it cannot be sprung under 4 planks.
-- Swing-beam: build (12 s at night), spring, sweep, re-hang; each re-hang costs 1 rope; it knocks hooks off its section's rails.
+- Swing-beam: build (12 s at night) on a rail picked at building, spring, sweep, re-hang; each re-hang costs 1 rope; it knocks hooks off its section's rails and deck edge.
 - No rig on section 6. A rail holding a beam, or a hook, cannot be stripped.
 - The wedge: 3 s of hammering, 1 plank, a nest shut for the wave.
 - Striking a hook: one blow restarts the haul, once per Grappler.
 - Dismantling a rig: planks return, one rope is lost.
-- Lanterns: three; hung on a corner post, taken down, moved; 4 m and 5 m of light; cues in any lantern's light.
+- Lanterns: three; hung on a pole over the middle of a section, taken down, moved; 4 m and 5 m of light; cues in any lit lantern's light.
 - Oil: 6-minute tanks, one spare flask, refill, shutter (carried and hung).
-- Divers choose their section by the light rule.
+- Divers pick their section by the light rule, at the start of the warning.
 - Wounds: knocked down for 1.5 s, one ear dulled and that side of the view darkened for 20 s; from the dead, the warden's own beam, a Diver's landing, or a falling section.
 
 **Out.** The planning view; the full wave timetable; the name.
@@ -208,6 +212,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 - Dawn: the silence, then the ledger with the name learned, its epitaph, and the soul released.
 - A lost night: replay from planning with one of six journal hints.
 - Starting up: menu, the headphones-or-speakers question, settings (Ears only, cues everywhere), skipping the lesson on replay.
+- The night's few texts are written: 6 names with epitaphs, 6 journal hints, the ally's lines.
 - Every sound the night still lacks is in place: the hum and the tune, both bells, footsteps, creaks and groans, the collapse, the rigs, the lanterns.
 
 **Out.** The woodcut look; stream-safe sound; the public page.
@@ -225,6 +230,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 7. Losing, the six hints and the replay.
 8. Menu, sound-output question, settings and lesson skip.
 9. All remaining sounds in place.
+10. The 6 names with their epitaphs, the 6 hints and the ally's lines are written.
 
 **Delivers.** GDD Core Gameplay Loop; Game Mechanics 7 and 10; Enemy Wave Design (waves); Difficulty and Replayability. Decisions GD-11, GD-14, GD-23, GD-25, GD-35 (one-night items), GD-39 (from wave 4), GD-42.
 
@@ -236,7 +242,8 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **In**
 
-- A playtest build that logs to a local file: each warning in waves 4 to 6 (turn, place, section, dark or lit, called or not); each night (sections, windows, tries, length); and time spent on each section.
+- The listening round, run with each newcomer before their first night. The ear re-check's pass marks apply to it.
+- A playtest build that logs to a local file: each warning in waves 4 to 6 (turn, heading, section, dark or lit, called or not); each night (sections, windows, tries, length, name found, name called); and time spent on each section. This night log is supporting data.
 - A fixed question sheet: play again? what felt clever?
 - Five newcomers, at least two on headphones and two on speakers.
 - Scoring the three checks and the ear re-check; a written outcome.
@@ -255,11 +262,11 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 1. The playtest log.
 2. The question sheet and session script.
 3. Five sessions run.
-4. The three checks and the ear re-check scored and written up.
+4. The three checks and the listening round scored and written up, with the night log beside them.
 5. Starting values tuned from what the sessions showed.
 6. A failed check is fixed and the gate re-run; fallbacks chosen if the ear re-check fails.
 
-**Delivers.** GDD Success Metrics (gate 2, ear re-check). Decisions GD-29, GD-30, GD-40 (the place score); IN-20.
+**Delivers.** GDD Success Metrics (gate 2, ear re-check). Decisions GD-29, GD-30, GD-40 (the place score), GD-46; IN-20.
 
 ---
 
@@ -302,6 +309,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 **In**
 
 - Loudness measured one last time on the final build.
+- 20 nights played back to back without a crash.
 - Stream-safe sound. The three clip moments, each checked in a recorded clip.
 - Credits and the AI-use disclosure.
 - The title checked on itch.io by hand; the *LAST STAGE* demo checked for overlaps.
@@ -314,7 +322,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **Stories**
 
-1. Final loudness measurement.
+1. Final loudness measurement and the 20-night run.
 2. Stream-safe sound.
 3. Clip moments.
 4. Credits and disclosure.
@@ -347,7 +355,7 @@ Every mechanic in the GDD lands in an epic:
 | The six waves and their timetable; dawn; the town bell as clock | 2 (bell), 5 (waves, dawn) |
 | The dawn ledger; the six hints; replay | 5 |
 | Settings: Ears only, cues everywhere | 5 |
-| The early listen | 2 |
+| The early listen; the listening round | 2 (built, first run), 6 (at gate 2) |
 | Gate 2; the ear re-check; the camping log | 6 |
 | The look test; performance | 7 |
 | Stream-safe sound; clip moments | 8 |

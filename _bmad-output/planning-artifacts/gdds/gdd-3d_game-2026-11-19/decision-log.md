@@ -10,7 +10,8 @@ IDs: **IN** = inherited from an earlier document, **GD** = decided in this GDD s
 | 0.1 | 2026-11-19 | Workspace created. Skeleton `gdd.md`. Discovery in progress. |
 | 0.2 | 2026-11-19 | Discovery complete (GD-1 to GD-36). Full draft of `gdd.md` and `epics.md`, with 23 tagged proposals. |
 | 0.3 | 2026-11-19 | Review applied (GD-37 to GD-39): proposals accepted, tags removed, hammer-and-hook and ally-fade rules added. |
-| 0.4 | 2026-11-19 | Finalize checks run (three input reconciliations, one validator: 2 critical, 14 major, 2 minor). GD-40 to GD-44 applied; `gdd.md` and `epics.md` rewritten. Not independently re-validated. |
+| 0.4 | 2026-11-19 | Finalize checks run (three input reconciliations, one validator: 2 critical, 14 major, 2 minor). GD-40 to GD-44 applied; `gdd.md` and `epics.md` rewritten. Committed as 74deb48. |
+| 0.5 | 2026-11-19 | Second validator read draft 0.4: 1 critical, 8 major, minor items; 31 of the 38 first-round fixes confirmed as logged. GD-46 and GD-47 applied. Draft 0.5 has not been read by a validator. Finalized. |
 
 ## Inputs read (2026-11-19)
 
@@ -184,6 +185,8 @@ Gates, metrics, technical:
 | GD-43 | 2026-11-19 | Early listen, a check and not a gate: at the end of epic 2, two or three newcomers (at least one on headphones, one on speakers) try the dusk lesson and the listening yard. If direction is under 80%, rethink before building the dead and the rigs. | |
 | GD-44 | 2026-11-19 | Finalize fixes applied to `gdd.md` and `epics.md`: all 38 items under "Fixes applied at finalize" below. Three of them correct values Sonlm had approved, where the facilitator's arithmetic was wrong: lantern reach (GD-28) is now 4 m carried and 5 m placed; the town has 12 windows with an aim of about 3 left (GD-23, GD-12); the ear re-check scores waves 4 to 6 (GD-30). Sonlm was told before the change. | |
 | GD-45 | 2026-11-19 | Next steps chosen by Sonlm: a second validator reads draft 0.4 now; architecture (`gds-game-architecture`) comes before narrative design, which runs later, before the Fog Season is planned; the GDD workspace is committed on the branch `ear-test-prototype`. | |
+| GD-46 | 2026-11-19 | Ear re-check: a listening round carries the pass marks. Before their first night each of the five gate 2 newcomers spends 5 minutes on the span: 12 warnings from unpredictable places, 4 from each level, in the dark, with no ally. Direction (within 45 degrees in 4 s) 80%; place (within 5 m in 15 s) 70%. The night log stays as supporting data with no pass mark, because a good plan makes arrivals predictable. The same round is used in the early listen (GD-43). Refines GD-30. | |
+| GD-47 | 2026-11-19 | Second-validation fixes applied, listed under "Second validation" below. Two change approved starting values: the distance step is 3 dB per section up to 15 dB, not 2 and 10, so that it does not equal the rear shadow's 2 dB (GD-40); gate 2's "barely" check reads "at least 2 sections or 5 windows", scaled from 2 of 5 to the 12 windows (GD-29). Sonlm was told. | |
 
 ## Finalize status (2026-11-19)
 
@@ -246,3 +249,33 @@ Wording and source fixes (reconcilers):
 38. Epic 8: add a devlog post and the itch.io follow button; tips are saved toward Steam's $100 fee.
 
 Not adopted, kept as tuning levers: plank loss on stripping at night (Y5) if planks "follow the fight"; hammering a pier swelling its sobbing (Y8).
+
+## Second validation (2026-11-19, of draft 0.4)
+
+Result: 1 critical, 8 major, some minor. Checked and found sound: wave totals and the 44 crossings; the timetable against the wave table; at most 4 warnings at once; time-to-town figures; lantern-minutes; epic hour totals; the ally's 10 lines; the wrong-ring and one-shake rules.
+
+Fixes applied in draft 0.5 (GD-47):
+
+1. Stripping everything (critical). Section 6 cannot go below 4 planks. A Grappler with no free rail hooks the deck of the section with the most planks and tears one off. Divers always have a section to land on. An open section's side beams carry a load of 2.
+2. A Grappler step by step: warning (the rail locks), hanging from the hook for 6 s with a load of 1, then walking with a load of 1. The hook does not add a second load.
+3. A rail locks when a warning starts under it, so it cannot be stripped to cancel an arrival.
+4. A Diver picks its section when its warning starts, and the shrieks come from over it. Only sections 1 to 5 with planks can be picked. A lantern counts only when lit (shutter open, tank not empty).
+5. Sums: five re-hangs in the worked night, not six, because a beam's own rail must stay. A Diver's landing counts 5 in place of its 1, which restores the approved "breaks at 4 planks or fewer".
+6. A flame leans only toward cries inside its own light, so the dark stays sound only.
+7. The ear re-check's pass marks move to the listening round (GD-46).
+8. Section 6 takes no hooks and no Divers while any other section has planks; its two rails are spare rope.
+9. Distance step 3 dB up to 15 dB; ambience at least 6 dB under the quietest a cry can be.
+10. Minor: the lesson's pass rule and the left/right check's failure path; where a crossing counts and how hatchlings round; "lit" for lanterns and "open" for sections; "the tune" (the returning one's voice) and "the hum" (the same tune over the carved name); short definitions of the Carrion Choir, wave-breakers and the holdout; the beam hangs from a rail picked at building; lanterns hang on a pole over the middle of a section; a Diver's two shrieks overlap to fit 8 s; visible events as the cue for footsteps, hooks and falls.
+11. `epics.md`: a story for writing the names, hints and lines (epic 5); the 20-night run (epic 8); the listening round built in epic 2 and run in epic 6; name found and called recorded at gate 2.
+
+Corrections to the first list: in item 12 the "fourth voice" on the level below is the tune, not the hum; in item 35 the left/right check sits in epic 2 with the lesson, not in epic 5.
+
+## Finalized (2026-11-19)
+
+- `gdd.md` and `epics.md` are at draft 0.5.
+- Polish: no document standards are configured for this skill, so none were applied.
+- Narrative design: offered; Sonlm chose architecture first (GD-45).
+- External handoffs: none configured.
+- Still open, none blocking architecture: the seven notes under "Notes for the designer" and the four items under "Deferred" in `gdd.md`.
+- Owed: no validator has read draft 0.5. The second validator expects Grappler, Diver and stripping rules to need more cases; architecture is the next place they will surface.
+- Next step: `gds-game-architecture`.
