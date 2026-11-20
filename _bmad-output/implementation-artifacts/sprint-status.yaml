@@ -1,0 +1,142 @@
+# generated: 2026-11-20
+# last_updated: 2026-11-20
+# project: 3d_game
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: "{project-root}/_bmad-output/implementation-artifacts"
+# epics_source: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md (draft 0.8)
+#
+# Keys are short forms of the story lines in epics.md: story N-M is line M of epic N's
+# Stories list. Epic 1's stories are written in full there ("Epic 1: story detail");
+# epics 2 to 8 have one line each until their stories are written (DW-18).
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-11-20
+last_updated: 2026-11-20
+project: 3d_game
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: backlog
+  1-1-the-game-starts-beside-the-ear-test: backlog
+  1-2-the-span-exists-and-is-drawn-to-the-count: backlog
+  1-3-the-warden-walks-and-looks: backlog
+  1-4-the-warden-strips-re-lays-carries-and-reads-the-forearm: backlog
+  1-5-sections-carry-weight-creak-groan-and-fall: backlog
+  1-6-open-sections-and-gaps: backlog
+  1-7-the-overhead-read-out: backlog
+  epic-1-retrospective: optional
+  epic-2: backlog
+  2-1-cries-recut-and-remeasured: backlog
+  2-2-cry-rules-for-a-walking-listener: backlog
+  2-3-cries-from-places-and-distance: backlog
+  2-4-the-four-warnings: backlog
+  2-5-cry-limit-spacing-and-ambience: backlog
+  2-6-ally-calls-with-captions: backlog
+  2-7-cues-in-the-carried-lanterns-light: backlog
+  2-8-town-bell-and-tally: backlog
+  2-9-the-listening-lesson: backlog
+  2-10-the-listening-round: backlog
+  2-11-warning-log: backlog
+  2-12-the-early-listen: backlog
+  epic-2-retrospective: optional
+  epic-3: backlog
+  3-1-grapplers: backlog
+  3-2-the-rail-rule: backlog
+  3-3-divers: backlog
+  3-4-nests: backlog
+  3-5-deck-cries-footsteps-and-falling-cry: backlog
+  3-6-town-windows: backlog
+  3-7-losing-the-night: backlog
+  3-8-the-fallen-are-gone-until-dawn: backlog
+  3-9-open-sections-and-gaps-for-the-dead: backlog
+  epic-3-retrospective: optional
+  epic-4: backlog
+  4-1-context-hands: backlog
+  4-2-trapdoor: backlog
+  4-3-swing-beam: backlog
+  4-4-building-and-dismantling-at-night: backlog
+  4-5-the-wedge: backlog
+  4-6-striking-a-hook: backlog
+  4-7-lanterns-at-poles: backlog
+  4-8-oil-flask-and-shutter: backlog
+  4-9-divers-follow-the-light: backlog
+  4-10-wounds: backlog
+  epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-planning-view: backlog
+  5-2-six-wave-timetable-and-dawn: backlog
+  5-3-the-carved-name: backlog
+  5-4-the-one-who-keeps-coming-back: backlog
+  5-5-calling-the-name-and-the-wrong-ring: backlog
+  5-6-dawn-and-the-ledger: backlog
+  5-7-losing-journal-hints-and-replay: backlog
+  5-8-title-pause-key-card-settings-and-lesson-skip: backlog
+  5-9-remaining-sounds: backlog
+  5-10-names-hints-and-ally-lines-written: backlog
+  5-11-lesson-hands-on-part: backlog
+  5-12-lantern-light-look: backlog
+  epic-5-retrospective: optional
+  epic-6: backlog
+  6-1-playtest-log: backlog
+  6-2-question-sheet-and-session-script: backlog
+  6-3-five-sessions-run: backlog
+  6-4-gate-2-scored-and-written-up: backlog
+  6-5-starting-values-tuned: backlog
+  6-6-failed-check-rerun-and-fallbacks: backlog
+  epic-6-retrospective: optional
+  epic-7: backlog
+  7-1-woodcut-treatment: backlog
+  7-2-span-kit-and-town: backlog
+  7-3-the-dead: backlog
+  7-4-wardens-arms-tools-and-forearm: backlog
+  7-5-fog-fallback-cue-effects-and-fog-setting: backlog
+  7-6-performance-on-reference-machines: backlog
+  7-7-the-look-test: backlog
+  epic-7-retrospective: optional
+  epic-8: backlog
+  8-1-final-loudness-measurement: backlog
+  8-2-twenty-night-run: backlog
+  8-3-startup-replay-rig-and-size-targets: backlog
+  8-4-stream-safe-sound: backlog
+  8-5-clip-moments: backlog
+  8-6-credits-and-disclosure: backlog
+  8-7-title-and-overlap-checks: backlog
+  8-8-itch-page-and-first-devlog: backlog
+  8-9-builds-on-a-clean-machine: backlog
+  8-10-cues-everywhere-strengthened: backlog
+  8-11-holds-press-once-setting: backlog
+  8-12-mono-sound: backlog
+  8-13-frame-rate-with-extras: backlog
+  8-14-the-muted-night: backlog
+  epic-8-retrospective: optional

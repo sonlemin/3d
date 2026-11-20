@@ -2,7 +2,7 @@
 title: 'EXPERIENCE.md — The Mourning Watch (one-night game)'
 status: final
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 form_factor: 'PC at a desk: monitor, keyboard and mouse, stereo headphones or speakers'
 sources:
   - ../../gdds/gdd-3d_game-2026-11-19/decision-log.md
@@ -17,7 +17,7 @@ How the game's surfaces behave. How they look is in [DESIGN.md](DESIGN.md); toke
 ## Foundation
 
 - **Form factor.** Windows and Linux PC at a desk. Monitor at 1080p or 720p, keyboard and mouse only, stereo on headphones or speakers. No gamepad, no couch distance, no handheld in the one-night game (GDD GD-22).
-- **Engine.** Godot 4.7.2, Forward+. Screen UI is Control nodes under one Theme built from DESIGN.md's tokens, on a 1920×1080 canvas with `canvas_items` stretch. Everything the warden reads at night is a 3D object in the scene, not a Control.
+- **Engine.** Godot 4.7.2, Forward+. Screen UI is Control nodes under one Theme built from DESIGN.md's tokens. The tokens are sizes at 1080p; the project's canvas is 1280×720 with `canvas_items` stretch, so the Theme holds two thirds of each token (architecture AD-69). Everything the warden reads at night is a 3D object in the scene, not a Control.
 - **Two kinds of surface.** *Screens* (title, first-launch questions, planning, pause, settings, journal, dawn ledger) may draw text. *The night* may not, with one named exception: the ally's caption (UX-1). The dusk lesson is first person but is not night, so it may also show key-prompts (UX-22).
 - **Stakes.** Hobby: a free solo release to a good standard (UX log).
 - **Standing rule.** Every visual cue points to a sound; it never replaces one (GDD pillar 2).
@@ -392,4 +392,4 @@ Applied in GDD draft 0.6 on 2026-11-19 (GDD decisions GD-48 to GD-55). The table
 - [ASSUMPTION] Godot specifics (physical key codes, key labels by layout, mono downmix on the master bus) are to be confirmed by architecture against 4.7.
 - [ASSUMPTION] The key card has no key of its own; it is reached from the tray and from Pause.
 - [OPEN] The six names and epitaphs, the six journal hints and the ally's exact lines are written in GDD epic 5. Journal and ledger wording here is illustrative.
-- [OPEN] The playtest build's listening round (GDD ear re-check) needs its own instruction screen; not designed here.
+- The playtest build's listening round (GDD ear re-check) has no instruction screen: the person running the session reads the instruction aloud from the session script (GDD, Success Metrics; epic 6 story 2). Closed 2026-11-20.

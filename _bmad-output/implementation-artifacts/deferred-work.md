@@ -174,7 +174,7 @@ owner: gds-create-epics-and-stories, when epic 1's stories are written
 severity: medium
 reason: epics.md has only its dependency line changed. The setup story (main scene switch, test runner split, CI checks) is not in epic 1's story list or its hours, and epic 2 now also builds warning phases, a timetable with tolls and the carried lantern's light.
 status: open (epic level done 2026-11-20)
-resolution-so-far: epics.md draft 0.7 has the setup story, epic 2's additions and new hours (GD-63). Still owed: the story files, and a re-guess of epics 2 to 5 for the test paths and show-me setups every story now carries.
+resolution-so-far: epics.md draft 0.7 has the setup story, epic 2's additions and new hours (GD-63). Draft 0.8 (2026-11-20) has epic 1's seven stories in full with acceptance criteria. Still owed: the same for epics 2 to 8, each before its epic starts, and a re-guess of epics 2 to 5 for the test paths and show-me setups every story now carries, once epic 1's hours are logged.
 
 ### DW-19: Architecture's second round of validation fixes was not re-read
 
@@ -183,4 +183,41 @@ location: _bmad-output/game-architecture.md
 owner: gds-check-implementation-readiness
 severity: low
 reason: Two cold reads found 39 and then 37 problems; the fixes for the second set had mechanical checks only.
+status: done 2026-11-20
+resolution: Read in full during gds-check-implementation-readiness. No contradiction found that would make two agents write code that does not fit. Three small things noted in planning-artifacts/implementation-readiness-report-2026-11-20.md (UX Alignment Assessment, DW-19): night_ticks.gd and StartState missing from the directory tree; an event's t is undefined before the first toll and in a lesson or round; pause is described for the night and lesson only.
+
+### DW-20: Write epic 2's stories in full, with three things the readiness check found
+
+origin: gds-check-implementation-readiness, 2026-11-20 (findings G3, G7, B3, B4, Q4)
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md, epic 2
+owner: gds-create-epics-and-stories, when epic 1 is nearly done and after the UX update of DW-5
+severity: medium
+reason: Epic 2's stories are still one line each. When they are written they must also: say where the tune comes from, or that a stand-in is allowed until epic 5 story 9 (its 3 variations, resolving phrase and hum have no sourcing story); name the mono-and-swap measurement test, the saved settings, `build_info` and the two playtest presets the architecture builds in epic 2; and name the no-threat-before-its-warning invariant, which the architecture builds in epic 3 and no story mentions.
+status: open
+
+### DW-21: Choose how the screen effects are drawn
+
+origin: gds-check-implementation-readiness, 2026-11-20 (finding A2)
+location: _bmad-output/game-architecture.md; DESIGN.md, Elevation & Depth
+owner: put to Sonlm as options before epic 5's stories are created
+severity: medium
+reason: The Lantern light look needs a soft glow on the chosen item, a soft halo on text over 3D, lines that write in left to right, a hold rule that fills and drains, and the paused view dimmed to 15%. The architecture names no technique for any of them, and agents cannot see the result.
+status: open
+
+### DW-22: Split and reorder epic 5; add two cue stories and a frame-time check
+
+origin: gds-check-implementation-readiness, 2026-11-20 (findings G4, Q2, Q3, Q8)
+location: epics.md, epic 5
+owner: gds-create-epics-and-stories, before epic 5 starts
+severity: medium
+reason: Epic 5 holds the night's rules and every screen, setting, sound and text in 65 to 90 h; stories 8 and 9 are each epic-sized; the text (story 10) and the look (story 12) come after the stories that need them. No story draws bowing planks in the light or the tune's swaying ropes. Frame rate is first measured in epic 7; one wave 6 night with frame times logged in gray boxes would catch a structural cost earlier.
+status: open
+
+### DW-23: Bound epic 6's open-ended stories and give its tooling a story
+
+origin: gds-check-implementation-readiness, 2026-11-20 (findings B6, Q6)
+location: epics.md, epic 6
+owner: gds-create-epics-and-stories, before epic 6 starts
+severity: medium
+reason: Story 5 (tuning) has no limit and story 6 (fix and re-run the gate; fallbacks) is a contingency, not a story. The architecture builds night recording, replay, the debug overlay, frame times and refusal counts in epic 6, and none has a story or hours there.
 status: open

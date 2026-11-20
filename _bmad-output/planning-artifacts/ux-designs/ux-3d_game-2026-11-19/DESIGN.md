@@ -4,7 +4,7 @@ description: 'Screen UI for the one-night game: words lit, or left in the dark. 
 title: 'DESIGN.md — The Mourning Watch (one-night game)'
 status: final
 created: 2026-11-19
-updated: 2026-11-19
+updated: 2026-11-20
 sources:
   - ../../gdds/gdd-3d_game-2026-11-19/decision-log.md
   - ../../gdds/gdd-3d_game-2026-11-19/gdd.md
@@ -171,7 +171,7 @@ components:
 
 How the screens look. How they behave is in [EXPERIENCE.md](EXPERIENCE.md). Both documents win over any mock on conflict.
 
-Sizes are given for a 1920×1080 canvas and scale with the viewport height (Godot `canvas_items` stretch), so 720p shows two thirds of each value.
+Sizes are given as they appear at 1080p and scale with the viewport height (Godot `canvas_items` stretch), so 720p shows two thirds of each value. The project's canvas is 1280×720, so the Theme is written with the 720p values and the stretch brings them up to these sizes at 1080p (architecture AD-69).
 
 ## Brand & Style
 
@@ -285,7 +285,7 @@ Not screen components: the warden's hands, the forearm, lantern flames and reser
 - Do say "cannot" with dim text and a sentence.
 - Do keep every screen readable in greyscale.
 - Do keep the planning view clean: flat shapes, no hatching (GDD: the overhead view does not use the woodcut look).
-- Don't draw a box, bar, card, badge, icon or progress ring anywhere.
+- Don't draw a box, bar, card, badge, icon or progress ring anywhere. The one exception is hold-control's warm rule, which grows under the entry while it is held.
 - Don't put anything over the night view except the caption line and, if switched on, the centre dot.
 - Don't use colour to carry meaning the words do not also carry.
 - Don't use a second typeface, or any weight lighter than semibold below title size.

@@ -26,6 +26,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Offline tools:** Python 3 + numpy, in `game/tools/` only. Never a runtime dependency.
 - **The Godot project root is `game/`**, not the repo root: every command uses `--path game`.
 - **Targets:** Windows 10/11 x64 and Linux x86-64, on itch.io. Stereo output. Keyboard and mouse.
+- **Canvas (AD-69):** 1280×720, `canvas_items` stretch, `expand` aspect, as `project.godot` has it. Never change those lines. `DESIGN.md` sizes are at 1080p; only `watch_theme.gd` turns a token into a canvas size (two thirds, rounded). No other script writes a pixel size for a screen.
+- **Menu keys (AD-70):** menus read the `watch_menu_*` actions from the `InputActions` table, not Godot's `ui_*` actions.
 - **CI:** `tools/ci.sh` (repo root) = import, the purity and `print` checks, tests, three smoke runs of 120 frames (the game's main scene; the game with `--start=night --seed=1`; `res://scenes/ear_test.tscn`). `--export` adds the builds. Local only, run by the pre-commit hook. The checks and the second and third smoke runs are added in epic 1; until that story lands, CI is import + tests + one smoke run.
 - **Agents work headless: no editor, no screen, no speakers.** CI sees no rendering and hears no sound.
 - **Until epic 1's setup story lands, `project.godot` is still the ear test** (name, main scene). That story switches the main scene to `res://watch/main.tscn` and adds `.eartest` feature overrides so the ear test's two presets still open the ear test (AD-12, AD-43).

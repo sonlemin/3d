@@ -436,3 +436,31 @@ Known consequence, not changed: a nest holds one of the four places for its whol
 - Owed: nobody has read the draft after GD-64 to GD-67. The sizes of epics 2 to 5 were not re-guessed (DW-18).
 - Next step: `gds-check-implementation-readiness`.
 
+## After the readiness check (2026-11-20, epics draft 0.8)
+
+`gds-check-implementation-readiness` ran on draft 0.7 and came out NEEDS WORK (`../../implementation-readiness-report-2026-11-20.md`, 42 findings). Sonlm asked for the "needed now" and "optional" items to be done as recommended. No rule of play changed and no GD-n was added.
+
+Applied to `epics.md` (now draft 0.8):
+
+- Epic 1's seven stories are written in full with acceptance criteria, under "Epic 1: story detail" (finding Q1; DW-18). They carry what the architecture schedules for epic 1 and `epics.md` had elsewhere or nowhere: the Press once rule (B1), the one input table with physical keys and the menu keys (B2, A3; architecture AD-70), and the typeface for the read-out at the canvas size of architecture AD-69 (A1, Q4).
+- Every story line of epics 2 to 8 now names the GDD section and decisions it delivers (Q11), and the stories only Sonlm can run say so.
+- Epic 8's two bundled stories are split: 9 stories became 14 (Q14). Nothing was added or removed.
+- The Fog quality setting moves from epic 5 to epic 7, where the fog is built. The title's Credits entry opens a licence page from epic 5; epic 8 completes it with the AI-use disclosure (Q10).
+- "Keys bound by physical position" is epic 1's, not epic 5's; the coverage table has a row for it.
+
+Applied to `gdd.md`: one line in the reading guide says what IN-n IDs are (Q12). It stays at draft 0.7.
+
+Kept in step: the architecture (AD-69, AD-70 and three small corrections), both UX spines (the canvas sentence, the hold-control exception, a closed open item) and `project-context.md` (two rules).
+
+Sizes were not changed. Epic 1 now names more work than its 40 to 65 hours were guessed for; the hours logged in epic 1 are the check (DW-18).
+
+Not done, by choice: everything the report lists as deferrable. Each has an owner in `deferred-work.md` (DW-5, DW-9 to DW-12, DW-18, DW-20 to DW-23).
+
+Two rules were found missing while story 1.6 was written, and Sonlm chose from options (each was the facilitator's recommendation):
+
+| ID | Date | Decision | Closes |
+|---|---|---|---|
+| GD-68 | 2026-11-20 | Whoever is on a section when its last plank is taken finishes the crossing toward the town, in the share of the crossing time that the distance left is of the section. This holds for the warden as for the dead. (Declined: to the nearer edge; the way the warden faces.) | Story 1.6 |
+| GD-69 | 2026-11-20 | A section with no planks that has not fallen can be re-laid from the next section; "standing" in the re-lay rule means not fallen. (Declined: a bare section stays open for the night.) | Story 1.6 |
+
+Both are in `gdd.md` (Game Mechanics 2 and 3) and in story 1.6. `gdd.md` stays at draft 0.7 with these two added.

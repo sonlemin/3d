@@ -5,7 +5,7 @@ secondary_game_type: horror
 platforms: [Windows, Linux]
 created: 2026-11-19
 updated: 2026-11-20
-status: draft 0.7 (architecture decisions written back)
+status: draft 0.7 (architecture decisions written back; GD-68 and GD-69 added at the readiness check)
 architecture: ../../../game-architecture.md
 ux_documents: ../../ux-designs/ux-3d_game-2026-11-19/
 ---
@@ -21,7 +21,7 @@ ux_documents: ../../ux-designs/ux-3d_game-2026-11-19/
 - The **one-night game** is specified in full. The **Fog Season** is outlined. Later seasons are out of scope.
 - Every number is a starting value to tune at gate 2, unless it is marked as measured.
 - What still has to be proven by playtest is listed under Assumptions and Dependencies.
-- Decision IDs (GD-n) point to `decision-log.md`. Brainstorm IDs (for example ST4, G11) point to the brainstorming session.
+- Decision IDs (GD-n) point to `decision-log.md`. IN-n IDs are the inputs listed at the top of that log: what the brief and the ear test fixed before this document was written. Brainstorm IDs (for example ST4, G11) point to the brainstorming session.
 - Screens, the night's surfaces (hands, forearm, flames, captions) and the details of input are specified in `../../ux-designs/ux-3d_game-2026-11-19/EXPERIENCE.md` and `DESIGN.md`. UX-n IDs point to that folder's `.decision-log.md`. This document keeps the rules of play and cites them.
 - "The dead" are the enemies. A "section" is one of the six parts of the span. The dead "fall" (gone until dawn) or are "released" (gone for good, by name).
 - A lantern is "lit" when its shutter is open and its tank is not empty. A section is "open" when nothing can stand on it. A "placed" lantern is one hung on a pole. A "toll" is the town bell's tolling at the start of a wave, made of one to six strokes. A "run" is one night: every night start is a new run (GD-52).
@@ -291,7 +291,7 @@ Starting value for the glow: it can be made out from 15 m, half the span, at def
 - **Collapse.** When load is above strength the section groans for 2 s, then falls for good. If the load drops back within the 2 s, it holds.
 - **A Diver's landing** counts 5 on top of whatever already stands there. If that total is above strength, the section falls at once. An empty section breaks at 4 planks or fewer.
 - **What falls with it:** the dead on it, a rig on it, any lantern hung on it, and the planks and ropes still on it. A warden on it catches the edge and climbs back onto the nearest standing section toward the town in 5 s, with a wound.
-- **An open section** has its trapdoor down, or no planks left. Nothing can stand on it. Crossing it along its side beams takes a Grappler or Diver 12 s, a hatchling 6 s and the warden 4 s. The side beams carry a load of 2; more than that for 2 s and the section falls. Whoever stands on a section when its last plank is taken is on its side beams from that moment and finishes the crossing from where they stand.
+- **An open section** has its trapdoor down, or no planks left. Nothing can stand on it. Crossing it along its side beams takes a Grappler or Diver 12 s, a hatchling 6 s and the warden 4 s. The side beams carry a load of 2; more than that for 2 s and the section falls. Whoever stands on a section when its last plank is taken is on its side beams from that moment and finishes the crossing from where they stand, toward the town, in the share of the crossing time that the distance left is of the section (GD-68).
 - **A fallen section** is a 5 m gap. A Grappler throws a hook across and crosses in 12 s. A Diver stranded beyond it takes off and dives again 8 s later, picking by the same rule among the sections on the town side. Those 8 s are a full warning: it takes one of the four places and keeps 1.5 s from other warnings, and it may sound during a lull (GD-65). Stranded hatchlings fall. The warden crosses hand over hand in 8 s.
 - **Section 6** stands inside the light of the town gate. It cannot be stripped below 4 planks and nothing can be built on it. Grapplers do not hook its rails and Divers do not pick it, so its two rails are spare rope. It is reached on foot from section 5, or by the brood of the town pier's nest. The exceptions: when no other section has planks, deck hooks and Divers come to section 6; and a Diver that dives again from beyond a gap comes to section 6 when no section between the gap and the town can be picked (Game Mechanics 6).
 - **Falling** (GD-13). Any of the dead that falls is gone until dawn. Nothing in the one-night game ends one of the dead on the deck.
@@ -302,7 +302,7 @@ Starting value for the glow: it can be made out from 15 m, half the span, at def
 |---|---|---|
 | Strip a plank | 2 s | +1 plank in hand; that section's strength −1 |
 | Strip a rail rope | 3 s | +1 rope in hand; no Grappler can hook that rail |
-| Re-lay a plank | 3 s | −1 plank in hand; that section's strength +1 |
+| Re-lay a plank | 3 s | −1 plank in hand; that section's strength +1. Any section that has not fallen can take one, an open one with no planks included (GD-69) |
 | Dismantle a rig | 4 s | Its planks return; one of its ropes is lost |
 
 - The warden carries stripped parts, with no limit. Parts in hand are kept through every wound, climb and crossing. The forearm shows tallies of planks and ropes in hand.

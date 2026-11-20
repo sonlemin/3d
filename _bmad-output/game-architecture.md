@@ -9,7 +9,7 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
 status: 'complete'
 engine: 'Godot 4.7.2 (pinned), Forward+, typed GDScript'
 platform: 'Windows 10/11 x64 and Linux x86-64 (itch.io)'
-decisions: 'AD-1 to AD-68'
+decisions: 'AD-1 to AD-70'
 
 # Source Documents
 gdd: '_bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md'
@@ -287,7 +287,7 @@ By this test the ally's call rules, the cry voice allocator, and the steps of th
 
 - The sim counts whole ticks (`tick: int`), 60 per second. It never adds up float seconds.
 - Every duration constant is written in seconds with its `_S` suffix and converted to ticks once, when the sim is built (`roundi(seconds * 60.0)`).
-- An event's `t` is `tick / 60.0`, measured from the first toll.
+- An event's `t` is `tick / 60.0`. Tick 0 is the sim's first tick. A night's `NightDef` puts the first stroke of the first toll on tick 0, so in a night `t` is also seconds since the first toll; a lesson and a listening round have no toll and count from their own first tick.
 - Physics runs at 60 ticks per second (`physics/common/physics_ticks_per_second=60`, set explicitly). One physics frame is one sim tick.
 - **Countdowns (AD-67).** Something that begins on tick *T* and lasts *N* ticks completes on tick *T + N*, and its event carries that tick. A 6 s warning that starts at 5.000 lands its hook at 11.000. A condition first true during tick *T* (a section overloaded) begins its countdown on *T*.
 
@@ -479,8 +479,8 @@ AD-39 to AD-43 came out of an elicitation pass on this section (inversion, secon
 │   │   │                              #   input_actions, watch_faults, build_info, engine_globals
 │   │   ├── content/                   # names, hints, ally_lines, key_card, ui_text, sound_cues
 │   │   ├── sim/                       # NODE-FREE. night_sim, night_types, night_def, night_defs,
-│   │   │                              #   night_plan, plan_action, plan_result, plan_editor, night_event,
-│   │   │                              #   night_command, night_result, part_place,
+│   │   │                              #   night_ticks, start_state, night_plan, plan_action, plan_result,
+│   │   │                              #   plan_editor, night_event, night_command, night_result, part_place,
 │   │   │                              #   span_geometry, *_state.gd, *_rules.gd, *_constants.gd
 │   │   ├── night/                     # night.tscn + night.gd (tick loop, consumers), warden,
 │   │   │                              #   hands, span_view, section_view, dead_views, dead_view,
@@ -861,7 +861,7 @@ A night is thrown away (AD-4), but some engine state is global and outlives it. 
 | `get_tree().paused`, the pause mute on the game's buses, and `Input.mouse_mode` | `EngineGlobals.set_paused(on)` and `EngineGlobals.enter_screen(kind)` | The pause overlay calls `set_paused`; `Main` calls `enter_screen` at each screen change, which clears the pause and sets the mouse mode for that kind of screen |
 | `InputMap` | `InputActions` | Registered once at start; never reset |
 
-Pause is not a screen change (AD-67), so pausing resets nothing in this table. The lesson pauses in the same way as the night.
+Pause is not a screen change (AD-67), so pausing resets nothing in this table. The lesson pauses in the same way as the night. Planning and the dawn page pause with the same overlay (`EXPERIENCE.md`: pause is reachable from the lesson, planning, the night and dawn): they have no sim to stop, so the overlay's tree pause is the whole of it. Planning's `hold_timer` is not ticked and the ledger's write-in waits.
 
 - `Engine.time_scale` and project settings are never changed at run time.
 - **Losing focus pauses the lesson and the night**, as the ear test does. The pause is logged with its cause.
@@ -1042,7 +1042,7 @@ Validated on 2026-11-20 by mechanical checks and by two independent readers who 
 
 **Systems covered:** the 20 of Project Context, each with its files in System Location Mapping.
 **Patterns defined:** 5 novel (the parts ledger, the sound-and-cue table, hands, the plan as a list of actions, consequences in one place) and 7 standard. All but the plan, consequences, data access and global state come with a code example; those four are stated as rules and tables.
-**Decisions made:** 68 (AD-1 to AD-68).
+**Decisions made:** 70 (AD-1 to AD-68 in the workflow; AD-69 and AD-70 at the readiness check).
 **Consistency rules:** 18, of which 15 are enforced by CI, a test or the engine.
 
 ### Decisions made during validation
@@ -1068,7 +1068,7 @@ Validated on 2026-11-20 by mechanical checks and by two independent readers who 
 | Done 2026-11-20 in GDD draft 0.7 (GD-56 to GD-62). GDD wording: AD-6 (smooth distance), AD-7 (cut and skip, three falling cries, warning spacing), AD-17 (the wounded ear), AD-34 (dawn wins a tie), AD-26 (what a replay resets; hints on leaving). The hold wording (cancelled on the next tick) was left as it is in the GDD on purpose: to a player "the moment" is still true | Done |
 | GDD gaps 6 and 7 (a Diver whose section opens during its drop; hanging Grapplers when the name is called) | Done 2026-11-20: GD-60 and GD-61 |
 | Epic 1's setup story, and the pieces the built-when table adds to epic 2 | In `epics.md` draft 0.7 at epic level (GD-63); the story files are written by `gds-create-epics-and-stories` |
-| The full table of input actions (only the mechanism and two examples are here) | Epic 1's setup story; it follows the GDD's Controls tables one to one |
+| The full table of input actions (only the mechanism and two examples are here) | Epic 1's setup story; it follows the GDD's Controls tables one to one, and adds the menu keys of `EXPERIENCE.md` (AD-70) |
 | Whether the `eartest` feature override picks the main scene in an exported build | Checked by CI in epic 1's setup story (AD-43) |
 | Whether `pan_pullout` −1 swaps the channels cleanly | The measurement test in epic 2 (AD-18) |
 | Whether a night recorded on Windows replays on Linux | The recording's checksums will say, from epic 6 (AD-37) |
@@ -1076,6 +1076,17 @@ Validated on 2026-11-20 by mechanical checks and by two independent readers who 
 ### Validation Date
 
 2026-11-20
+
+### Decisions made at the readiness check
+
+The readiness check of 2026-11-20 (`planning-artifacts/implementation-readiness-report-2026-11-20.md`) found two things with no home here. Sonlm asked for the recommended option on each.
+
+| ID | Decision | Why |
+|---|---|---|
+| AD-69 | **The canvas stays 1280×720.** `project.godot` keeps its viewport size, `canvas_items` stretch and `expand` aspect; no display line in it changes. `DESIGN.md` gives every size at 1080p. `watch_theme.gd` is the one place that turns a token into a canvas size: two thirds of the token, rounded to a whole pixel, which is `DESIGN.md`'s own "At 720p" column for type (69, 37, 32, 29, 27, 21, 19; captions 24, 29, 37). No other script writes a pixel size for a screen. A test checks every theme size against its token. The Resolution setting changes the window, never the canvas. (Declined: a 1920×1080 canvas with an `.eartest` override for the ear test's viewport.) | The ear test shares `project.godot` and may not change; at a 1080p window the stretch scales the canvas by 1.5, so the tokens come out at their stated size |
+| AD-70 | **Menu keys are in the same input table.** `InputActions` also registers `watch_menu_up`, `watch_menu_down`, `watch_menu_left`, `watch_menu_right`, `watch_menu_confirm` and `watch_menu_back` (Up or W, Down or S, Left or A, Right or D, Enter or Space, Esc) and `watch_ring_again` (R on the left/right check), by physical position like every other key. The menu-item, setting-row and two-choice components read these actions. Godot's built-in `ui_*` focus navigation is not relied on. | `EXPERIENCE.md` (menu-item, two-choice, Input Schemes) names keys the GDD's Controls tables do not; one table keeps "no action lives in `project.godot`" true |
+
+Also corrected in place, with no new decision: `night_ticks` and `start_state` added to the directory tree; what an event's `t` counts from in a lesson or a round; planning and dawn named in the pause rules. DW-19 is closed.
 
 ---
 
