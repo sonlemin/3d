@@ -3,9 +3,16 @@
 #   tools/ci.sh             import, the purity and print checks, the test suite, the smoke runs
 #   tools/ci.sh --export    the same, then the ear test's Windows and Linux builds into builds/,
 #                           and one start of the Linux ear test build
-# The pre-commit hook (.githooks/pre-commit) runs it before every commit.
+# The pre-commit hook (.githooks/pre-commit) runs it before every commit that touches game/ or
+# this file.
 # Set GODOT to use a different Godot 4.7.2 binary.
 set -uo pipefail
+
+case "${1:-}" in
+	'' | --export) ;;
+	*) echo "ci: unknown argument '$1' (the only one is --export)" >&2; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { echo "ci: too many arguments" >&2; exit 2; }
 
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-$(command -v godot || echo "$HOME/.local/bin/godot")}"
@@ -20,28 +27,43 @@ trap 'rm -rf "$log" "$scratch"' EXIT
 step() { printf 'ci: %-36s' "$1..."; }
 fail() { echo "FAILED"; echo "----- output -----" >&2; tail -n 40 "$log" >&2; exit 1; }
 # A smoke run or a build start fails on any of these lines (AD-28).
-BAD_LINES='^(ERROR|SCRIPT ERROR|WARNING)'
+BAD_LINES='^(ERROR|SCRIPT ERROR|SHADER ERROR|WARNING)'
 
 # Prints "file:line:code" for each code line of the .gd files under $1 that matches the ERE $2.
-# Comments are dropped first: a line whose first non-space is `#`, and text after a `#`.
+# Text that is not code is dropped first: what is inside a one-line string ("..." or '...'), so
+# a `#` in a string hides nothing after it and a banned word in a string is not flagged; then
+# comments (a line whose first non-space is `#`, and text after a `#`).
 # Folders named in $3 (space-separated) are skipped. A missing folder matches nothing.
 code_matches() {
-	local dir="$1" pattern="$2" skip="${3:-}" file
+	local dir="$1" pattern="$2" skip="${3:-}" file s
 	[[ -d "$dir" ]] || return 0
 	while IFS= read -r -d '' file; do
 		for s in $skip; do [[ "$file" == "$s"/* ]] && continue 2; done
-		sed -E 's/#.*$//' "$file" | grep -nE "$pattern" | sed "s|^|$file:|"
+		sed -E 's/"([^"\\]|\\.)*"/""/g; s/'"'"'([^'"'"'\\]|\\.)*'"'"'/'"''"'/g; s/#.*$//' "$file" \
+			| grep -nE "$pattern" | awk -v f="$file" '{ print f ":" $0 }'
 	done < <(find "$dir" -name '*.gd' -print0 | sort -z)
+}
+
+# Boundary 1, base types: prints each `extends` line under $1 whose base is neither RefCounted
+# nor a class declared under $1 itself (`class_name X`, or an inner `class X`).
+bad_bases() {
+	local dir="$1" own
+	[[ -d "$dir" ]] || return 0
+	own="$(code_matches "$dir" '(^|[[:space:]])class(_name)?[[:space:]]+[A-Za-z_]' \
+		| sed -nE 's/.*(^|[[:space:]:])class(_name)?[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\3/p' | sort -u | paste -sd'|')"
+	code_matches "$dir" '\bextends\b' \
+		| grep -vE "\bextends[[:space:]]+(RefCounted${own:+|$own})[[:space:]]*:?[[:space:]]*\$"
 }
 
 # Boundary 1 (watch/sim/ is node-free): whole words, so `HandInput.` passes; a global random
 # call is one not preceded by a dot, so `sim.rng.randi_range(` passes.
 W='[^[:alnum:]_]'
-SIM_BANNED="\\bextends[[:space:]]+Node\\b|\\bNode3D\\b|\\bget_tree\\b|(^|$W)Input\\.|\\bAudioServer\\b"
-SIM_BANNED+="|\\bFileAccess\\b|(^|$W)Time\\.|\\bawait\\b|(^|$W)print\\("
-SIM_BANNED+="|(^|[^[:alnum:]_.])(randi|randf|randi_range|randf_range|randomize)\\(|\\.shuffle\\(|\\.pick_random\\("
-# AD-29: no print in runtime code outside watch/debug/.
-PRINT_BANNED="(^|$W)print\\("
+# AD-29: no print of any kind in runtime code outside watch/debug/.
+PRINT_BANNED="(^|$W)print(s|t|err|raw|_rich|_debug|_verbose)?[[:space:]]*\\("
+SIM_BANNED="\\bNode\\b|\\bNode2D\\b|\\bNode3D\\b|\\bSceneTree\\b|\\bTimer\\b|\\bget_tree\\b|\\bget_main_loop\\b"
+SIM_BANNED+="|(^|$W)Input\\.|\\bAudioServer\\b|\\bFileAccess\\b|(^|$W)Time\\.|\\bawait\\b|$PRINT_BANNED"
+SIM_BANNED+="|(^|[^[:alnum:]_.])(randi|randf|randfn|randi_range|randf_range|seed|rand_from_seed)[[:space:]]*\\("
+SIM_BANNED+="|\\brandomize[[:space:]]*\\(|\\.shuffle[[:space:]]*\\(|\\.pick_random[[:space:]]*\\("
 
 # Proves the purity grep works while watch/sim/ is still empty: each banned token alone must be
 # caught, and a clean file with look-alikes must pass.
@@ -51,6 +73,11 @@ purity_self_check() {
 		'var n: int = AudioServer.bus_count' 'var f: FileAccess = null' 'var t: int = Time.get_ticks_msec()'
 		'await done' 'print("x")' 'var a: int = randi()' 'var b: float = randf()' 'var c: int = randi_range(0, 3)'
 		'var d: float = randf_range(0.0, 1.0)' 'randomize()' 'items.shuffle()' 'var e: int = items.pick_random()'
+		'var n: Node = null' 'var n: Node2D = null' 'var t: Timer = Timer.new()' 'var l: MainLoop = Engine.get_main_loop()'
+		'var t: SceneTree = null' 'var g: float = randfn(0.0, 1.0)' 'seed(5)' 'var h: int = rand_from_seed(5)[0]'
+		'rng.randomize()' 'var i: int = randi ()' 'print ("x")' 'prints("x")' 'printt("x")' 'printerr("x")'
+		'printraw("x")' 'print_rich("x")' 'print_debug("x")' 'print_verbose("x")'
+		'var s: String = "#" + str(randi())' "var s: String = '#' + str(randi())"
 	)
 	local i=0 line dir
 	for line in "${bad[@]}"; do
@@ -75,7 +102,14 @@ purity_self_check() {
 			var later: float = sim.rng.randf()
 			var nodes: int = NightTime.NODE_COUNT
 			var input_count: int = 0
+			var text: String = "print(x), randi() and Node in a string"
+			var other: String = 'await get_tree() in a string'
+			var seeded: int = sim.rng.seed
 			sprint(roll)
+		class Inner extends RefCounted:
+			var a: int = 0
+		class Deeper extends Inner:
+			var b: int = 0
 	EOF
 	local found
 	found="$(code_matches "$dir" "$SIM_BANNED")"
@@ -83,6 +117,23 @@ purity_self_check() {
 		echo "purity self-check: clean file flagged: $found" >>"$log"
 		return 1
 	fi
+	found="$(bad_bases "$dir")"
+	if [[ -n "$found" ]]; then
+		echo "purity self-check: clean base type flagged: $found" >>"$log"
+		return 1
+	fi
+	# Base types: anything but RefCounted or a class of the folder itself must be caught.
+	local base
+	for base in 'extends Node2D' 'extends Control' 'extends Resource' 'class Inner extends Object:' 'extends "res://x.gd"'; do
+		i=$((i + 1))
+		dir="$scratch/purity_bad_$i"
+		mkdir -p "$dir"
+		printf '%s\n\tvar a: int = 0\n' "$base" >"$dir/case.gd"
+		if [[ -z "$(bad_bases "$dir")" ]]; then
+			echo "purity self-check: base type not caught: $base" >>"$log"
+			return 1
+		fi
+	done
 	return 0
 }
 
@@ -94,7 +145,7 @@ echo "ok"
 step "purity check (watch/sim/)"
 : >"$log"
 purity_self_check || fail
-found="$(code_matches game/watch/sim "$SIM_BANNED")"
+found="$(code_matches game/watch/sim "$SIM_BANNED"; bad_bases game/watch/sim)"
 if [[ -n "$found" ]]; then echo "$found" >"$log"; fail; fi
 if [[ -d game/watch/sim ]]; then echo "ok"; else echo "ok (no watch/sim/ yet; self-check passed)"; fi
 
@@ -134,31 +185,37 @@ done
 
 if [[ "${1:-}" == "--export" ]]; then
 	mkdir -p builds/ear-test-windows builds/ear-test-linux
-	step "export Windows"
-	"$GODOT" --headless --path game --export-release "Windows" ../builds/ear-test-windows/ear_test.exe >"$log" 2>&1 || fail
-	echo "ok"
-	step "export Linux"
-	"$GODOT" --headless --path game --export-release "Linux" ../builds/ear-test-linux/ear_test.x86_64 >"$log" 2>&1 || fail
-	echo "ok"
+	# An export fails on a bad exit code, an error line, or a build file it did not write anew.
+	stamp="$scratch/stamp"
+	touch "$stamp"
+	export_build() {
+		step "export $1"
+		"$GODOT" --headless --path game --export-release "$1" "../$2" >"$log" 2>&1 || fail
+		grep -qE "^(ERROR|SCRIPT ERROR)" "$log" && fail
+		[[ "$2" -nt "$stamp" ]] || { echo "$2 was not written by this export" >>"$log"; fail; }
+		echo "ok"
+	}
+	export_build "Windows" builds/ear-test-windows/ear_test.exe
+	export_build "Linux" builds/ear-test-linux/ear_test.x86_64
 
 	# The ear test build must open the ear test, not the game, and write where it always did
 	# (AD-43): Godot's default folder named after config/name.eartest, not the game's folder.
+	# It runs with a scratch data home, so the real user folders are neither read nor written
+	# and a game open in another window cannot disturb the check.
 	step "start the Linux ear test build"
-	ear_dir="${XDG_DATA_HOME:-$HOME/.local/share}/godot/app_userdata/Ear Test"
-	game_dir="${XDG_DATA_HOME:-$HOME/.local/share}/mourning_watch"
-	stamp="$scratch/stamp"
-	touch "$stamp"
-	builds/ear-test-linux/ear_test.x86_64 --headless --verbose --quit-after 120 >"$log" 2>&1 || fail
+	data_home="$scratch/data"
+	mkdir -p "$data_home"
+	ear_dir="$data_home/godot/app_userdata/Ear Test"
+	game_dir="$data_home/mourning_watch"
+	XDG_DATA_HOME="$data_home" builds/ear-test-linux/ear_test.x86_64 --headless --verbose --quit-after 120 >"$log" 2>&1 || fail
 	grep -qE "$BAD_LINES" "$log" && fail
 	# The scene it opened: --verbose logs "Completed load for: '<path>'" even in a release build.
 	grep -qF "Completed load for: 'res://scenes/ear_test.tscn'" "$log" \
 		|| { echo "did not open res://scenes/ear_test.tscn" >>"$log"; fail; }
 	grep -qF "res://watch/main.tscn" "$log" && { echo "opened the game's main scene" >>"$log"; fail; }
 	# The folder it wrote its log to.
-	[[ -n "$(find "$ear_dir/logs" -maxdepth 1 -name 'godot.log' -newer "$stamp" 2>/dev/null)" ]] \
-		|| { echo "no fresh log in $ear_dir/logs" >>"$log"; fail; }
-	[[ -z "$(find "$game_dir" -newer "$stamp" 2>/dev/null)" ]] \
-		|| { echo "the ear test build wrote to $game_dir" >>"$log"; fail; }
+	[[ -f "$ear_dir/logs/godot.log" ]] || { echo "no log in $ear_dir/logs" >>"$log"; fail; }
+	[[ ! -e "$game_dir" ]] || { echo "the ear test build wrote to $game_dir" >>"$log"; fail; }
 	echo "ok"
 fi
 echo "ci: all checks passed"

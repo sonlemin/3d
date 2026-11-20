@@ -1,6 +1,7 @@
 ## Base of every test file. The runner (tests/run_tests.gd) finds each `test_*.gd` under
 ## res://tests/, makes one of these per file, sets `root` and the shared logger, then calls
-## `_before_all()`, every `_test_*()` method in declaration order, and `_after_all()`.
+## `_before_all()`, every `_test_*()` method in declaration order (each followed by
+## `_after_test()`), and `_after_all()`. A test may not use `await`.
 ##
 ## Assert with _check(name, ok, detail). Any engine error, script error or warning that a test
 ## did not ask for fails the file's logger check. A test that triggers some on purpose wraps
@@ -54,6 +55,13 @@ class LogCounter extends Logger:
 		_mutex.unlock()
 		return entries
 
+	## True between begin_window() and end_window().
+	func window_open() -> bool:
+		_mutex.lock()
+		var open: bool = _in_window
+		_mutex.unlock()
+		return open
+
 	func add_unexpected(text: String) -> void:
 		_mutex.lock()
 		_unexpected.append(text)
@@ -84,6 +92,24 @@ func _before_all() -> void:
 ## Called once after this file's last test.
 func _after_all() -> void:
 	pass
+
+
+## Called by the runner after each test with what the call returned. A test must run to its
+## end in one go; two ways of stopping early would otherwise pass in silence:
+## - a script error ends the function where it stands. Inside an expect window the error is
+##   held by the window, so the window is closed here and what it held becomes unexpected;
+## - `await` makes the function a coroutine that returns at once, so later checks never count.
+func _after_test(method: String, result: Variant) -> void:
+	if result is Object and (result as Object).get_class() == "GDScriptFunctionState":
+		_check("%s: a test may not use await (checks after it never run)" % method, false)
+	if _logger.window_open():
+		var held: PackedStringArray = []
+		for entry: Array in _logger.end_window():
+			var text: String = "%s: %s (%s)" % [entry[0], entry[1], entry[2]]
+			held.append(text)
+			_logger.add_unexpected(text)
+		_check("%s: stopped inside an expect window (a script error, or no _expect_end)" % method,
+				false, " | ".join(held))
 
 
 func _check(test_name: String, ok: bool, detail: String = "") -> void:

@@ -35,9 +35,21 @@ var start: StringName = &""
 var problems: PackedStringArray = []
 
 
-## The switches of this run (the arguments after `--`).
+## The switches of this run (the arguments after `--`). A switch typed before `--` goes to
+## the engine, which ignores it without a word; it is listed as a problem here.
 static func from_command_line() -> LaunchOptions:
-	return parse(OS.get_cmdline_user_args())
+	var options: LaunchOptions = parse(OS.get_cmdline_user_args())
+	options.problems.append_array(misplaced(OS.get_cmdline_args()))
+	return options
+
+
+## One problem line per launch switch found among the engine's own arguments. Pure.
+static func misplaced(engine_args: PackedStringArray) -> PackedStringArray:
+	var found: PackedStringArray = []
+	for arg: String in engine_args:
+		if SWITCHES.has(arg.get_slice("=", 0)):
+			found.append("launch.misplaced: '%s' was ignored; launch switches go after `--`" % arg)
+	return found
 
 
 ## Pure: reads only `args`.
@@ -51,9 +63,8 @@ static func parse(args: PackedStringArray) -> LaunchOptions:
 					% [arg, ", ".join(PackedStringArray(SWITCHES.keys()))])
 			continue
 		if seen.has(switch_name):
-			options.problems.append("launch.repeated: %s given more than once; the first stands" % switch_name)
+			options.problems.append("launch.repeated: %s given more than once; the first good value stands" % switch_name)
 			continue
-		seen[switch_name] = true
 		var row: Dictionary = SWITCHES[switch_name]
 		var what: String = switch_name.trim_prefix("--")
 		var value: String = arg.substr(switch_name.length() + 1) if arg.contains("=") else ""
@@ -61,6 +72,8 @@ static func parse(args: PackedStringArray) -> LaunchOptions:
 		if parsed == null:
 			options.problems.append("launch.%s: '%s' is not %s" % [what, arg, _wanted(row["kind"], switch_name)])
 			continue
+		# Only a value that was taken counts as given: a bad one does not block a later good one.
+		seen[switch_name] = true
 		options.set(row["field"], parsed)
 		var given: StringName = row["given"]
 		if not given.is_empty():

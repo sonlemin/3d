@@ -82,9 +82,19 @@ static func key_name(action: StringName) -> String:
 	var bindings: Array = ACTIONS.get(action, [])
 	if bindings.is_empty():
 		return ""
-	var binding: Array = bindings[0]
+	return binding_name(bindings[0])
+
+
+## The printed name of one binding of the table, [Device, code]. Empty for a mouse button the
+## game has no name for (it binds only the left and the right one).
+static func binding_name(binding: Array) -> String:
 	if binding[0] == Device.MOUSE:
-		return UiText.MOUSE_LEFT if binding[1] == MOUSE_BUTTON_LEFT else UiText.MOUSE_RIGHT
+		match binding[1]:
+			MOUSE_BUTTON_LEFT:
+				return UiText.MOUSE_LEFT
+			MOUSE_BUTTON_RIGHT:
+				return UiText.MOUSE_RIGHT
+		return ""
 	var physical: Key = binding[1]
 	# The headless display server cannot read the layout and logs an error if asked.
 	if DisplayServer.get_name() == "headless":

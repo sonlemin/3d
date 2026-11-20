@@ -221,3 +221,23 @@ owner: gds-create-epics-and-stories, before epic 6 starts
 severity: medium
 reason: Story 5 (tuning) has no limit and story 6 (fix and re-run the gate; fallbacks) is a contingency, not a story. The architecture builds night recording, replay, the debug overlay, frame times and refusal counts in epic 6, and none has a story or hours there.
 status: open
+
+## Deferred from: code review of 1-1-the-game-starts-beside-the-ear-test.md (2026-11-20)
+
+### DW-24: The Windows ear test build is exported but never started
+
+origin: gds-code-review of story 1.1, 2026-11-20 (Edge Case Hunter)
+location: tools/ci.sh, the `--export` start check
+owner: Sonlm, the next time a Windows ear test build is handed out
+severity: low
+reason: `tools/ci.sh --export` starts only the Linux build to prove it opens the ear test and writes to the `Ear Test` user folder. The Windows preset is checked as text only. If its `eartest` feature or the `.eartest` overrides stopped applying, that build would open the game and write to `mourning_watch`, and nothing would say so. Needs a Windows machine or Wine.
+status: open
+
+### DW-25: Key names on other keyboard layouts are unchecked
+
+origin: gds-code-review of story 1.1, 2026-11-20 (Edge Case Hunter, inferred)
+location: game/watch/core/input_actions.gd, `key_name()`
+owner: the story that first draws key names on screen
+severity: low
+reason: `key_name()` prints `OS.get_keycode_string()` of the layout's label for a physical key. Where that label is a symbol or `KEY_NONE` (the number row on AZERTY, some display servers), the name may be empty or a word such as "Ampersand". On Xvfb with a US layout all 27 actions gave good names. Fall back to the physical key's name when the label is `KEY_NONE` or empty, and try at least one non-US layout.
+status: open

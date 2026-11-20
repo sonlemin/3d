@@ -26,6 +26,20 @@ func _open(problems: PackedStringArray) -> PackedStringArray:
 	return texts
 
 
+## What is sized in pixels under `node`: a font size override or a minimum size, by node name.
+func _pixel_sizes(node: Node) -> PackedStringArray:
+	var out: PackedStringArray = []
+	for child: Node in node.get_children():
+		var control: Control = child as Control
+		if control != null:
+			if control.has_theme_font_size_override(&"font_size"):
+				out.append("%s: font size override" % control.name)
+			if control.custom_minimum_size != Vector2.ZERO:
+				out.append("%s: custom_minimum_size %s" % [control.name, control.custom_minimum_size])
+		out.append_array(_pixel_sizes(child))
+	return out
+
+
 func _test_no_problems() -> void:
 	var texts: PackedStringArray = _open(PackedStringArray())
 	_check("title: name and 'No setup problems.'",
@@ -48,4 +62,20 @@ func _test_no_pixel_sizes() -> void:
 	_check("title: the root fills the screen by anchors alone", title.anchor_left == 0.0 and title.anchor_top == 0.0
 			and title.anchor_right == 1.0 and title.anchor_bottom == 1.0 and title.offset_left == 0.0
 			and title.offset_top == 0.0 and title.offset_right == 0.0 and title.offset_bottom == 0.0)
+	# The lines are built in code, so the built page is what must hold no pixel size.
+	title.session = WatchSession.new(LaunchOptions.parse(PackedStringArray()), PackedStringArray(["a.b: c"]))
+	root.add_child(title)
+	var sized: PackedStringArray = _pixel_sizes(title)
+	_check("title: no line of the built page has a font size or a minimum size in pixels", sized.is_empty(), str(sized))
+	root.remove_child(title)
+	title.free()
+
+
+func _test_run_alone() -> void:
+	# Run alone from the editor (F6) there is no session: the page shows the name, no crash.
+	var title: TitleScreen = TitleScene.instantiate() as TitleScreen
+	root.add_child(title)
+	var texts: PackedStringArray = _texts(title)
+	_check("title: with no session, only the name", texts == PackedStringArray(["The Mourning Watch"]), str(texts))
+	root.remove_child(title)
 	title.free()

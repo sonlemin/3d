@@ -4,7 +4,7 @@ baseline_commit: 10cad8d1beaedae539149afcd5d244899575eae0
 
 # Story 1.1: The game starts beside the ear test
 
-Status: review
+Status: done
 
 <!-- Created 2026-11-20 by gds-create-story from epics.md draft 0.8 ("Epic 1: story detail"). -->
 
@@ -70,6 +70,34 @@ Follow the architecture's build order (AD-46): the failing test first, then the 
   - [x] 6.2 `game/EAR_TEST.md`: change only the lines that are now wrong: running the test (`godot --path game` now opens the game) and the test command path. The ear test's closed list does not include this file.
   - [x] 6.3 `_bmad-output/project-context.md`: replace the three "until that story" notes (exact edits in Dev Notes), and the matching line in Usage Guidelines.
 - [x] **T7. Close**: `tools/ci.sh` and `tools/ci.sh --export` pass. Fill in the Dev Agent Record. List M1 to M3 for Sonlm as **not verified**. Set Status to `review`.
+
+### Review Findings
+
+<!-- gds-code-review, 2026-11-20, commit 05124dd against 10cad8d. Three reviewers on the 1833 lines of new work; the moved ear test file was compared mechanically (all 54 test bodies byte-identical; 120 passed, 23 expected). No acceptance criterion is violated. -->
+
+- [x] [Review][Decision] The purity check lets node-based and unseeded-random code through — `extends Node2D`, `extends Control`, `Node.new()`, `Timer.new()`, `randfn(`, `seed(` and `rng.randomize()` all pass `SIM_BANNED`. The pattern matches the architecture's written list (boundary 1), which leaves base types to a test that is not in this story. `watch/sim/` is still empty. Widen now, or with story 1.2? [tools/ci.sh:40] — **Decided (Sonlm, 2026-11-20):** widen now. Fixed: `SIM_BANNED` also bans `Node`, `Node2D`, `SceneTree`, `Timer`, `get_main_loop`, `randfn(`, `seed(`, `rand_from_seed(` and any `randomize(`; `bad_bases` fails any `extends` that is neither `RefCounted` nor a class of the folder itself; the self-check covers each.
+- [x] [Review][Decision] The physics-tick line is at the engine default, so an editor save may remove it — `physics/common/physics_ticks_per_second=60` is the default, and the editor does not write default values when it saves `project.godot`. The first save from the editor would then fail "60 in the file", though AC4 asks for the line. Not confirmed on 4.7.2. [game/tests/watch/test_project_setup.gd:50] — **Decided (Sonlm, 2026-11-20):** test the engine value only. Fixed: the "60 in the file" check is removed; the line stays in `project.godot`.
+- [x] [Review][Decision] `register()`'s `input.defined_elsewhere` branch has no test — `_test_other_bindings_are_a_problem` says "register() must notice" but only calls `same_events()`; deleting the branch leaves every test green. A real test must write to the `InputMap`, which the story's rule (tests only read it) forbids. [game/tests/watch/test_input_actions.gd:158] — **Decided (Sonlm, 2026-11-20):** add the test, with cleanup. Fixed: `_test_register_reports_other_bindings` is the one test that writes to the `InputMap`, and it puts the bindings back.
+- [x] [Review][Decision] The ear test builds now carry the game's code — both presets keep `all_resources` and exclude only `tests/*, tools/*`, so `watch/` ships inside the ear test builds; `config/description` still describes the ear test under the game's name. AC3 says to keep the include filter. Exclude `watch/*`, or accept? [game/export_presets.cfg:11] — **Decided (Sonlm, 2026-11-20):** accept as is. Dismissed: the ear test is closed, and `ci.sh --export` proves the build opens the ear test.
+- [x] [Review][Patch] A test that aborts inside an expect window is swallowed: the run prints 0 failed (reproduced) [game/tests/test_case.gd:99, game/tests/run_tests.gd:76]
+- [x] [Review][Patch] A `_test_` function that uses `await` stops at the await; later checks never run and the file passes (reproduced) [game/tests/run_tests.gd:77]
+- [x] [Review][Patch] A bad first switch blocks a good repeat and says "the first stands": `--seed=abc --seed=5` gives no seed (reproduced) [game/watch/core/launch_options.gd:53]
+- [x] [Review][Patch] A switch typed before `--` is ignored without a word: the start page says "No setup problems." (reproduced) [game/watch/core/launch_options.gd:39]
+- [x] [Review][Patch] `tools/ci.sh --exports` or any other unknown argument skips the export checks and prints "all checks passed" [tools/ci.sh:135]
+- [x] [Review][Patch] The print check misses `prints(`, `printt(`, `printerr(`, `printraw(`, `print_rich(`, `print_debug(`, `print_verbose(` and `print (` (AD-29) [tools/ci.sh:44]
+- [x] [Review][Patch] Comment stripping cuts code after a `#` inside a string, so `"#" + str(randi())` passes both checks (reproduced) [tools/ci.sh:33]
+- [x] [Review][Patch] Smoke and export logs: `SHADER ERROR` is not in `BAD_LINES`, export logs are never searched for errors, and the start check does not require a freshly built binary [tools/ci.sh:23, tools/ci.sh:138]
+- [x] [Review][Patch] The export start check reads and writes the real `~/.local/share` folders; a game open in another window fails it falsely. Run it under a scratch `XDG_DATA_HOME` [tools/ci.sh:137]
+- [x] [Review][Patch] A `TestCase` file under `tests/` not named `test_*.gd` is skipped without a word [game/tests/run_tests.gd:90]
+- [x] [Review][Patch] `_test_no_pixel_sizes` only reads the `.tscn`; the labels are built in `title_screen.gd`, where a pixel size would go unnoticed (AD-69) [game/tests/watch/test_title_screen.gd:43]
+- [x] [Review][Patch] `key_name()` calls every mouse button that is not the left one "Right mouse" [game/watch/core/input_actions.gd:86]
+- [x] [Review][Patch] The title screen crashes on a null `session` when the scene is run alone (F6) [game/watch/screens/title_screen.gd:18]
+- [x] [Review][Patch] The Xvfb command template puts `--write-movie`, `--fixed-fps` and `--quit-after` after `--`, where they become user arguments: no movie, no quit, and `launch.unknown` lines on the screen being judged [_bmad/custom/gds-dev-story.toml:16]
+- [x] [Review][Patch] Completion Notes contradict themselves and are stale: M1 "verified" and M3 "partly verified" against a later block that lists M1 to M3 as NOT verified; no frame path; "Nothing is committed" inside the commit; agent time ends before the manual checks; `_bmad/custom/gds-dev-story.toml` is in the commit and not in the File List [this file, Completion Notes and File List]
+- [x] [Review][Patch] `project-context.md` still opens two rules with things that do not exist yet: "three smoke runs" and "extending `WatchTest`" [_bmad-output/project-context.md:31, _bmad-output/project-context.md:121]
+- [x] [Review][Patch] `EAR_TEST.md` tells the reader to skip the hook with `git commit --no-verify`; `WATCH.md` and the project rule say never [game/EAR_TEST.md:44]
+- [x] [Review][Defer] Only the Linux ear test build is started; the Windows build is exported and never run, so a lost `eartest` feature there would go unseen [tools/ci.sh:137] — deferred, needs a Windows machine or Wine (DW-24)
+- [x] [Review][Defer] `key_name()` may print an empty name or a word such as "Ampersand" on layouts where the key's label is a symbol or `KEY_NONE`; not reproducible here (US layout on Xvfb gave good names for all 27 actions) [game/watch/core/input_actions.gd:92] — deferred to the story that first draws key names (DW-25)
 
 ## Dev Notes
 
@@ -326,24 +354,24 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
 
 - Ultimate context engine analysis completed: comprehensive developer guide created (gds-create-story, 2026-11-20).
 - Hours: epics.md logs hours from epic 1 onward. Record the hours spent on this story here (Sonlm).
-- Agent time: 2026-11-20 15:42 to 15:57 +0700 (0 h 15 min), measured by the agent: from the first file it wrote (the baseline test run) to setting the status to review. Reading the story and context before that took a few more minutes.
-- Manual checks after the fact, on a virtual display (Xvfb, Forward+ on llvmpipe CPU Vulkan, not a real GPU; frames written with `--write-movie` to the session's scratch folder, not kept):
+- Agent time: 2026-11-20 15:42 to 15:57 +0700 (0 h 15 min), measured by the agent: from the first file it wrote (the baseline test run) to setting the status to review. Reading the story and context before that took a few more minutes. This end time is before the virtual-display checks below and the commit at 16:10, so the true figure is nearer 0 h 30 min (corrected at code review; not measured).
+- Manual checks after the fact, on a virtual display (Xvfb, Forward+ on llvmpipe CPU Vulkan, not a real GPU; frames written with `--write-movie` to the session's scratch folder, not kept, so no frame path can be given; the code review repeated M1 and saw the same frame 19):
   - M1: verified on a virtual display. Frame 19 of `godot --path game` shows "The Mourning Watch" and "No setup problems." centred on a plain background.
   - M2: NOT verified, needs Sonlm (one trial must be played and heard).
-  - M3: partly verified on a virtual display. Frame 19 of `builds/ear-test-linux/ear_test.x86_64` shows the ear test's start screen ("Ear test", Tester ID, Output, "Clips found: above 5 · inside 4 · below 4"), not the game. The window title "Ear Test" is NOT verified (no window frame on Xvfb), so it needs Sonlm.
+  - M3: NOT verified, needs Sonlm (the window title "Ear Test" cannot be seen on Xvfb, which draws no window frame). Seen on the way: frame 19 of `builds/ear-test-linux/ear_test.x86_64` shows the ear test's start screen ("Ear test", Tester ID, Output, "Clips found: above 5 · inside 4 · below 4"), not the game.
 - **Result:** `tools/ci.sh` and `tools/ci.sh --export` both pass. Tests: 221 passed, 0 failed, 28 expected (ear test 120 passed, 23 expected; project setup 39; launch options 23; input actions 16; watch faults 11 passed, 5 expected; engine globals 7; title screen 5). `git diff --stat` on the ear test's closed paths is empty. `project.godot` differs only by the AC 4 lines.
 - **T1, runner split.** `TestCase` keeps the counter names `_passed`, `_failed`, `_expected_total` and `_logger`, so the moved `_check` / `_expect_begin` / `_expect_end` bodies are byte-identical. `LogCounter` is an inner class (`TestCase.LogCounter`), so `tests/` gains no second global name. Every helper and `_test_` body in `test_ear_test.gd` is byte-identical to the old file (checked with `diff`). Declaration order differs from the old `_run()` order in three places, but the counts are unchanged and the 120 check names are the same set, so no function was moved (T1.5).
 - **Runner, stricter than asked:** a test file with no `_test_` function fails, and so does an error or warning logged outside any file.
-- **Decisions an agent took (restrictive reading; Sonlm may revisit):** (1) a switch given twice is a setup problem `launch.repeated`, and the first value stands; (2) a seed over 18 digits is a `launch.seed` problem; (3) `InputActions.register()` reports `input.defined_elsewhere` when an action already exists with other bindings; (4) the start page shows a heading line "Setup problems found at start:" above the list (`UiText.SETUP_PROBLEMS_HEADING`), and nothing above "No setup problems.".
+- **Decisions an agent took (restrictive reading; Sonlm may revisit):** (1) a switch given twice is a setup problem `launch.repeated`, and the first good value stands (a bad value does not block a later good one; changed at code review); (2) a seed over 18 digits is a `launch.seed` problem; (3) `InputActions.register()` reports `input.defined_elsewhere` when an action already exists with other bindings; (4) the start page shows a heading line "Setup problems found at start:" above the list (`UiText.SETUP_PROBLEMS_HEADING`), and nothing above "No setup problems.".
 - **Additions beyond the story's file list:** `tests/watch/test_title_screen.gd` checks AC 1 headless (name plus "No setup problems.", or the heading plus each problem in order, and no pixel sizes). `EngineGlobals.mouse_mode_for()` makes the screen-kind → mouse-mode mapping testable; the engine's actual mouse mode stays a manual check.
 - **Main** types the title screen through `const TitleScreen := preload(...)`, because the screen has no `class_name`.
 - **EAR_TEST.md:** the test command line is still correct (the runner kept its path), so it is unchanged. Besides the run line and the CI line, one note was added: run from source, the ear test's CSVs now go to the game's folder (`mourning_watch/ear_test_results/`). Without it, "Where the CSVs are" would be wrong for source runs.
 - **project-context.md:** the three "until that story" notes and the Usage Guidelines line are replaced or removed. `Last Updated` was already 2026-11-20.
-- **Manual checks for Sonlm: NOT verified** (an agent is headless):
-  - M1. `godot --path game`: the start page appears and says there are no setup problems.
+- **Manual checks still for Sonlm** (the results above stand; this list is what is left):
   - M2. `godot --path game res://scenes/ear_test.tscn`: run one trial; it looks and sounds as before.
-  - M3. `builds/ear-test-linux/ear_test.x86_64` (built by the last `--export` run): it opens the ear test, and the window title is "Ear Test".
-- Nothing is committed. The new files are only marked intent-to-add (`git add -N`) so they show in `git diff`; the `git mv` of the ear test's file is staged.
+  - M3. `builds/ear-test-linux/ear_test.x86_64` (built by the last `--export` run): the window title is "Ear Test".
+- Committed as `05124dd` on `ear-test-prototype`.
+- **Code review, 2026-11-20 (gds-code-review, Claude Fable 5.2):** no acceptance criterion was violated. 4 decisions (3 fixed, 1 dismissed), 17 patches applied, 2 deferred (DW-24, DW-25), 13 dismissed. See "Review Findings" under Tasks. After the fixes `tools/ci.sh` and `tools/ci.sh --export` pass: 237 passed, 0 failed, 28 expected (ear test 120 passed, 23 expected; launch options 28; input actions 20; project setup 37; title screen 7; runner rules 7; watch faults 11 passed, 5 expected; engine globals 7). Negative checks run and removed: `extends Node2D` and `"#" + str(randi())` in a probe `watch/sim/` file fail the purity check, a sim class extending another sim class passes, `print_rich(` in `watch/core/` fails the print check, `tools/ci.sh --exports` exits 2; in a scratch copy, a test crashing inside an expect window, a test using `await` and a misnamed test file each fail the run.
 
 ### File List
 
@@ -373,7 +401,19 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
 - `game/watch/content/ui_text.gd`, `.gd.uid` (new)
 - `game/watch/screens/title_screen.tscn`, `title_screen.gd`, `title_screen.gd.uid` (new)
 - `tools/ci.sh` (modified)
+- `_bmad/custom/gds-dev-story.toml` (new; was in commit `05124dd` and missing from this list)
+
+Changed by the code review (2026-11-20):
+
+- `_bmad-output/implementation-artifacts/deferred-work.md` (modified: DW-24, DW-25)
+- `_bmad-output/project-context.md`, `_bmad/custom/gds-dev-story.toml`, `game/EAR_TEST.md`, `game/WATCH.md`, `.githooks/pre-commit` (modified)
+- `game/tests/test_runner_rules.gd`, `.gd.uid` (new)
+- `game/tests/run_tests.gd`, `game/tests/test_case.gd` (modified)
+- `game/tests/watch/test_input_actions.gd`, `test_launch_options.gd`, `test_project_setup.gd`, `test_title_screen.gd` (modified)
+- `game/watch/core/input_actions.gd`, `game/watch/core/launch_options.gd`, `game/watch/screens/title_screen.gd` (modified)
+- `tools/ci.sh` (modified)
 
 ## Change Log
 
 - 2026-11-20: Story 1.1 implemented (gds-dev-story). The test runner is split into a self-listing runner plus `TestCase`, with the ear test's file moved, bodies unchanged and still 120/23. `project.godot` and the presets carry the game's main scene, name and user folder, with `.eartest` overrides. New core scripts: `LaunchOptions`, `InputActions`, `WatchFaults`, `WatchSession`, `EngineGlobals`; plus `UiText`, `Main` and the bare start page. CI adds the purity and print checks with a self-check, smoke runs of the game and the ear test, a run per `--start` value, and a start check of the ear test build. Docs: `WATCH.md`, `EAR_TEST.md` fixes, `project-context.md` notes. Status → review; M1 to M3 left for Sonlm.
+- 2026-11-20: Code review (gds-code-review). The runner now fails a test that stops before its end (a script error inside an expect window, or `await`) and a misnamed test file. `LaunchOptions`: a bad value no longer blocks a later good one, and a switch typed before `--` is a setup problem. `tools/ci.sh`: unknown arguments stop it; strings are dropped before the greps; the print check covers the whole `print` family; the purity check is wider and checks base types; exports fail on error lines or a stale build; the build start uses a scratch data folder. Smaller fixes to `InputActions.key_name`, the title screen, the tests and the docs. Status → done; M2 and M3 are still for Sonlm.

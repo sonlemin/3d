@@ -69,6 +69,31 @@ func _test_repeated_switch() -> void:
 			_one_problem(options, "launch.repeated:") and options.seed == 1, "%s %d" % [options.problems, options.seed])
 
 
+func _test_bad_then_good_switch() -> void:
+	# A bad value is not "the first": the good one after it is taken, and only the bad is listed.
+	var options: LaunchOptions = _parse(["--seed=abc", "--seed=5"])
+	_check("launch: --seed=abc --seed=5 is one launch.seed problem and seed 5",
+			_one_problem(options, "launch.seed:") and options.seed_given and options.seed == 5,
+			"%s %d" % [options.problems, options.seed])
+	options = _parse(["--seed=5", "--seed=abc"])
+	_check("launch: --seed=5 --seed=abc is one launch.repeated problem and seed 5",
+			_one_problem(options, "launch.repeated:") and options.seed == 5, "%s %d" % [options.problems, options.seed])
+	options = _parse(["--seed=abc", "--seed=5", "--seed=6"])
+	_check("launch: a third --seed after a good one is repeated; seed stays 5",
+			options.problems.size() == 2 and options.problems[0].begins_with("launch.seed:")
+			and options.problems[1].begins_with("launch.repeated:") and options.seed == 5, str(options.problems))
+
+
+func _test_misplaced_switch() -> void:
+	# Typed before `--`, a switch reaches the engine, not the game: say so instead of ignoring it.
+	var found: PackedStringArray = LaunchOptions.misplaced(PackedStringArray(["--path", "game", "--seed=3", "--start"]))
+	_check("launch: --seed=3 and --start before -- are two launch.misplaced problems",
+			found.size() == 2 and found[0].begins_with("launch.misplaced: '--seed=3'")
+			and found[1].begins_with("launch.misplaced: '--start'"), str(found))
+	found = LaunchOptions.misplaced(PackedStringArray(["--headless", "--path", "game", "-s", "res://tests/run_tests.gd"]))
+	_check("launch: engine arguments alone are no problem", found.is_empty(), str(found))
+
+
 func _test_problems_do_not_stop_the_rest() -> void:
 	var options: LaunchOptions = _parse(["--bogus", "--seed=3", "--start=nowhere"])
 	_check("launch: good switches still apply beside bad ones",

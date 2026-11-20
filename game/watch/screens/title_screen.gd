@@ -4,7 +4,8 @@
 ## No pixel sizes here (AD-69): layout is anchors and containers only.
 extends Control
 
-## Handed over by Main before the screen enters the tree.
+## Handed over by Main before the screen enters the tree. Null when the scene is run alone
+## (F6): nothing was checked then, so the page shows only the name.
 var session: WatchSession
 
 
@@ -15,6 +16,8 @@ func _ready() -> void:
 	var lines: VBoxContainer = VBoxContainer.new()
 	center.add_child(lines)
 	_add_line(lines, UiText.GAME_NAME)
+	if session == null:
+		return
 	if session.setup_problems.is_empty():
 		_add_line(lines, UiText.NO_SETUP_PROBLEMS)
 		return

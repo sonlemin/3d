@@ -156,8 +156,7 @@ func _test_nothing_in_project_godot() -> void:
 
 
 func _test_other_bindings_are_a_problem() -> void:
-	# An action that already exists with other bindings (from project.godot, say) is a setup
-	# problem: register() must notice, not silently keep or double the bindings.
+	# Two lists of bindings match only when they hold the same bindings.
 	var mine: Array[InputEvent] = InputActions.events_for(&"watch_use")
 	var other: InputEventKey = InputEventKey.new()
 	other.physical_keycode = KEY_Q
@@ -167,6 +166,36 @@ func _test_other_bindings_are_a_problem() -> void:
 	_check("input: the same bindings match", InputActions.same_events(mine, InputActions.events_for(&"watch_use")))
 	_check("input: other bindings do not match", not InputActions.same_events(mine, others))
 	_check("input: an extra binding does not match", not InputActions.same_events(mine, extra))
+
+
+func _test_register_reports_other_bindings() -> void:
+	# An action that already exists with other bindings (from project.godot, say) is a setup
+	# problem: register() must notice, not silently keep or double the bindings.
+	# The one test that writes to the InputMap (decision with Sonlm at code review, 2026-11-20);
+	# it puts the table's bindings back before it ends.
+	InputActions.register()
+	InputMap.erase_action(&"watch_use")
+	InputMap.add_action(&"watch_use")
+	var other: InputEventKey = InputEventKey.new()
+	other.physical_keycode = KEY_Q
+	InputMap.action_add_event(&"watch_use", other)
+	var problems: PackedStringArray = InputActions.register()
+	_check("input: register() reports watch_use bound elsewhere, and only that",
+			problems.size() == 1 and problems[0].begins_with("input.defined_elsewhere: watch_use "), str(problems))
+	_check("input: register() leaves the other binding as it found it",
+			InputMap.action_get_events(&"watch_use").size() == 1)
+	InputMap.erase_action(&"watch_use")
+	problems = InputActions.register()
+	_check("input: with the action gone, register() adds it back without a problem", problems.is_empty()
+			and InputActions.same_events(InputMap.action_get_events(&"watch_use"), InputActions.events_for(&"watch_use")),
+			str(problems))
+
+
+func _test_unnamed_mouse_button() -> void:
+	# The game names only the two buttons it binds; any other has no name rather than a wrong one.
+	_check("input: the middle mouse button has no name",
+			InputActions.binding_name([InputActions.Device.MOUSE, MOUSE_BUTTON_MIDDLE]) == "",
+			InputActions.binding_name([InputActions.Device.MOUSE, MOUSE_BUTTON_MIDDLE]))
 
 
 func _test_key_names() -> void:

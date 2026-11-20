@@ -45,10 +45,9 @@ func _test_user_folder_pinned() -> void:
 
 
 func _test_physics_ticks() -> void:
-	var config: ConfigFile = _project()
-	# AD-52: the physics tick is only the simulation's clock, 60 per second.
-	_check("project: physics_ticks_per_second is 60 in the file",
-			config.get_value("physics", "common/physics_ticks_per_second", 0) == 60)
+	# AD-52: the physics tick is only the simulation's clock, 60 per second. 60 is also the
+	# engine's default, and the editor drops a default value's line when it saves project.godot,
+	# so the running value is checked and the line is not (decision at code review, 2026-11-20).
 	_check("project: the engine runs 60 physics ticks per second", Engine.physics_ticks_per_second == 60)
 
 

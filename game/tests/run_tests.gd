@@ -2,7 +2,9 @@
 ##     godot --headless --path game -s res://tests/run_tests.gd
 ## Finds every `test_*.gd` under res://tests/ (sorted by path), and in each file every method
 ## whose name starts with `_test_`, in declaration order. Nothing is listed by hand, so a new
-## test cannot be forgotten. Each file must extend TestCase.
+## test cannot be forgotten. Each file must extend TestCase. A file with `_test_` functions
+## under another name fails the run, and so does a test that stops before its end (a script
+## error inside an expect window, or `await`): see TestCase._after_test.
 ##
 ## Prints one PASS/FAIL line per check, one summary line per file and a final total line
 ## ("N passed, M failed. ..."), which tools/ci.sh reads; exits 1 if anything failed.
@@ -36,6 +38,9 @@ func _run() -> void:
 	var file_lines: PackedStringArray = []
 	if paths.is_empty():
 		_runner_fail("no test file (test_*.gd) found under %s" % TESTS_DIR)
+	for path: String in _misnamed_test_files(TESTS_DIR):
+		_runner_fail("%s has _test_ functions but is not named test_*.gd, so it never runs"
+				% path.trim_prefix(TESTS_DIR + "/"))
 	for path: String in paths:
 		file_lines.append(_run_file(path))
 
@@ -74,7 +79,7 @@ func _run_file(path: String) -> String:
 		case._check("%s: has at least one _test_ function" % short, false)
 	case._before_all()
 	for method: String in tests:
-		case.call(method)
+		case._after_test(method, case.call(method))
 	case._after_all()
 
 	var unexpected: PackedStringArray = _logger.unexpected().slice(_seen)
@@ -95,6 +100,22 @@ func _find_test_files(dir: String) -> PackedStringArray:
 			found.append(path)
 	for sub: String in DirAccess.get_directories_at(dir):
 		found.append_array(_find_test_files(dir.path_join(sub)))
+	return found
+
+
+## Every other `.gd` below `dir` that extends TestCase and has `_test_` methods: its tests
+## would never run. A base class for test files (no `_test_` method of its own) is fine.
+func _misnamed_test_files(dir: String) -> PackedStringArray:
+	var found: PackedStringArray = []
+	for file_name: String in DirAccess.get_files_at(dir):
+		var path: String = dir.path_join(file_name)
+		if not file_name.ends_with(".gd") or file_name.begins_with("test_"):
+			continue
+		var script: GDScript = load(path) as GDScript
+		if script != null and _extends_test_case(script) and not _test_methods(script).is_empty():
+			found.append(path)
+	for sub: String in DirAccess.get_directories_at(dir):
+		found.append_array(_misnamed_test_files(dir.path_join(sub)))
 	return found
 
 

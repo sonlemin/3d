@@ -13,7 +13,8 @@ Before the final message to Sonlm, do these three steps in this order.
 
 1. Manual checks, automatically where possible. For each manual check the story lists (M1, M2, ...):
    - If it can be judged from what is on screen, run it on a virtual display and write frames:
-       xvfb-run -a -s "-screen 0 1280x720x24" godot --path game <scene, or -- <switches>> --write-movie <scratchpad>/<check id>/frame.png --fixed-fps 30 --quit-after <frames>
+       xvfb-run -a -s "-screen 0 1280x720x24" godot --path game [<scene>] --write-movie <scratchpad>/<check id>/frame.png --fixed-fps 30 --quit-after <frames> [-- <switches>]
+     Launch switches go last, after `--`: everything after `--` is handed to the game, so an engine flag put there writes no frames and never quits.
      For an exported build, run the binary with the same xvfb-run and --write-movie flags. Use a `--show=<name>` setup once those exist. Read the last frames (and any frame the check needs), judge them against the check, and note which frame you judged. The renderer is Forward+ on llvmpipe (CPU Vulkan), not a real GPU: say so beside the result.
    - Sound, panning, feel, mouse capture, frame rate and the window title cannot be judged this way. List them for Sonlm as NOT verified. Never report such a check, or any part of one, as verified.
    - Write each result into the story's Completion Notes: "Mn: verified on a virtual display (<frame path>)" or "Mn: NOT verified, needs Sonlm (<why>)".

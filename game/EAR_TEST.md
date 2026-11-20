@@ -40,9 +40,9 @@ named `placeholder_*`) unless you pass `--force`, so it never mixes placeholders
 `tools/ci.sh` runs the import, the code checks, the test suite (the ear test's tests are in
 `tests/ear_test/test_ear_test.gd`) and 120-frame smoke runs of the game and the ear test (about 15 s);
 `tools/ci.sh --export` also makes both builds. A pre-commit hook in `.githooks/` runs it
-before any commit that touches `game/`, and blocks the commit if a check fails. Enable the
-hook once per clone with `git config core.hooksPath .githooks`; skip it once with
-`git commit --no-verify`.
+before any commit that touches `game/` or `tools/ci.sh`, and blocks the commit if a check fails. Enable the
+hook once per clone with `git config core.hooksPath .githooks`. Never skip it with
+`--no-verify`: fix what the check found.
 
 ## Builds (no Godot needed on the test machine)
 

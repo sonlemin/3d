@@ -35,25 +35,33 @@ godot --headless --path game -s res://tests/run_tests.gd
 
 The runner finds every `tests/**/test_*.gd` and every `_test_*` function in it by itself; each
 file extends `TestCase` (`tests/test_case.gd`). It prints one line per file and a total line,
-and fails on any failed check or any error or warning a test did not ask for. The ear test's
-tests are in `tests/ear_test/test_ear_test.gd` (120 passed, 23 expected).
+and fails on any failed check or any error or warning a test did not ask for. A test must run
+to its end in one go: one that uses `await`, or stops on a script error inside an expect
+window, fails. A file with `_test_` functions that is not named `test_*.gd` fails the run too.
+The ear test's tests are in `tests/ear_test/test_ear_test.gd` (120 passed, 23 expected).
 
 ## CI
 
-- `tools/ci.sh`: import, the purity check on `watch/sim/` (with a self-check of the grep), the
-  `print(` check on `watch/` outside `watch/debug/`, the tests, and 120-frame smoke runs of the
-  game, the ear test, and the game with each `--start` value. Any ERROR or WARNING line fails.
+- `tools/ci.sh`: import, the purity check on `watch/sim/` (banned names, and any base type but
+  `RefCounted` or a class of that folder; with a self-check of the greps), the check for any
+  kind of `print` on `watch/` outside `watch/debug/`, the tests, and 120-frame smoke runs of
+  the game, the ear test, and the game with each `--start` value. A smoke run fails on any
+  ERROR or WARNING line; the import and the exports fail on any ERROR line.
 - `tools/ci.sh --export`: the same, then the ear test's Windows and Linux builds into `builds/`,
   and one headless start of the Linux build to confirm it opens the ear test and writes to
-  `app_userdata/Ear Test`, not to the game's folder.
-- The pre-commit hook runs `tools/ci.sh`. Enable it once per clone:
+  `app_userdata/Ear Test`, not to the game's folder. That start uses a scratch data folder, so
+  your real user folders are not touched. Only the Linux build is started; the Windows build
+  is built and not run.
+- Any other argument stops `tools/ci.sh` at once with an error.
+- The pre-commit hook runs `tools/ci.sh` for commits that touch `game/` or `tools/ci.sh`. Enable it once per clone:
   `git config core.hooksPath .githooks`. Never commit with `--no-verify`.
 
 ## Launch switches
 
 Switches go after `--`, for example `godot --path game -- --seed=3`. A switch that is unknown,
-given twice, or has a bad value is a setup problem: it is reported once as a warning and listed
-on the start page, and the game starts anyway.
+given twice, has a bad value, or is typed before `--` is a setup problem: it is reported once
+as a warning and listed on the start page, and the game starts anyway. Of a switch given more
+than once, the first good value stands.
 
 | Switch | What it does |
 |---|---|
