@@ -28,14 +28,17 @@ godot --headless --path game --import          # after a fresh checkout and afte
 godot --headless --path game -s res://tests/run_tests.gd
 ```
 
-Then run the test with `godot --path game`, or open `game/` in the editor and press F5.
+Then run the test with `godot --path game res://scenes/ear_test.tscn`, or open
+`scenes/ear_test.tscn` in the editor and press F6. (`godot --path game` and F5 now open the
+game, The Mourning Watch; see `WATCH.md`. The ear test's builds still open the ear test.)
 
 The placeholder script refuses any level folder that already holds a real clip (a `.wav` not
 named `placeholder_*`) unless you pass `--force`, so it never mixes placeholders into real clips.
 
 ## Local CI (free, no hosted service)
 
-`tools/ci.sh` runs the import, the test suite and a 120-frame smoke run (about 10 s);
+`tools/ci.sh` runs the import, the code checks, the test suite (the ear test's tests are in
+`tests/ear_test/test_ear_test.gd`) and 120-frame smoke runs of the game and the ear test (about 15 s);
 `tools/ci.sh --export` also makes both builds. A pre-commit hook in `.githooks/` runs it
 before any commit that touches `game/`, and blocks the commit if a check fails. Enable the
 hook once per clone with `git config core.hooksPath .githooks`; skip it once with
@@ -132,6 +135,10 @@ no-break, ideographic and zero-width spaces). An ID made only of spaces counts a
 - Linux: `~/.local/share/godot/app_userdata/Ear Test/ear_test_results/`
 - Windows: `%APPDATA%\Godot\app_userdata\Ear Test\ear_test_results\`
 - macOS: `~/Library/Application Support/Godot/app_userdata/Ear Test/ear_test_results/`
+
+Those are the builds' folders. Run from source, the ear test shares the game's folder:
+`~/.local/share/mourning_watch/ear_test_results/` on Linux, `%APPDATA%\mourning_watch\ear_test_results\`
+on Windows.
 
 The results screen shows the full path, and **Open results folder** opens it. The columns are:
 `tester_id, output_mode, round, trial_index, true_direction, true_level, answer_direction,

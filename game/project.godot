@@ -10,9 +10,14 @@ config_version=5
 
 [application]
 
-config/name="Ear Test"
+config/name="The Mourning Watch"
+config/name.eartest="Ear Test"
 config/description="Private gray-box test: can players place a cry's direction and level by ear?"
-run/main_scene="res://scenes/ear_test.tscn"
+run/main_scene="res://watch/main.tscn"
+run/main_scene.eartest="res://scenes/ear_test.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="mourning_watch"
+config/use_custom_user_dir.eartest=false
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [audio]
@@ -36,6 +41,10 @@ window/stretch/aspect="expand"
 wav={
 "force/mono": true
 }
+
+[physics]
+
+common/physics_ticks_per_second=60
 
 [rendering]
 

@@ -28,9 +28,9 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Targets:** Windows 10/11 x64 and Linux x86-64, on itch.io. Stereo output. Keyboard and mouse.
 - **Canvas (AD-69):** 1280×720, `canvas_items` stretch, `expand` aspect, as `project.godot` has it. Never change those lines. `DESIGN.md` sizes are at 1080p; only `watch_theme.gd` turns a token into a canvas size (two thirds, rounded). No other script writes a pixel size for a screen.
 - **Menu keys (AD-70):** menus read the `watch_menu_*` actions from the `InputActions` table, not Godot's `ui_*` actions.
-- **CI:** `tools/ci.sh` (repo root) = import, the purity and `print` checks, tests, three smoke runs of 120 frames (the game's main scene; the game with `--start=night --seed=1`; `res://scenes/ear_test.tscn`). `--export` adds the builds. Local only, run by the pre-commit hook. The checks and the second and third smoke runs are added in epic 1; until that story lands, CI is import + tests + one smoke run.
+- **CI:** `tools/ci.sh` (repo root) = import, the purity and `print` checks, tests, three smoke runs of 120 frames (the game's main scene; the game with `--start=night --seed=1`; `res://scenes/ear_test.tscn`). `--export` adds the builds. Local only, run by the pre-commit hook. The purity and `print` checks and the first two smoke runs (the main scene, the ear test) exist since story 1.1, with one more smoke run per `--start` value; the night run (`--start=night --seed=1`) arrives with story 1.2.
 - **Agents work headless: no editor, no screen, no speakers.** CI sees no rendering and hears no sound.
-- **Until epic 1's setup story lands, `project.godot` is still the ear test** (name, main scene). That story switches the main scene to `res://watch/main.tscn` and adds `.eartest` feature overrides so the ear test's two presets still open the ear test (AD-12, AD-43).
+- **`project.godot` is the game's** since story 1.1: the main scene is `res://watch/main.tscn`, the user folder is pinned to `mourning_watch`, and `.eartest` overrides of the name, the main scene and the user folder keep the ear test's two presets opening the ear test and writing to `app_userdata/Ear Test` (AD-12, AD-43). Run the ear test from source with `godot --path game res://scenes/ear_test.tscn`.
 
 ## Critical Implementation Rules
 
@@ -118,7 +118,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Testing Rules
 
-- **No test framework** (AD-27). One test file per system, `game/tests/watch/test_<system>.gd`, extending `WatchTest`. The runner finds every `_test_<topic>()` by itself. (Until epic 1's setup story splits it, the ear test's tests are in `run_tests.gd`, where each must be listed in `_run()`.)
+- **No test framework** (AD-27). One test file per system, `game/tests/watch/test_<system>.gd`, extending `WatchTest`. The runner finds every `test_*.gd` and every `_test_<topic>()` by itself. Files extend `TestCase` (`tests/test_case.gd`), or `WatchTest` once story 1.2 adds it. The ear test's tests are in `tests/ear_test/test_ear_test.gd`.
 - Assert with `_check(name, ok, detail)`. Any engine error or warning during the run fails the suite; a test that provokes one on purpose wraps it in `_expect_begin()` / `_expect_end(name, [[kind, text, count]])`.
 - **Build order for every story** (AD-46): the failing test first, then constants, state, the tick-order step, the rule and its events, shapes and consequences, the sound-and-cue row; only then the view and the sound; then a bot path and a show-me setup. The sim part passes before anything is drawn.
 - **Set up a situation only through a `StartState` on the test's own `NightDef`**, then use commands and ticks. Never write sim fields from a test.
@@ -185,7 +185,6 @@ _This file contains critical rules and patterns that AI agents must follow when 
 **For humans**
 
 - Update when the architecture, the engine version, CI or the folder layout changes.
-- After epic 1's setup story lands, remove the three "until that story" notes (CI, `project.godot`, the test file).
 - Remove a rule once the code makes it obvious.
 
 Last Updated: 2026-11-20

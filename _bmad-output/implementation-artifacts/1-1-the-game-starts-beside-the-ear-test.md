@@ -1,6 +1,10 @@
+---
+baseline_commit: 10cad8d1beaedae539149afcd5d244899575eae0
+---
+
 # Story 1.1: The game starts beside the ear test
 
-Status: ready-for-dev
+Status: review
 
 <!-- Created 2026-11-20 by gds-create-story from epics.md draft 0.8 ("Epic 1: story detail"). -->
 
@@ -35,37 +39,37 @@ Delivers: architecture AD-10, AD-12, AD-20, AD-27, AD-28, AD-29, AD-36, AD-39, A
 
 Follow the architecture's build order (AD-46): the failing test first, then the code. There is no sim in this story, so steps 3 to 7 and 9 to 10 of AD-46 do not apply.
 
-- [ ] **T1. Split the test runner (AC 5)**. Do this first: every later task adds tests through it.
-  - [ ] 1.1 Create `game/tests/test_case.gd`: `class_name TestCase`, `extends RefCounted`. Move `_check`, `_expect_begin`, `_expect_end` into it **with their bodies unchanged**. Give it `var root: Window` (set by the runner, so ear test bodies that call `root.add_child(...)` / `root.remove_child(...)` still work unchanged), the per-file counters `passed`, `failed`, `expected_total`, a reference to the shared logger, and two empty virtual hooks `_before_all()` and `_after_all()`.
-  - [ ] 1.2 Move `LogCounter` (the `Logger` subclass) out of the ear test's code into `tests/test_case.gd` (or a `tests/log_counter.gd` beside it). It is shared by every file.
-  - [ ] 1.3 `git mv game/tests/run_tests.gd game/tests/ear_test/test_ear_test.gd` (keeps history), then cut it down: it `extends TestCase`; it keeps its preloads, its constants (`SCRATCH_DIR`, `SEEDS`, `TIMESTAMP`, `FOCUS_OUT`, `DESIGN_NOTES_BUS_FX`), `_fake_ms` and every ear-test helper (`_seeded`, `_count`, `_remove_tree`, `_read_lines`, `_read_csv`, `_fake_now`, `_new_scene`, ...). Remove `_initialize`, `_run` and the three moved helpers. Add `_before_all()` and `_after_all()`, each calling `_remove_tree(SCRATCH_DIR)` (what `_run()` did before and after). **No `_test_` function body changes.** Move the `.uid` along with the script (`run_tests.gd.uid` → `test_ear_test.gd.uid`), and let `--import` write a fresh `.uid` for the new runner.
-  - [ ] 1.4 Write the new `game/tests/run_tests.gd` (`extends SceneTree`, no `class_name`): install the logger, on the first frame scan `res://tests/` recursively for files named `test_*.gd` (sorted by path), load each, fail loudly if one does not extend `TestCase`, instantiate it, set `root`, call `_before_all()`, call every method whose name starts with `_test_` **in declaration order** (`get_script_method_list()` returns declaration order; checked on 4.7.2), call `_after_all()`, then run the per-file check `"logger: no unexpected engine/script errors or warnings during the run"` over what was logged during that file. Print one summary line per file and a final total line, `N passed, M failed. ...`, then `quit(0 or 1)`. Fail if no test file or no `_test_` function is found.
-  - [ ] 1.5 Run it. The ear test's file must report **120 passed** (119 of its own checks plus its logger check) **and 23 expected**, exactly as on 2026-11-20. The old `_run()` order differs from declaration order in a few places (`_test_pass_mark` / `_test_level_confusions`, `_test_scene_listener_geometry` / `_test_scene_rear_shadow`, and others). If a count changes because of order, **move whole functions** in the file to match the old `_run()` order. Never edit a body.
-- [ ] **T2. project.godot and export presets (AC 3, 4)**
-  - [ ] 2.1 Write the test first: `tests/watch/test_project_setup.gd` checks the main scene, the name, the `.eartest` overrides, the pinned user folder and 60 physics ticks; checks that the viewport (1280×720), `canvas_items` and `expand` are unchanged; checks that both ear test presets have `custom_features="eartest"` and keep `include_filter="audio/cries/loudness.json"`. Note that the ear test's own `_test_loudness_table_real` already counts that filter line exactly twice. Keep that true.
-  - [ ] 2.2 Edit `game/project.godot` by hand (exact lines in Dev Notes). Then run `godot --headless --path game --import` and check with `git diff game/project.godot` that the import did not rewrite anything else.
-  - [ ] 2.3 Edit `game/export_presets.cfg`: `custom_features="eartest"` in `[preset.0]` and `[preset.1]`. Change nothing else.
-- [ ] **T3. Core scripts (AC 7, 8, 9)**. Test first for each.
-  - [ ] 3.1 `tests/watch/test_launch_options.gd`, then `watch/core/launch_options.gd` (`class_name LaunchOptions`).
-  - [ ] 3.2 `tests/watch/test_input_actions.gd`, then `watch/core/input_actions.gd` (`class_name InputActions`).
-  - [ ] 3.3 `tests/watch/test_watch_faults.gd`, then `watch/core/watch_faults.gd` (`class_name WatchFaults`).
-  - [ ] 3.4 `watch/core/watch_session.gd` (`class_name WatchSession`) and `watch/core/engine_globals.gd` (`class_name EngineGlobals`). Test what can be tested headless: tree pause on/off and the `enter_screen` clearing pause. Mouse mode is a manual-only fact.
-  - [ ] 3.5 `godot --headless --path game --import` after adding the `class_name`s.
-- [ ] **T4. Main and the start page (AC 1)**
-  - [ ] 4.1 `watch/main.tscn` + `watch/main.gd` (no `class_name`): parses `LaunchOptions`, registers `InputActions`, builds the `WatchSession` with the setup problems collected, calls `EngineGlobals.enter_screen(...)` and shows the start page. It holds the flow and nothing else (AD-59).
-  - [ ] 4.2 `watch/screens/title_screen.tscn` + `title_screen.gd`: the bare start page (see Dev Notes). Handed the `WatchSession`; draws the problem list or the no-problem line.
-  - [ ] 4.3 `watch/content/ui_text.gd` (`class_name UiText`, constants only) for the page's strings.
-- [ ] **T5. CI (AC 3, 6, 7)**: rewrite `tools/ci.sh` (details in Dev Notes)
-  - [ ] 5.1 Purity check on `game/watch/sim/` (absent folder = pass), with a built-in fixture self-check so the grep is proven to catch each banned token.
-  - [ ] 5.2 The `print(` check on runtime folders (`game/watch/` except `game/watch/debug/`).
-  - [ ] 5.3 Tests: grep the final total line.
-  - [ ] 5.4 Smoke runs: the game's main scene; the ear test's scene. Then one smoke run per `--start` value, listed by `tests/print_start_values.gd`.
-  - [ ] 5.5 `--export`: build both presets, start the Linux ear test build once headless for 120 frames, and confirm it opened the ear test and wrote to its old user folder.
-- [ ] **T6. Docs (AC 9)**
-  - [ ] 6.1 `game/WATCH.md`.
-  - [ ] 6.2 `game/EAR_TEST.md`: change only the lines that are now wrong: running the test (`godot --path game` now opens the game) and the test command path. The ear test's closed list does not include this file.
-  - [ ] 6.3 `_bmad-output/project-context.md`: replace the three "until that story" notes (exact edits in Dev Notes), and the matching line in Usage Guidelines.
-- [ ] **T7. Close**: `tools/ci.sh` and `tools/ci.sh --export` pass. Fill in the Dev Agent Record. List M1 to M3 for Sonlm as **not verified**. Set Status to `review`.
+- [x] **T1. Split the test runner (AC 5)**. Do this first: every later task adds tests through it.
+  - [x] 1.1 Create `game/tests/test_case.gd`: `class_name TestCase`, `extends RefCounted`. Move `_check`, `_expect_begin`, `_expect_end` into it **with their bodies unchanged**. Give it `var root: Window` (set by the runner, so ear test bodies that call `root.add_child(...)` / `root.remove_child(...)` still work unchanged), the per-file counters `passed`, `failed`, `expected_total`, a reference to the shared logger, and two empty virtual hooks `_before_all()` and `_after_all()`.
+  - [x] 1.2 Move `LogCounter` (the `Logger` subclass) out of the ear test's code into `tests/test_case.gd` (or a `tests/log_counter.gd` beside it). It is shared by every file.
+  - [x] 1.3 `git mv game/tests/run_tests.gd game/tests/ear_test/test_ear_test.gd` (keeps history), then cut it down: it `extends TestCase`; it keeps its preloads, its constants (`SCRATCH_DIR`, `SEEDS`, `TIMESTAMP`, `FOCUS_OUT`, `DESIGN_NOTES_BUS_FX`), `_fake_ms` and every ear-test helper (`_seeded`, `_count`, `_remove_tree`, `_read_lines`, `_read_csv`, `_fake_now`, `_new_scene`, ...). Remove `_initialize`, `_run` and the three moved helpers. Add `_before_all()` and `_after_all()`, each calling `_remove_tree(SCRATCH_DIR)` (what `_run()` did before and after). **No `_test_` function body changes.** Move the `.uid` along with the script (`run_tests.gd.uid` → `test_ear_test.gd.uid`), and let `--import` write a fresh `.uid` for the new runner.
+  - [x] 1.4 Write the new `game/tests/run_tests.gd` (`extends SceneTree`, no `class_name`): install the logger, on the first frame scan `res://tests/` recursively for files named `test_*.gd` (sorted by path), load each, fail loudly if one does not extend `TestCase`, instantiate it, set `root`, call `_before_all()`, call every method whose name starts with `_test_` **in declaration order** (`get_script_method_list()` returns declaration order; checked on 4.7.2), call `_after_all()`, then run the per-file check `"logger: no unexpected engine/script errors or warnings during the run"` over what was logged during that file. Print one summary line per file and a final total line, `N passed, M failed. ...`, then `quit(0 or 1)`. Fail if no test file or no `_test_` function is found.
+  - [x] 1.5 Run it. The ear test's file must report **120 passed** (119 of its own checks plus its logger check) **and 23 expected**, exactly as on 2026-11-20. The old `_run()` order differs from declaration order in a few places (`_test_pass_mark` / `_test_level_confusions`, `_test_scene_listener_geometry` / `_test_scene_rear_shadow`, and others). If a count changes because of order, **move whole functions** in the file to match the old `_run()` order. Never edit a body.
+- [x] **T2. project.godot and export presets (AC 3, 4)**
+  - [x] 2.1 Write the test first: `tests/watch/test_project_setup.gd` checks the main scene, the name, the `.eartest` overrides, the pinned user folder and 60 physics ticks; checks that the viewport (1280×720), `canvas_items` and `expand` are unchanged; checks that both ear test presets have `custom_features="eartest"` and keep `include_filter="audio/cries/loudness.json"`. Note that the ear test's own `_test_loudness_table_real` already counts that filter line exactly twice. Keep that true.
+  - [x] 2.2 Edit `game/project.godot` by hand (exact lines in Dev Notes). Then run `godot --headless --path game --import` and check with `git diff game/project.godot` that the import did not rewrite anything else.
+  - [x] 2.3 Edit `game/export_presets.cfg`: `custom_features="eartest"` in `[preset.0]` and `[preset.1]`. Change nothing else.
+- [x] **T3. Core scripts (AC 7, 8, 9)**. Test first for each.
+  - [x] 3.1 `tests/watch/test_launch_options.gd`, then `watch/core/launch_options.gd` (`class_name LaunchOptions`).
+  - [x] 3.2 `tests/watch/test_input_actions.gd`, then `watch/core/input_actions.gd` (`class_name InputActions`).
+  - [x] 3.3 `tests/watch/test_watch_faults.gd`, then `watch/core/watch_faults.gd` (`class_name WatchFaults`).
+  - [x] 3.4 `watch/core/watch_session.gd` (`class_name WatchSession`) and `watch/core/engine_globals.gd` (`class_name EngineGlobals`). Test what can be tested headless: tree pause on/off and the `enter_screen` clearing pause. Mouse mode is a manual-only fact.
+  - [x] 3.5 `godot --headless --path game --import` after adding the `class_name`s.
+- [x] **T4. Main and the start page (AC 1)**
+  - [x] 4.1 `watch/main.tscn` + `watch/main.gd` (no `class_name`): parses `LaunchOptions`, registers `InputActions`, builds the `WatchSession` with the setup problems collected, calls `EngineGlobals.enter_screen(...)` and shows the start page. It holds the flow and nothing else (AD-59).
+  - [x] 4.2 `watch/screens/title_screen.tscn` + `title_screen.gd`: the bare start page (see Dev Notes). Handed the `WatchSession`; draws the problem list or the no-problem line.
+  - [x] 4.3 `watch/content/ui_text.gd` (`class_name UiText`, constants only) for the page's strings.
+- [x] **T5. CI (AC 3, 6, 7)**: rewrite `tools/ci.sh` (details in Dev Notes)
+  - [x] 5.1 Purity check on `game/watch/sim/` (absent folder = pass), with a built-in fixture self-check so the grep is proven to catch each banned token.
+  - [x] 5.2 The `print(` check on runtime folders (`game/watch/` except `game/watch/debug/`).
+  - [x] 5.3 Tests: grep the final total line.
+  - [x] 5.4 Smoke runs: the game's main scene; the ear test's scene. Then one smoke run per `--start` value, listed by `tests/print_start_values.gd`.
+  - [x] 5.5 `--export`: build both presets, start the Linux ear test build once headless for 120 frames, and confirm it opened the ear test and wrote to its old user folder.
+- [x] **T6. Docs (AC 9)**
+  - [x] 6.1 `game/WATCH.md`.
+  - [x] 6.2 `game/EAR_TEST.md`: change only the lines that are now wrong: running the test (`godot --path game` now opens the game) and the test command path. The ear test's closed list does not include this file.
+  - [x] 6.3 `_bmad-output/project-context.md`: replace the three "until that story" notes (exact edits in Dev Notes), and the matching line in Usage Guidelines.
+- [x] **T7. Close**: `tools/ci.sh` and `tools/ci.sh --export` pass. Fill in the Dev Agent Record. List M1 to M3 for Sonlm as **not verified**. Set Status to `review`.
 
 ## Dev Notes
 
@@ -307,11 +311,69 @@ Branch `ear-test-prototype`, last commit `555918b` (planning: readiness fixes an
 
 ### Agent Model Used
 
+Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
+
 ### Debug Log References
+
+- Baseline before any change: old runner `120 passed, 0 failed ... 23 expected`; saved and compared check by check after the split.
+- `ConfigFile.get_value(section, key, null)` logs an ERROR when the key is missing (a `null` default counts as "no default"). The project test uses a string default instead.
+- Probe (Godot 4.7.2): `"99999999999999999999".is_valid_int()` is `true`, then `to_int()` logs `ERROR: Cannot represent ... as a 64-bit signed integer`. `LaunchOptions` therefore rejects a seed over 18 digits (a test covers it).
+- Probe: `PackedStringArray(Array[StringName])` converts fine (the problem line that lists `--start` values; exercised by temporarily setting `START_VALUES = [&"night", &"lesson"]`, then restored).
+- Release export templates refuse a scene path on the command line (`compiled without support for path overrides`). `--verbose` in a release build does log `Completed load for: 'res://scenes/ear_test.tscn'`, which CI now requires; from source the same line names `res://watch/main.tscn` for the game.
+- Negative checks run and removed afterwards: a `Time.` line in a probe `watch/sim/` file fails the purity check; a `print(` in `watch/core/` fails the print check while one in `watch/debug/` passes; removing `await` from the pattern fails the self-check; the runner fails on a file not extending `TestCase`, an empty test file, a failing check and a stray warning; rebinding `watch_use` to Q fails the input test.
 
 ### Completion Notes List
 
 - Ultimate context engine analysis completed: comprehensive developer guide created (gds-create-story, 2026-11-20).
 - Hours: epics.md logs hours from epic 1 onward. Record the hours spent on this story here (Sonlm).
+- Agent time: 2026-11-20 15:42 to 15:57 +0700 (0 h 15 min), measured by the agent: from the first file it wrote (the baseline test run) to setting the status to review. Reading the story and context before that took a few more minutes.
+- Manual checks after the fact, on a virtual display (Xvfb, Forward+ on llvmpipe CPU Vulkan, not a real GPU; frames written with `--write-movie` to the session's scratch folder, not kept):
+  - M1: verified on a virtual display. Frame 19 of `godot --path game` shows "The Mourning Watch" and "No setup problems." centred on a plain background.
+  - M2: NOT verified, needs Sonlm (one trial must be played and heard).
+  - M3: partly verified on a virtual display. Frame 19 of `builds/ear-test-linux/ear_test.x86_64` shows the ear test's start screen ("Ear test", Tester ID, Output, "Clips found: above 5 · inside 4 · below 4"), not the game. The window title "Ear Test" is NOT verified (no window frame on Xvfb), so it needs Sonlm.
+- **Result:** `tools/ci.sh` and `tools/ci.sh --export` both pass. Tests: 221 passed, 0 failed, 28 expected (ear test 120 passed, 23 expected; project setup 39; launch options 23; input actions 16; watch faults 11 passed, 5 expected; engine globals 7; title screen 5). `git diff --stat` on the ear test's closed paths is empty. `project.godot` differs only by the AC 4 lines.
+- **T1, runner split.** `TestCase` keeps the counter names `_passed`, `_failed`, `_expected_total` and `_logger`, so the moved `_check` / `_expect_begin` / `_expect_end` bodies are byte-identical. `LogCounter` is an inner class (`TestCase.LogCounter`), so `tests/` gains no second global name. Every helper and `_test_` body in `test_ear_test.gd` is byte-identical to the old file (checked with `diff`). Declaration order differs from the old `_run()` order in three places, but the counts are unchanged and the 120 check names are the same set, so no function was moved (T1.5).
+- **Runner, stricter than asked:** a test file with no `_test_` function fails, and so does an error or warning logged outside any file.
+- **Decisions an agent took (restrictive reading; Sonlm may revisit):** (1) a switch given twice is a setup problem `launch.repeated`, and the first value stands; (2) a seed over 18 digits is a `launch.seed` problem; (3) `InputActions.register()` reports `input.defined_elsewhere` when an action already exists with other bindings; (4) the start page shows a heading line "Setup problems found at start:" above the list (`UiText.SETUP_PROBLEMS_HEADING`), and nothing above "No setup problems.".
+- **Additions beyond the story's file list:** `tests/watch/test_title_screen.gd` checks AC 1 headless (name plus "No setup problems.", or the heading plus each problem in order, and no pixel sizes). `EngineGlobals.mouse_mode_for()` makes the screen-kind → mouse-mode mapping testable; the engine's actual mouse mode stays a manual check.
+- **Main** types the title screen through `const TitleScreen := preload(...)`, because the screen has no `class_name`.
+- **EAR_TEST.md:** the test command line is still correct (the runner kept its path), so it is unchanged. Besides the run line and the CI line, one note was added: run from source, the ear test's CSVs now go to the game's folder (`mourning_watch/ear_test_results/`). Without it, "Where the CSVs are" would be wrong for source runs.
+- **project-context.md:** the three "until that story" notes and the Usage Guidelines line are replaced or removed. `Last Updated` was already 2026-11-20.
+- **Manual checks for Sonlm: NOT verified** (an agent is headless):
+  - M1. `godot --path game`: the start page appears and says there are no setup problems.
+  - M2. `godot --path game res://scenes/ear_test.tscn`: run one trial; it looks and sounds as before.
+  - M3. `builds/ear-test-linux/ear_test.x86_64` (built by the last `--export` run): it opens the ear test, and the window title is "Ear Test".
+- Nothing is committed. The new files are only marked intent-to-add (`git add -N`) so they show in `git diff`; the `git mv` of the ear test's file is staged.
 
 ### File List
+
+- `_bmad-output/implementation-artifacts/1-1-the-game-starts-beside-the-ear-test.md` (modified)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified)
+- `_bmad-output/project-context.md` (modified)
+- `game/EAR_TEST.md` (modified)
+- `game/WATCH.md` (new)
+- `game/export_presets.cfg` (modified)
+- `game/project.godot` (modified)
+- `game/tests/ear_test/test_ear_test.gd`, `.gd.uid` (moved from `game/tests/run_tests.gd`, `.gd.uid`; cut down)
+- `game/tests/run_tests.gd`, `.gd.uid` (new: the self-listing runner)
+- `game/tests/test_case.gd`, `.gd.uid` (new)
+- `game/tests/print_start_values.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_project_setup.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_launch_options.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_input_actions.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_watch_faults.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_engine_globals.gd`, `.gd.uid` (new)
+- `game/tests/watch/test_title_screen.gd`, `.gd.uid` (new)
+- `game/watch/main.tscn`, `main.gd`, `main.gd.uid` (new)
+- `game/watch/core/launch_options.gd`, `.gd.uid` (new)
+- `game/watch/core/input_actions.gd`, `.gd.uid` (new)
+- `game/watch/core/watch_faults.gd`, `.gd.uid` (new)
+- `game/watch/core/watch_session.gd`, `.gd.uid` (new)
+- `game/watch/core/engine_globals.gd`, `.gd.uid` (new)
+- `game/watch/content/ui_text.gd`, `.gd.uid` (new)
+- `game/watch/screens/title_screen.tscn`, `title_screen.gd`, `title_screen.gd.uid` (new)
+- `tools/ci.sh` (modified)
+
+## Change Log
+
+- 2026-11-20: Story 1.1 implemented (gds-dev-story). The test runner is split into a self-listing runner plus `TestCase`, with the ear test's file moved, bodies unchanged and still 120/23. `project.godot` and the presets carry the game's main scene, name and user folder, with `.eartest` overrides. New core scripts: `LaunchOptions`, `InputActions`, `WatchFaults`, `WatchSession`, `EngineGlobals`; plus `UiText`, `Main` and the bare start page. CI adds the purity and print checks with a self-check, smoke runs of the game and the ear test, a run per `--start` value, and a start check of the ear test build. Docs: `WATCH.md`, `EAR_TEST.md` fixes, `project-context.md` notes. Status → review; M1 to M3 left for Sonlm.
