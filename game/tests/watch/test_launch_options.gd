@@ -15,8 +15,9 @@ func _one_problem(options: LaunchOptions, prefix: String) -> bool:
 
 func _test_no_switches() -> void:
 	var options: LaunchOptions = _parse([])
-	_check("launch: no switches -> no problems, no seed, start page",
-			options.problems.is_empty() and not options.seed_given and options.start == &"",
+	_check("launch: no switches -> no problems, no seed, start page, no trace, no show",
+			options.problems.is_empty() and not options.seed_given and options.start == &""
+			and not options.trace and options.show == &"",
 			"%s %s '%s'" % [options.problems, options.seed_given, options.start])
 
 
@@ -38,21 +39,49 @@ func _test_bad_seed() -> void:
 
 
 func _test_start_values_so_far() -> void:
-	# Story 1.1: no --start value exists yet (night arrives in story 1.2). Written literally.
-	_check("launch: no --start value exists yet", LaunchOptions.START_VALUES.is_empty(),
+	# Story 1.2: `night` is the one --start value (planning in 1.7; lesson and round in epic 2).
+	_check("launch: the --start values are night", LaunchOptions.START_VALUES == [&"night"],
 			str(LaunchOptions.START_VALUES))
-	for value: StringName in LaunchOptions.START_VALUES:
-		var options: LaunchOptions = _parse(["--start=" + value])
-		_check("launch: --start=%s is accepted" % value,
-				options.problems.is_empty() and options.start == value, str(options.problems))
+	var options: LaunchOptions = _parse(["--start=night"])
+	_check("launch: --start=night is accepted", options.problems.is_empty() and options.start == &"night",
+			str(options.problems))
 
 
 func _test_bad_start() -> void:
-	# `night` is not a value until story 1.2; an unknown value never starts anything.
-	for arg: String in ["--start=night", "--start=", "--start", "--start=NIGHT"]:
+	# An unknown value never starts anything.
+	for arg: String in ["--start=nowhere", "--start=", "--start", "--start=NIGHT", "--start=night2"]:
 		var options: LaunchOptions = _parse([arg])
 		_check("launch: %s is one launch.start problem and the start page" % arg,
 				_one_problem(options, "launch.start:") and options.start == &"", str(options.problems))
+
+
+func _test_trace() -> void:
+	var options: LaunchOptions = _parse(["--trace"])
+	_check("launch: --trace turns the trace on", options.problems.is_empty() and options.trace, str(options.problems))
+	_check("launch: no --trace, no trace", not _parse([]).trace)
+
+
+func _test_bad_trace() -> void:
+	# --trace is a flag: any value is a problem, and the trace stays off.
+	for arg: String in ["--trace=x", "--trace=", "--trace=1"]:
+		var options: LaunchOptions = _parse([arg])
+		_check("launch: %s is one launch.trace problem, trace off" % arg,
+				_one_problem(options, "launch.trace:") and not options.trace, str(options.problems))
+
+
+func _test_show() -> void:
+	# Any non-empty lower-snake name; whether the setup exists is the debug tools' check.
+	for value: String in ["span_counts", "list", "a1_b", "x"]:
+		var options: LaunchOptions = _parse(["--show=" + value])
+		_check("launch: --show=%s is taken" % value,
+				options.problems.is_empty() and options.show == StringName(value), str(options.problems))
+
+
+func _test_bad_show() -> void:
+	for arg: String in ["--show", "--show=", "--show=Span", "--show=a-b", "--show=a b", "--show=é"]:
+		var options: LaunchOptions = _parse([arg])
+		_check("launch: %s is one launch.show problem and no show" % arg,
+				_one_problem(options, "launch.show:") and options.show == &"", str(options.problems))
 
 
 func _test_unknown_switch() -> void:
@@ -86,26 +115,28 @@ func _test_bad_then_good_switch() -> void:
 
 func _test_misplaced_switch() -> void:
 	# Typed before `--`, a switch reaches the engine, not the game: say so instead of ignoring it.
-	var found: PackedStringArray = LaunchOptions.misplaced(PackedStringArray(["--path", "game", "--seed=3", "--start"]))
-	_check("launch: --seed=3 and --start before -- are two launch.misplaced problems",
-			found.size() == 2 and found[0].begins_with("launch.misplaced: '--seed=3'")
-			and found[1].begins_with("launch.misplaced: '--start'"), str(found))
+	var found: PackedStringArray = LaunchOptions.misplaced(PackedStringArray(["--path", "game", "--seed=3", "--start", "--trace"]))
+	_check("launch: --seed=3, --start and --trace before -- are three launch.misplaced problems",
+			found.size() == 3 and found[0].begins_with("launch.misplaced: '--seed=3'")
+			and found[1].begins_with("launch.misplaced: '--start'")
+			and found[2].begins_with("launch.misplaced: '--trace'"), str(found))
 	found = LaunchOptions.misplaced(PackedStringArray(["--headless", "--path", "game", "-s", "res://tests/run_tests.gd"]))
 	_check("launch: engine arguments alone are no problem", found.is_empty(), str(found))
 
 
 func _test_problems_do_not_stop_the_rest() -> void:
-	var options: LaunchOptions = _parse(["--bogus", "--seed=3", "--start=nowhere"])
+	var options: LaunchOptions = _parse(["--bogus", "--seed=3", "--start=nowhere", "--trace"])
 	_check("launch: good switches still apply beside bad ones",
-			options.seed_given and options.seed == 3 and options.problems.size() == 2
+			options.seed_given and options.seed == 3 and options.trace and options.problems.size() == 2
 			and options.problems[0].begins_with("launch.unknown:")
 			and options.problems[1].begins_with("launch.start:"), str(options.problems))
 
 
 func _test_every_row_is_a_switch() -> void:
-	# AD-61: one table, one row per switch; story 1.1 has exactly these two.
+	# AD-61: one table, one row per switch; story 1.2 has exactly these four.
 	var names: Array[String] = []
 	for switch_name: String in LaunchOptions.SWITCHES:
 		names.append(switch_name)
 	names.sort()
-	_check("launch: the table has --seed and --start", names == ["--seed", "--start"], str(names))
+	_check("launch: the table has --seed, --show, --start and --trace",
+			names == ["--seed", "--show", "--start", "--trace"], str(names))

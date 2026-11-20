@@ -11,11 +11,15 @@ extends RefCounted
 enum Kind {
 	INT,    ## A whole number, e.g. --seed=7.
 	START,  ## One of START_VALUES.
+	FLAG,   ## No value: given means on, e.g. --trace. `--trace=x` is a problem.
+	NAME,   ## A non-empty lower-snake name ([a-z0-9_]+), e.g. --show=span_counts.
 }
 
-## The values `--start` accepts. None exist yet: `night` arrives with the night (story 1.2),
-## then lesson, planning and round. tools/ci.sh starts the game once with each of them.
-const START_VALUES: Array[StringName] = []
+## The values `--start` accepts. Still to come: planning (story 1.7), lesson and round
+## (epic 2). tools/ci.sh starts the game once with each of them.
+const START_VALUES: Array[StringName] = [&"night"]
+## The characters a NAME value may hold.
+const NAME_CHARS: String = "abcdefghijklmnopqrstuvwxyz0123456789_"
 ## Any whole number of up to 18 digits fits a 64-bit int.
 const MAX_INT_DIGITS: int = 18
 
@@ -24,6 +28,8 @@ const MAX_INT_DIGITS: int = 18
 const SWITCHES: Dictionary[String, Dictionary] = {
 	"--seed": {"kind": Kind.INT, "field": &"seed", "given": &"seed_given"},
 	"--start": {"kind": Kind.START, "field": &"start", "given": &""},
+	"--trace": {"kind": Kind.FLAG, "field": &"trace", "given": &""},
+	"--show": {"kind": Kind.NAME, "field": &"show", "given": &""},
 }
 
 ## True when --seed was given; otherwise the caller picks a seed.
@@ -31,6 +37,11 @@ var seed_given: bool = false
 var seed: int = 0
 ## The screen to start on; empty means the title.
 var start: StringName = &""
+## Print every NightEvent as one line (AD-29). A debug switch: source runs and playtest builds.
+var trace: bool = false
+## A show-me setup to open (AD-56); empty for none. `list` lists them. Whether the name exists
+## is checked by the debug tools, not here.
+var show: StringName = &""
 ## One line per bad switch, "launch.<what>: <detail>", in the order given.
 var problems: PackedStringArray = []
 
@@ -68,7 +79,7 @@ static func parse(args: PackedStringArray) -> LaunchOptions:
 		var row: Dictionary = SWITCHES[switch_name]
 		var what: String = switch_name.trim_prefix("--")
 		var value: String = arg.substr(switch_name.length() + 1) if arg.contains("=") else ""
-		var parsed: Variant = _read(row["kind"], value)
+		var parsed: Variant = _read(row["kind"], value, arg.contains("="))
 		if parsed == null:
 			options.problems.append("launch.%s: '%s' is not %s" % [what, arg, _wanted(row["kind"], switch_name)])
 			continue
@@ -81,8 +92,9 @@ static func parse(args: PackedStringArray) -> LaunchOptions:
 	return options
 
 
-## The switch's value, or null when `value` is not one of its kind.
-static func _read(kind: Kind, value: String) -> Variant:
+## The switch's value, or null when `value` is not one of its kind. `has_value` is whether
+## an `=` was typed at all.
+static func _read(kind: Kind, value: String, has_value: bool) -> Variant:
 	match kind:
 		Kind.INT:
 			# More than 18 digits may not fit in 64 bits, and to_int() would log an error.
@@ -91,6 +103,15 @@ static func _read(kind: Kind, value: String) -> Variant:
 		Kind.START:
 			var wanted: StringName = StringName(value)
 			return wanted if START_VALUES.has(wanted) else null
+		Kind.FLAG:
+			return true if not has_value else null
+		Kind.NAME:
+			if value.is_empty():
+				return null
+			for c: String in value:
+				if not NAME_CHARS.contains(c):
+					return null
+			return StringName(value)
 	return null
 
 
@@ -103,4 +124,8 @@ static func _wanted(kind: Kind, switch_name: String) -> String:
 			if START_VALUES.is_empty():
 				return "a start value (none exist yet)"
 			return "a start value (%s)" % ", ".join(PackedStringArray(START_VALUES))
+		Kind.FLAG:
+			return "%s with no value" % switch_name
+		Kind.NAME:
+			return "%s=<lower_snake name>" % switch_name
 	return "valid"

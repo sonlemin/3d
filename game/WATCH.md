@@ -15,6 +15,20 @@ Or open `game/` in the editor and press **F5**. Today the game opens on a bare s
 lists every setup problem found at start (a bad launch switch, an input action already defined
 elsewhere), or says "No setup problems."
 
+## The night
+
+```
+godot --path game -- --start=night --seed=1       # the one-night span
+godot --path game -- --show=span_counts           # a show-me setup
+godot --path game -- --show=list                  # list the show-me setups, then quit
+godot --path game -- --start=night --trace        # print every event of the night
+```
+
+`--start=night` opens the one-night span as gray boxes, seen from the landing at the town end:
+six sections of 5 m, each with its eight planks, two side beams, posts and two rail ropes,
+the far pier beyond and the town pier under you. Nothing moves yet: walking and looking arrive
+in story 1.3, stripping and re-laying in 1.4. The mouse stays free.
+
 ## Running the ear test
 
 The ear test is no longer the main scene:
@@ -45,8 +59,9 @@ The ear test's tests are in `tests/ear_test/test_ear_test.gd` (120 passed, 23 ex
 - `tools/ci.sh`: import, the purity check on `watch/sim/` (banned names, and any base type but
   `RefCounted` or a class of that folder; with a self-check of the greps), the check for any
   kind of `print` on `watch/` outside `watch/debug/`, the tests, and 120-frame smoke runs of
-  the game, the ear test, and the game with each `--start` value. A smoke run fails on any
-  ERROR or WARNING line; the import and the exports fail on any ERROR line.
+  the game, the ear test, the game with each `--start` value (with `--seed=1`), and the game
+  with each show-me setup that `--show=list` prints. A smoke run fails on any ERROR or WARNING
+  line; the import and the exports fail on any ERROR line.
 - `tools/ci.sh --export`: the same, then the ear test's Windows and Linux builds into `builds/`,
   and one headless start of the Linux build to confirm it opens the ear test and writes to
   `app_userdata/Ear Test`, not to the game's folder. That start uses a scratch data folder, so
@@ -65,8 +80,13 @@ than once, the first good value stands.
 
 | Switch | What it does |
 |---|---|
-| `--seed=N` | The seed for the night's randomness, a whole number. Used from the night on (story 1.2) |
-| `--start=<value>` | Start on that screen instead of the title. **No value exists yet**; `night` arrives in story 1.2, then `lesson`, `planning` and `round` |
+| `--seed=N` | The seed for the night's randomness, a whole number. Without it a night gets a fresh random seed |
+| `--start=<value>` | Start on that screen instead of the title. Today the one value is `night`; `planning` (story 1.7), `lesson` and `round` (epic 2) follow |
+| `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night`). No value |
+| `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. `--show=list` lists them and quits. Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
+
+The debug switches (`--trace`, `--show`) work when run from source and in playtest builds only;
+anywhere else they are a setup problem (`launch.no_debug`).
 
 ## Where the game writes
 

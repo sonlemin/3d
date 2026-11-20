@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Local CI for the game and the ear test: free, no hosted service. Runs from the repo root.
 #   tools/ci.sh             import, the purity and print checks, the test suite, the smoke runs
+#                           (the game, the ear test, each --start value, each show-me setup)
 #   tools/ci.sh --export    the same, then the ear test's Windows and Linux builds into builds/,
 #                           and one start of the Linux ear test build
 # The pre-commit hook (.githooks/pre-commit) runs it before every commit that touches game/ or
@@ -24,7 +25,7 @@ fi
 log="$(mktemp)"
 scratch="$(mktemp -d)"
 trap 'rm -rf "$log" "$scratch"' EXIT
-step() { printf 'ci: %-36s' "$1..."; }
+step() { printf 'ci: %-46s' "$1..."; }
 fail() { echo "FAILED"; echo "----- output -----" >&2; tail -n 40 "$log" >&2; exit 1; }
 # A smoke run or a build start fails on any of these lines (AD-28).
 BAD_LINES='^(ERROR|SCRIPT ERROR|SHADER ERROR|WARNING)'
@@ -179,8 +180,20 @@ count_line="$(grep -E '^start values: [0-9]+$' "$log")" || fail
 mapfile -t start_values < <(sed -nE 's/^start value: (.+)$/\1/p' "$log")
 [[ "${count_line#start values: }" == "${#start_values[@]}" ]] || fail
 echo "ok (${#start_values[@]})"
+# AC 2 of story 1.2: each start value runs with --seed=1 (the third smoke run is --start=night).
 for value in "${start_values[@]}"; do
-	smoke "smoke run: --start=$value" -- "--start=$value"
+	smoke "smoke run: --start=$value --seed=1" -- "--start=$value" --seed=1
+done
+
+# AD-56: one smoke run per show-me setup, so a broken setup never reaches Sonlm's review.
+step "list show-me setups"
+"$GODOT" --headless --path game --quit-after 120 -- --show=list >"$log" 2>&1 || fail
+grep -qE "$BAD_LINES" "$log" && fail
+mapfile -t shows < <(sed -nE 's/^show: ([a-z0-9_]+)( .*)?$/\1/p' "$log")
+[[ ${#shows[@]} -gt 0 ]] || { echo "no show-me setup listed" >>"$log"; fail; }
+echo "ok (${#shows[@]})"
+for name in "${shows[@]}"; do
+	smoke "smoke run: --show=$name --seed=1" -- "--show=$name" --seed=1
 done
 
 if [[ "${1:-}" == "--export" ]]; then
