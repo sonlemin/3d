@@ -357,6 +357,7 @@ if hook.shaken:
 
 ```
 $ godot --path game -- --trace --seed=7 --start=night
+  0.000 NIGHT_STARTED   one_night seed=7
   5.000 WARNING_STARTED grappler#1 s3 L
   5.000 CRY_STARTED     grappler#1 slot2
   9.300 SOUNDED         rope_strained s3 L
@@ -383,7 +384,7 @@ Tests write spec values literally and never read them from the constants under t
 
 **Pattern (AD-2, AD-30):** a synchronous, ordered, typed event list. No event bus, no autoload, no string event names.
 
-- One class, `NightEvent`, with a `kind: NightEvent.Kind` enum and a fixed set of typed fields: `t`, `section`, `side`, `along`, `level`, `dead_id`, `dead_kind`, `slot`, `sound` (the sound id, AD-45), `reason`, `amount`, `id` (a `StringName` for a line, hint, name or fault code). Unused fields keep their defaults. One event is one row of the playtest log. Each kind's `##` comment in `night_event.gd` lists the fields it sets, and a test checks that no kind sets a field its comment does not name.
+- One class, `NightEvent`, with a `kind: NightEvent.Kind` enum and a fixed set of typed fields: `t`, `section`, `side`, `along`, `level`, `dead_id`, `dead_kind`, `slot`, `sound` (the sound id, AD-45), `reason`, `amount`, `id` (a `StringName` for a line, hint, name or fault code), `seed` (the night's seed, on `NIGHT_STARTED` only: AD-3's "the seed is logged", added in story 1.2's code review). Unused fields keep their defaults. One event is one row of the playtest log. Each kind's `##` comment in `night_event.gd` lists the fields it sets, and a test checks that no kind sets a field its comment does not name.
 - Kinds are named for what happened, past tense, upper snake: `WARNING_STARTED`, `HOOK_LANDED`, `CLIMBED_ON_DECK`, `DEAD_FELL`, `SECTION_FELL`, `WINDOW_WENT_OUT`, `HOLD_CANCELLED`, `REFUSED`. Where two things can do the same, the kind names which: `DEAD_FELL`, `SECTION_FELL`.
 - **How a rule reports (AD-67).** A rule function that changes state returns nothing; it calls `sim.emit(event)` for what happened and `sim.refuse(reason)` for a designed "no", which emits the `REFUSED` event. A pure query returns its value and emits nothing.
 - The night screen calls `sim.advance()` once per physics tick and passes the same array, in the same order, to every consumer: audio, span view, dead views, hands, captions, cues, playtest log, trace. (The recording needs the inputs, not the events: `night.gd` passes it each tick's move, yaw, pitch and commands directly.)
@@ -646,14 +647,26 @@ These patterns keep every agent's code the same shape. AD-44 to AD-46 were chose
 
 ```gdscript
 ## Moves parts from one place to another. The only function that changes a part count.
+## Every bad call is a fault, and no part appears or vanishes.
 static func move_parts(kind: NightTypes.Part, count: int,
 		from: PartPlace, to: PartPlace, sim: NightSim) -> void:
+	if not sim.span.holds(kind, from) or not sim.span.holds(kind, to):
+		sim.faults.report(&"span.bad_place", ...)  # a plank on a rail: nothing moves
+		return
+	if count < 0:
+		sim.faults.report(&"span.bad_count", ...)  # nothing moves
+		return
 	if sim.span.count_at(kind, from) < count:
-		sim.faults.report(&"span.parts_short", "%s from %s" % [kind, from.label()])
+		sim.faults.report(&"span.parts_short", ...)  # what there is moves
 		count = sim.span.count_at(kind, from)
+	if sim.span.fits_at(kind, to, count) < count:
+		sim.faults.report(&"span.no_room", ...)  # what fits moves
+		count = sim.span.fits_at(kind, to, count)
 	sim.span.add_at(kind, from, -count)
 	sim.span.add_at(kind, to, count)
 ```
+
+The four guards were added in story 1.2 and its code review (2026-11-20). Without the first, a move to a place that cannot hold the part took it from `from` and put it nowhere, so a part vanished. Without the others, a negative count ran the move backwards, and a deck could hold more planks than the view draws or a rail more than one rope, all with the totals intact, so the proof below could not see them. A deck holds at most the `NightDef`'s planks per section and a rail one rope; the hand's limit is `HandRules`' rule, not the ledger's.
 
 **Proof:** after every tick of every bot night, the totals over all places equal the `NightDef`'s starting planks and ropes.
 

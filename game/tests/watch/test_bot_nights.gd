@@ -22,7 +22,8 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 		_broken.append("tick %d: %d planks, %d ropes, faults %s" % [sim.tick, planks, ropes, sim.faults.codes()])
 
 
-func _run_all(sections: int, planks: int, ropes: int) -> void:
+## Every path over seeds 1 to 20, noting the kinds seen and any broken tick. Checks nothing.
+func _run_paths(sections: int, planks: int, ropes: int) -> void:
 	_want_planks = planks
 	_want_ropes = ropes
 	_broken = []
@@ -30,6 +31,10 @@ func _run_all(sections: int, planks: int, ropes: int) -> void:
 		for night_seed: int in range(1, 21):
 			var def: NightDef = NightDefs.one_night() if sections == 6 else _def_with(StartState.new(), sections)
 			path.call(def, night_seed, WatchFaults.new(), _each_tick)
+
+
+func _run_all(sections: int, planks: int, ropes: int) -> void:
+	_run_paths(sections, planks, ropes)
 	_check("bot: every path, seeds 1 to 20, %d sections: %d planks and %d ropes on every tick, no fault"
 			% [sections, planks, ropes], _broken.is_empty(), " | ".join(_broken))
 
@@ -49,17 +54,18 @@ func _test_same_seed_twice() -> void:
 		var a: NightSim = path.call(NightDefs.one_night(), 5, WatchFaults.new(),
 				func(events: Array[NightEvent], _sim: NightSim) -> void:
 					for event: NightEvent in events:
-						lines_a.append(NightTrace.line(event)))
+						lines_a.append(_event_text(event)))
 		var b: NightSim = path.call(NightDefs.one_night(), 5, WatchFaults.new(),
 				func(events: Array[NightEvent], _sim: NightSim) -> void:
 					for event: NightEvent in events:
-						lines_b.append(NightTrace.line(event)))
-		_check("bot: %s twice on seed 5 gives the same events and checksum" % path.get_method(),
+						lines_b.append(_event_text(event)))
+		_check("bot: %s twice on seed 5 gives the same events (every field) and checksum" % path.get_method(),
 				lines_a == lines_b and not lines_a.is_empty() and a.checksum() == b.checksum())
 
 
 func _test_every_kind_produced() -> void:
-	_run_all(6, 48, 12)
+	_seen = {}
+	_run_paths(6, 48, 12)
 	var missing: PackedStringArray = []
 	for kind_name: String in NightEvent.Kind.keys():
 		if not _seen.has(NightEvent.Kind[kind_name]):

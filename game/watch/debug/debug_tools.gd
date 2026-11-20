@@ -17,10 +17,11 @@ func show_def(show_name: StringName) -> NightDef:
 	return ShowSetups.def_of(show_name)
 
 
-## `--show=list`: one line per setup.
+## `--show=list`: one line per setup, then `shows: <how many>` for tools/ci.sh to check.
 func print_show_list() -> void:
 	for show_name: String in ShowSetups.names():
 		print(ShowSetups.list_line(StringName(show_name)))
+	print("shows: %d" % ShowSetups.names().size())
 
 
 ## The trace consumer for the night screen (`--trace`).

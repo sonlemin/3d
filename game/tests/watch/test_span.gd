@@ -129,6 +129,40 @@ func _test_move_parts_short() -> void:
 	_check("span: totals stay 48 after a short move", sim.span.total(PLANK) == 48)
 
 
+func _test_move_parts_negative_count() -> void:
+	# A negative count would run the move backwards with the totals intact: a fault, nothing moves.
+	var sim: NightSim = _sim_with(_def_with(StartState.new()), 1)
+	_expect_begin()
+	SpanRules.move_parts(PLANK, -3, PartPlace.deck(1), PartPlace.hand(), sim)
+	_expect_end("span: a negative count is span.bad_count", [["ERROR", "span.bad_count", 1]])
+	_check("span: nothing moved", sim.span.planks(1) == 8 and sim.span.in_hand(PLANK) == 0,
+			"%d %d" % [sim.span.planks(1), sim.span.in_hand(PLANK)])
+
+
+func _test_move_parts_no_room() -> void:
+	# A deck holds at most the planks per section and a rail one rope: what fits moves.
+	var start: StartState = StartState.new()
+	start.planks = {2: 5, 3: 0}
+	start.stripped_rails = [Vector2i(4, LEFT)]
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	_check("span: 11 planks and 1 rope in hand to begin", sim.span.in_hand(PLANK) == 11 and sim.span.in_hand(ROPE) == 1)
+	_expect_begin()
+	SpanRules.move_parts(PLANK, 5, PartPlace.hand(), PartPlace.deck(2), sim)
+	SpanRules.move_parts(ROPE, 1, PartPlace.hand(), PartPlace.rail(1, LEFT), sim)
+	_expect_end("span: more than a deck or a rail has room for is span.no_room", [["ERROR", "span.no_room", 1]])
+	_check("span: both were counted", _faults.count(&"span.no_room") == 2, str(_faults.count(&"span.no_room")))
+	_check("span: 3 planks moved, the deck is full and 8 stay in hand",
+			sim.span.planks(2) == 8 and sim.span.in_hand(PLANK) == 8, "%d %d" % [sim.span.planks(2), sim.span.in_hand(PLANK)])
+	_check("span: the rope stays in hand and the rail holds one rope",
+			sim.span.in_hand(ROPE) == 1 and sim.span.count_at(ROPE, PartPlace.rail(1, LEFT)) == 1)
+	SpanRules.move_parts(ROPE, 1, PartPlace.hand(), PartPlace.rail(4, LEFT), sim)
+	SpanRules.move_parts(PLANK, 8, PartPlace.hand(), PartPlace.deck(3), sim)
+	_check("span: moves that fit add no fault", _faults.total() == 2, str(_faults.codes()))
+	_check("span: and land: rail 4 up, deck 3 full, hand empty", sim.span.rail_standing(4, LEFT)
+			and sim.span.planks(3) == 8 and sim.span.in_hand(PLANK) == 0 and sim.span.in_hand(ROPE) == 0)
+	_check("span: totals stay 48 and 12", sim.span.total(PLANK) == 48 and sim.span.total(ROPE) == 12)
+
+
 func _test_move_parts_bad_place() -> void:
 	# A plank on a rail or a rope on a deck is a fault, not a crash, and nothing moves.
 	var sim: NightSim = _sim_with(_def_with(StartState.new()), 1)

@@ -3,7 +3,7 @@ baseline_commit: 07808dc5d8c9bf7a5dbee0e0e38104cfd40ba5a5
 ---
 # Story 1.2: The span exists and is drawn to the count
 
-Status: review
+Status: done
 
 <!-- Created 2026-11-20 by gds-create-story from epics.md draft 0.8 ("Epic 1: story detail"). -->
 
@@ -86,6 +86,36 @@ Build order (AD-46). Do not draw anything until T1 to T5 pass.
 - [x] **T9. CI (AC 2)**: `tools/ci.sh` (Dev Notes "CI"): each `--start` value runs with `--seed=1`; one smoke run per show-me setup listed by `--show=list`.
 - [x] **T10. Docs**: `game/WATCH.md` (the `night` start value, `--trace`, `--show`, `--show=list`; what the night shows today); `_bmad-output/project-context.md` (Dev Notes "Docs").
 - [x] **T11. Close**: `tools/ci.sh` passes. Fill in the Dev Agent Record. Run the end-of-story chores of `_bmad/custom/gds-dev-story.toml` (M1 on Xvfb with `--show=span_counts`, agent time, commit). Set Status to `review`.
+
+### Review Findings
+
+Code review of 2026-11-20 (gds-code-review; Blind Hunter, Edge Case Hunter, Acceptance Auditor). No high-severity finding. Acceptance criteria 1 to 6 met, AC 7 partly met (DW-28). Manual check M1 still needs Sonlm.
+
+- [x] [Review][Decision] A random night seed is never reported — AD-3 says "the seed is logged". Without `--seed`, `main.gd:58` draws a seed that reaches only `NightSim.new`; `NIGHT_STARTED` and the trace carry the def name only, so such a night cannot be replayed. Decided by Sonlm: on `NIGHT_STARTED`. Done: `NightEvent.seed`, `sim.night_seed`, the trace prints `one_night seed=7`, and a night without `--seed` draws a seed of 0 to 2^32 - 1 that `--seed` accepts.
+- [x] [Review][Decision] The architecture's ledger code (Novel Pattern 1) still loses a part — the dev added a both-places guard in `span_rules.gd:12` and disclosed it, but `game-architecture.md` still shows the older code. Decided by Sonlm: correct the architecture. Done: Novel Pattern 1 now shows the four guards and why each is there; AD-30's field list names `seed`.
+- [x] [Review][Patch] (medium) `move_parts()` accepts a negative count and runs the move backwards, hand at -3, no fault [game/watch/sim/span_rules.gd:16]
+- [x] [Review][Patch] (medium) `move_parts()` has no capacity check: a deck can hold 10 planks while the view draws 8, a rail 2 ropes, no fault [game/watch/sim/span_rules.gd:16]
+- [x] [Review][Patch] (medium) Step comments 7 and 8 contradict AD-34 (creaks, groans and collapses belong to step 7); steps 2, 3, 5, 11 and 12 paraphrase it [game/watch/sim/night_sim.gd:140]
+- [x] [Review][Patch] The debug tools load has no guard for a missing `watch/debug/` folder: script error in `_ready`, no screen [game/watch/main.gd:29]
+- [x] [Review][Patch] `--show=list` quits before setup problems are pushed, so `--show=list --bogus` exits 0 in silence [game/watch/main.gd:33]
+- [x] [Review][Patch] In a public build, `--show=x --start=night` opens the title and no message says why [game/watch/main.gd:49]
+- [x] [Review][Patch] `Main` drives the night by string calls, and a night whose `setup()` never ran errors every physics tick [game/watch/main.gd:76] [game/watch/night/night.gd:36]
+- [x] [Review][Patch] The `span_counts` show-me setup names itself `one_night` in `NIGHT_STARTED` and the trace [game/watch/debug/show/show_setups.gd:36]
+- [x] [Review][Patch] A non-finite move wish or view is stored as NaN; INF is "clamped" to NaN [game/watch/sim/night_sim.gd:60]
+- [x] [Review][Patch] `command(null)` is queued [game/watch/sim/night_sim.gd:73]
+- [x] [Review][Patch] A `NightDef` with zero or negative counts is not rejected; it gives only a misleading `span.plank_order` fault [game/watch/sim/night_sim.gd:46]
+- [x] [Review][Patch] Step 1 (inputs) has no test: nothing reads back `sim.commands`, `sim.yaw` or `sim.pitch` [game/tests/watch/test_night_sim.gd:66]
+- [x] [Review][Patch] The fields-per-kind test checks one direction, keeps its field list by hand and parses kind names fragilely (T4.4) [game/tests/watch/test_night_sim.gd:103] — the field list is now read from the class and the parser takes the leading identifier; the other direction (a named field left unset) was not added, because a set field may hold its default value (side LEFT, seed 0)
+- [x] [Review][Patch] `_test_every_kind_produced` reruns the whole bot suite under a repeated check name, and the twice-run compares trace lines, not every event field (T8) [game/tests/watch/test_bot_nights.gd:45]
+- [x] [Review][Patch] The landing's size and height are not checked (T6.1) [game/tests/watch/test_span_view.gd:42]
+- [x] [Review][Patch] CI has no `--trace` smoke run and no count check on the show list; `list` is not reserved as a setup name [tools/ci.sh:189]
+- [x] [Review][Patch] `NightTicks.of()` uses a literal `60.0` beside `TICKS_PER_SECOND`; the `START_VALUES.is_empty()` branch can no longer run [game/watch/sim/night_ticks.gd:13] [game/watch/core/launch_options.gd] — both fixed; `_ended` in `NightSim` and `_session` in `night.gd` were kept, as the ending step and the pause screen need them
+- [x] [Review][Patch] Completion note "nothing writes 6 or 8 outside `night_defs.gd` and tests" is not true for 8 (`ORDER_PLACES`, the `span_counts` start) [this file, Completion Notes List]
+- [x] [Review][Defer] The determinism tests cannot fail on inputs or the generator, because no rule reads them yet [game/tests/watch/test_night_sim.gd:66] — deferred to story 1.3 (DW-26)
+- [x] [Review][Defer] A view test changes counts with a direct `SpanRules.move_parts()` call, outside the tick [game/tests/watch/test_span_view.gd:85] — deferred to story 1.4, which adds the strip command (DW-27)
+- [x] [Review][Defer] The trace's "where" has no side and its "who" is only the event `id` (AC 7, partly met) [game/watch/debug/trace.gd:18] — deferred to the first story with a sided event (DW-28)
+- [x] [Review][Defer] `EYE_HEIGHT` lives in `SpanGeometry`; AD-67 puts it in `WardenConstants` [game/watch/sim/span_geometry.gd:45] — deferred to story 1.3 (DW-29)
+- [x] [Review][Defer] `Main`'s conflict, unknown-show and no-debug branches have no test, and CI cannot smoke them because each raises a warning [game/watch/main.gd:28] — deferred (DW-30)
 
 ## Dev Notes
 
@@ -297,7 +327,7 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
 ### Completion Notes List
 
 - Ultimate context engine analysis completed: comprehensive developer guide created (gds-create-story, 2026-11-20).
-- **Sim (T2 to T4):** `NightSim` with the 13 steps of AD-34 as `_steps` (empty steps carry their AD-34 number and wording); `advance()` runs the current tick then adds 1; `NIGHT_STARTED` in step 5 on tick 0 with `id = def.name`; `emit()`, `checksum()` (tick, `rng.state`, every deck, rail, hand and lost count). `SpanState` stores base facts only; `SpanRules.move_parts()` is the only caller of `add_at()` (a test greps for it). `SpanGeometry` holds `PLANK_LEAVE_ORDER` and every gray-box size of D2 as a named constant; nothing writes 6 or 8 outside `night_defs.gd` and tests.
+- **Sim (T2 to T4):** `NightSim` with the 13 steps of AD-34 as `_steps` (empty steps carry their AD-34 number and wording); `advance()` runs the current tick then adds 1; `NIGHT_STARTED` in step 5 on tick 0 with `id = def.name`; `emit()`, `checksum()` (tick, `rng.state`, every deck, rail, hand and lost count). `SpanState` stores base facts only; `SpanRules.move_parts()` is the only caller of `add_at()` (a test greps for it). `SpanGeometry` holds `PLANK_LEAVE_ORDER` and every gray-box size of D2 as a named constant; nothing writes 6 outside `night_defs.gd` and tests; 8 is also written, as the Dev Notes ask, by `SpanGeometry.ORDER_PLACES` (the length of the leaving order) and by the `span_counts` start (corrected in code review).
 - **View (T6):** `SpanView` builds the piers, landing and one `SectionView` per section on the first tick; each `SectionView` reconciles planks (keyed by place) and rails with state every tick and never counts events. `night.tscn` holds only the camera, a light and the environment; `night.gd` places the camera at `warden_start()` + eye height.
 - **Debug (T7, T8):** `DebugTools`, `NightTrace`, `ShowSetups` (`span_counts`), `NightBot` (`span_counts` path). `Main` loads `debug_tools.gd` by path only when `editor` or `playtest`; `--show=list` prints and quits; `launch.conflict`, `launch.show`, `launch.no_debug` are setup problems.
 - **Choices this story did not settle (restrictive reading; Sonlm may revisit):**
@@ -313,7 +343,22 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
 - Agent time: 2026-11-20 17:24 +0700 to 2026-11-20 17:34 +0700 (0 h 10 min), measured by the agent.
 - Sonlm's own time: ___ (for Sonlm to fill in).
 
+### Code Review (2026-11-20)
+
+- gds-code-review with three reviewers (Blind Hunter, Edge Case Hunter, Acceptance Auditor): no high-severity finding; 2 decisions, 18 patches, 5 deferred (DW-26 to DW-30), 10 dismissed. Every decision and patch is applied; see "Review Findings" under Tasks.
+- **Ledger:** `move_parts()` now refuses a negative count (`span.bad_count`) and moves only what fits (`span.no_room`); `SpanState.fits_at()` is the room check.
+- **Sim:** `sim.bad_input` for a move wish or view that is not finite and for a null command; `sim.bad_def` for a night without a section or a plank; the 13 step comments use AD-34's wording (creaks, groans and collapses are step 7).
+- **Seed (AD-3):** `NightEvent.seed` on `NIGHT_STARTED`, `sim.night_seed`, shown by the trace.
+- **Main:** the debug tools load is guarded; `--show=list` reports setup problems and exits 1 on any; without debug tools `--start` still stands; the night screen is typed, not called by name; `night.tscn` run on its own warns once (`night.no_setup`) and does not tick.
+- **Debug:** a show-me setup's night carries the setup's name; `--show=list` ends with `shows: N`.
+- **Tests:** 402 pass (39 expected faults), up from 368. New: step 1's inputs, bad inputs, a bad def, a negative count, no room, the landing's size, setup names. The bot's twice-run compares every event field.
+- **CI:** the show list is checked against its count; `--show=list` with a bad switch must fail; one traced night must print `NIGHT_STARTED ... one_night seed=1`. `tools/ci.sh` passes in full.
+- M1 is unchanged by the review (no view code changed) and still needs Sonlm.
+
 ### File List
+
+Changed in code review: `game/watch/sim/span_rules.gd`, `span_state.gd`, `night_sim.gd`, `night_event.gd`, `night_ticks.gd`; `game/watch/main.gd`; `game/watch/night/night.gd`; `game/watch/core/launch_options.gd`; `game/watch/debug/debug_tools.gd`, `trace.gd`, `show/show_setups.gd`; `game/tests/watch/watch_test.gd`, `test_night_sim.gd`, `test_bot_nights.gd`, `test_span.gd`, `test_span_view.gd`, `test_trace.gd`, `test_show_setups.gd`; `tools/ci.sh`; `game/WATCH.md`; `_bmad-output/project-context.md`; `_bmad-output/game-architecture.md`; `_bmad-output/implementation-artifacts/deferred-work.md`.
+
 
 New:
 - `game/watch/sim/night_sim.gd`, `night_types.gd`, `night_event.gd`, `night_command.gd`, `night_ticks.gd`, `night_def.gd`, `night_defs.gd`, `start_state.gd`, `part_place.gd`, `span_state.gd`, `span_rules.gd`, `span_constants.gd`, `span_geometry.gd` (each with its `.uid`)
@@ -333,3 +378,4 @@ Modified:
 ### Change Log
 
 - 2026-11-20: Story 1.2 implemented: the first `NightSim` with its 13-step tick, the parts ledger, `SpanGeometry`, the gray-box span drawn to the count, `--start=night`, `--trace`, `--show` with `span_counts`, the first bot path and the event-coverage check, CI smoke runs per start value and show-me setup. 368 tests pass. Status → review.
+- 2026-11-20: Code review (gds-code-review): 2 decisions and 18 patches applied, 5 items deferred (DW-26 to DW-30). 402 tests pass. Status → done.

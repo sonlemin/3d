@@ -9,8 +9,8 @@ func _test_night_started_line() -> void:
 	_check("trace: one event on the first tick", events.size() == 1, str(events.size()))
 	if events.size() == 1:
 		var line: String = NightTrace.line(events[0])
-		_check("trace: NIGHT_STARTED prints '  0.000 NIGHT_STARTED     one_night'",
-				line == "  0.000 NIGHT_STARTED     one_night", "'%s'" % line)
+		_check("trace: NIGHT_STARTED prints '  0.000 NIGHT_STARTED     one_night seed=1'",
+				line == "  0.000 NIGHT_STARTED     one_night seed=1", "'%s'" % line)
 
 
 func _test_time_and_where() -> void:
@@ -18,5 +18,6 @@ func _test_time_and_where() -> void:
 	event.t = 12.5
 	event.section = 3
 	event.id = &"x"
+	event.seed = 7
 	_check("trace: time is 7 wide with 3 decimals, where is the section",
-			NightTrace.line(event) == " 12.500 NIGHT_STARTED     x s3", "'%s'" % NightTrace.line(event))
+			NightTrace.line(event) == " 12.500 NIGHT_STARTED     x seed=7 s3", "'%s'" % NightTrace.line(event))

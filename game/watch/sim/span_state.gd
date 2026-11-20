@@ -11,12 +11,15 @@ var _planks: Dictionary[int, int] = {}
 var _ropes: Dictionary[Vector2i, int] = {}
 var _hand: Dictionary[NightTypes.Part, int] = {NightTypes.Part.PLANK: 0, NightTypes.Part.ROPE: 0}
 var _lost: Dictionary[NightTypes.Part, int] = {NightTypes.Part.PLANK: 0, NightTypes.Part.ROPE: 0}
+## The most planks a deck holds; a rail holds one rope.
+var _planks_per_section: int = 0
 var _faults: WatchFaults
 
 
 ## A full span: every deck at `planks_per_section`, every rail up, nothing in hand.
 func _init(sections: int, planks_per_section: int, faults: WatchFaults) -> void:
 	_faults = faults
+	_planks_per_section = planks_per_section
 	for n: int in range(1, sections + 1):
 		_planks[n] = planks_per_section
 		_ropes[Vector2i(n, NightTypes.Side.LEFT)] = 1
@@ -69,6 +72,19 @@ func count_at(kind: NightTypes.Part, place: PartPlace) -> int:
 		PartPlace.Kind.HAND:
 			return _hand[kind]
 	return _lost[kind]
+
+
+## How many of `count` more parts `place` has room for: a deck up to the planks per section, a
+## rail one rope, the hand and lost any number. Pure; reports nothing.
+func fits_at(kind: NightTypes.Part, place: PartPlace, count: int) -> int:
+	if not holds(kind, place):
+		return 0
+	match place.kind:
+		PartPlace.Kind.DECK:
+			return clampi(_planks_per_section - _planks[place.section], 0, count)
+		PartPlace.Kind.RAIL:
+			return clampi(1 - _ropes[Vector2i(place.section, place.side)], 0, count)
+	return maxi(count, 0)
 
 
 ## Every part of `kind` over all places; always the def's total (the ledger's proof).

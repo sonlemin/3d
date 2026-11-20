@@ -121,8 +121,6 @@ static func _wanted(kind: Kind, switch_name: String) -> String:
 		Kind.INT:
 			return "%s=<whole number>" % switch_name
 		Kind.START:
-			if START_VALUES.is_empty():
-				return "a start value (none exist yet)"
 			return "a start value (%s)" % ", ".join(PackedStringArray(START_VALUES))
 		Kind.FLAG:
 			return "%s with no value" % switch_name

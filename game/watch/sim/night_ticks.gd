@@ -10,4 +10,4 @@ const TICKS_PER_SECOND: int = 60
 
 ## Whole ticks for a time in seconds, rounded to the nearest tick.
 static func of(seconds: float) -> int:
-	return roundi(seconds * 60.0)
+	return roundi(seconds * TICKS_PER_SECOND)

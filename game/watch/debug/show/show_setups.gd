@@ -6,7 +6,8 @@ class_name ShowSetups
 extends RefCounted
 
 
-## name -> [description, builder () -> NightDef]. A new setup is one more row.
+## name -> [description, builder () -> NightDef]. A new setup is one more row. `list` is taken:
+## `--show=list` lists the setups (a test checks no row uses it).
 static func _table() -> Dictionary[StringName, Array]:
 	return {
 		&"span_counts": ["sections at 8, 5, 4, 1 and 0 planks, seen from the landing", ShowSetups.span_counts],
@@ -17,13 +18,16 @@ static func names() -> PackedStringArray:
 	return PackedStringArray(_table().keys())
 
 
-## The setup's night, or null when there is no setup of that name.
+## The setup's night, or null when there is no setup of that name. The night carries the
+## setup's name, so NIGHT_STARTED, the trace and the playtest log never show it as a real night.
 static func def_of(show_name: StringName) -> NightDef:
 	var table: Dictionary[StringName, Array] = _table()
 	if not table.has(show_name):
 		return null
 	var builder: Callable = table[show_name][1]
-	return builder.call()
+	var def: NightDef = builder.call()
+	def.name = show_name
+	return def
 
 
 ## `show: <name>  <description>`, as `--show=list` prints it and tools/ci.sh reads it.

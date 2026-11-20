@@ -6,7 +6,7 @@ class_name NightEvent
 extends RefCounted
 
 enum Kind {
-	NIGHT_STARTED,  ## The night began: its first tick, step 5 (AD-33). Fields: t, id.
+	NIGHT_STARTED,  ## The night began: its first tick, step 5 (AD-33); `id` is the def's name. Fields: t, id, seed.
 }
 
 var kind: Kind = Kind.NIGHT_STARTED
@@ -32,6 +32,8 @@ var reason: int = -1
 var amount: float = 0.0
 ## A line, hint, name, night or fault code.
 var id: StringName = &""
+## The night's seed (AD-3: the seed is logged), on NIGHT_STARTED; 0 on every other kind.
+var seed: int = 0
 
 
 static func make(event_kind: Kind) -> NightEvent:

@@ -28,3 +28,15 @@ func _test_debug_tools_list() -> void:
 	_check("show: and null for an unknown name", tools.show_def(&"nope") == null)
 	_check("show: list line format", ShowSetups.list_line(&"span_counts").begins_with("show: span_counts  "),
 			ShowSetups.list_line(&"span_counts"))
+
+
+func _test_names() -> void:
+	# `--show=list` lists the setups, so no setup can be called `list`.
+	_check("show: no setup is named list", not ShowSetups.names().has("list"), str(ShowSetups.names()))
+	for show_name: String in ShowSetups.names():
+		var def: NightDef = ShowSetups.def_of(StringName(show_name))
+		_check("show: %s's night carries the setup's name, not a real night's" % show_name,
+				def != null and def.name == StringName(show_name), str(def.name) if def != null else "null")
+	var sim: NightSim = _sim_with(ShowSetups.def_of(&"span_counts"), 9)
+	var first: Array[NightEvent] = sim.advance()
+	_check("show: span_counts' NIGHT_STARTED says span_counts", first.size() == 1 and first[0].id == &"span_counts")

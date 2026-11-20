@@ -45,3 +45,21 @@ func _kinds(events: Array[NightEvent]) -> Array[NightEvent.Kind]:
 	for event: NightEvent in events:
 		kinds.append(event.kind)
 	return kinds
+
+
+## The names of every NightEvent field but `kind`, read from the class so a new field is
+## never left out of a comparison.
+static func _event_fields() -> PackedStringArray:
+	var fields: PackedStringArray = []
+	for property: Dictionary in NightEvent.new().get_property_list():
+		if property["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE and property["name"] != "kind":
+			fields.append(property["name"])
+	return fields
+
+
+## An event as text, kind and every field: two event lists are the same when these are.
+static func _event_text(event: NightEvent) -> String:
+	var parts: PackedStringArray = [NightEvent.Kind.find_key(event.kind)]
+	for field: String in _event_fields():
+		parts.append("%s=%s" % [field, event.get(field)])
+	return ",".join(parts)

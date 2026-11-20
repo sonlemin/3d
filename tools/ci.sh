@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Local CI for the game and the ear test: free, no hosted service. Runs from the repo root.
 #   tools/ci.sh             import, the purity and print checks, the test suite, the smoke runs
-#                           (the game, the ear test, each --start value, each show-me setup)
+#                           (the game, the ear test, each --start value, each show-me setup,
+#                           one traced night)
 #   tools/ci.sh --export    the same, then the ear test's Windows and Linux builds into builds/,
 #                           and one start of the Linux ear test build
 # The pre-commit hook (.githooks/pre-commit) runs it before every commit that touches game/ or
@@ -191,10 +192,28 @@ step "list show-me setups"
 grep -qE "$BAD_LINES" "$log" && fail
 mapfile -t shows < <(sed -nE 's/^show: ([a-z0-9_]+)( .*)?$/\1/p' "$log")
 [[ ${#shows[@]} -gt 0 ]] || { echo "no show-me setup listed" >>"$log"; fail; }
+# Every setup was read: the lines found match the count the list prints last.
+count_line="$(grep -E '^shows: [0-9]+$' "$log")" || fail
+[[ "${count_line#shows: }" == "${#shows[@]}" ]] || { echo "read ${#shows[@]} show lines" >>"$log"; fail; }
 echo "ok (${#shows[@]})"
 for name in "${shows[@]}"; do
 	smoke "smoke run: --show=$name --seed=1" -- "--show=$name" --seed=1
 done
+
+# AD-28: the list still reports a setup problem, and the run fails on it.
+step "show list with a bad switch fails"
+if "$GODOT" --headless --path game --quit-after 120 -- --show=list --no-such-switch >"$log" 2>&1; then
+	echo "--show=list with a bad switch exited 0" >>"$log"; fail
+fi
+grep -qE '^WARNING: launch\.unknown' "$log" || fail
+echo "ok"
+
+# AD-29, AD-3: one traced night, so the path Main takes with --trace runs, and its first line
+# names the seed the night can be run again with.
+smoke "smoke run: --start=night --trace --seed=1" -- --start=night --trace --seed=1
+step "trace: NIGHT_STARTED names the seed"
+grep -qE '^ +0\.000 NIGHT_STARTED +one_night seed=1$' "$log" || fail
+echo "ok"
 
 if [[ "${1:-}" == "--export" ]]; then
 	mkdir -p builds/ear-test-windows builds/ear-test-linux

@@ -59,8 +59,9 @@ The ear test's tests are in `tests/ear_test/test_ear_test.gd` (120 passed, 23 ex
 - `tools/ci.sh`: import, the purity check on `watch/sim/` (banned names, and any base type but
   `RefCounted` or a class of that folder; with a self-check of the greps), the check for any
   kind of `print` on `watch/` outside `watch/debug/`, the tests, and 120-frame smoke runs of
-  the game, the ear test, the game with each `--start` value (with `--seed=1`), and the game
-  with each show-me setup that `--show=list` prints. A smoke run fails on any ERROR or WARNING
+  the game, the ear test, the game with each `--start` value (with `--seed=1`), the game
+  with each show-me setup that `--show=list` prints, and one traced night (`--trace`), whose
+  first line must name the seed. A smoke run fails on any ERROR or WARNING
   line; the import and the exports fail on any ERROR line.
 - `tools/ci.sh --export`: the same, then the ear test's Windows and Linux builds into `builds/`,
   and one headless start of the Linux build to confirm it opens the ear test and writes to
@@ -80,10 +81,10 @@ than once, the first good value stands.
 
 | Switch | What it does |
 |---|---|
-| `--seed=N` | The seed for the night's randomness, a whole number. Without it a night gets a fresh random seed |
+| `--seed=N` | The seed for the night's randomness, a whole number. Without it a night gets a fresh random seed, which `NIGHT_STARTED` carries and `--trace` prints, so the night can be run again with `--seed=N` |
 | `--start=<value>` | Start on that screen instead of the title. Today the one value is `night`; `planning` (story 1.7), `lesson` and `round` (epic 2) follow |
-| `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night`). No value |
-| `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. `--show=list` lists them and quits. Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
+| `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night seed=7`). No value |
+| `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. `--show=list` lists them and quits (with exit code 1 when the launch had a setup problem). Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
 
 The debug switches (`--trace`, `--show`) work when run from source and in playtest builds only;
 anywhere else they are a setup problem (`launch.no_debug`).

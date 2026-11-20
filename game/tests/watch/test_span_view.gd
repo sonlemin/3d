@@ -44,6 +44,15 @@ func _test_stripped_start_is_drawn_from_geometry() -> void:
 			and view.get_node("Landing") is MeshInstance3D
 			and (view.get_node("Landing") as Node3D).position.x == g.landing_box().get_center().x
 			and is_equal_approx((view.get_node("Landing") as Node3D).position.z, g.landing_box().get_center().z))
+	# The landing is a surface in SpanGeometry; the view draws it as a thin slab on the pier's top.
+	var landing: MeshInstance3D = view.get_node("Landing") as MeshInstance3D
+	var slab: Vector3 = (landing.mesh as BoxMesh).size if landing != null and landing.mesh is BoxMesh else Vector3.ZERO
+	_check("view: the landing is as wide and long as SpanGeometry's, and a thin slab high",
+			is_equal_approx(slab.x, g.landing_box().size.x) and is_equal_approx(slab.z, g.landing_box().size.z)
+			and is_equal_approx(slab.y, SpanView.LANDING_MARK_THICKNESS), str(slab))
+	_check("view: the landing's slab starts at SpanGeometry's height, the deck level",
+			landing != null and is_equal_approx(landing.position.y - slab.y / 2.0, g.landing_box().position.y),
+			str(landing.position.y) if landing != null else "null")
 	_check("view: 6 sections drawn", view.get_children().filter(func(n: Node) -> bool: return n is SectionView).size() == 6)
 
 	var section3: SectionView = view.get_node("Section3")

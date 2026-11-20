@@ -33,6 +33,13 @@ func add_consumer(consumer: Callable) -> void:
 	_consumers.append(consumer)
 
 
+## Opened without setup() (the scene run on its own from the editor): nothing to tick.
+func _ready() -> void:
+	if _sim == null:
+		push_warning("night.no_setup: the night screen was opened without setup(); start it with --start=night")
+		set_physics_process(false)
+
+
 func _physics_process(_delta: float) -> void:
 	_sim.set_move(Vector2.ZERO)
 	_sim.set_view(0.0, 0.0)

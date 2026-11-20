@@ -241,3 +241,50 @@ owner: the story that first draws key names on screen
 severity: low
 reason: `key_name()` prints `OS.get_keycode_string()` of the layout's label for a physical key. Where that label is a symbol or `KEY_NONE` (the number row on AZERTY, some display servers), the name may be empty or a word such as "Ampersand". On Xvfb with a US layout all 27 actions gave good names. Fall back to the physical key's name when the label is `KEY_NONE` or empty, and try at least one non-US layout.
 status: open
+
+## Deferred from: code review of 1-2-the-span-exists-and-is-drawn-to-the-count.md (2026-11-20)
+
+### DW-26: The determinism tests cannot fail on inputs or the generator
+
+origin: gds-code-review of story 1.2, 2026-11-20 (Blind Hunter)
+location: game/tests/watch/test_night_sim.gd and test_bot_nights.gd; `NightSim.checksum()`
+owner: story 1.3, the first story whose rules read the move wish and the view
+severity: medium
+reason: `checksum()` hashes the tick, the generator's state and the part counts, and no rule reads `rng`, `move_wish`, `yaw`, `pitch` or `commands` yet. "Same seed and inputs, same checksum" therefore passes with any inputs, and "a different seed gives a different rng state" only shows that seeding differs. Once the warden walks, add a check that different inputs give a different checksum and that a roll changes the events.
+status: open
+
+### DW-27: A view test changes part counts outside the tick
+
+origin: gds-code-review of story 1.2, 2026-11-20 (Acceptance Auditor, Blind Hunter)
+location: game/tests/watch/test_span_view.gd, the reconcile checks (lines 85 to 94)
+owner: story 1.4, which adds the strip command
+severity: low
+reason: The test calls `SpanRules.move_parts()` directly and then checks that the view follows on the next tick. The testing rule is a `StartState`, then only commands and ticks. No command can change a count until story 1.4; replace the direct call with a strip command then.
+status: open
+
+### DW-28: The trace line has no side, and its "who" is only the event id
+
+origin: gds-code-review of story 1.2, 2026-11-20 (Acceptance Auditor, Blind Hunter)
+location: game/watch/debug/trace.gd, `line()`; game/tests/watch/test_trace.gd
+owner: the first story that emits an event with a side or an actor (story 1.4 at the latest)
+severity: low
+reason: The story's Dev Notes give "where" as `s3 L` and "who" as `grappler#3` or `warden`. The trace prints `s3` and the event's `id`, which is right for `NIGHT_STARTED`, the only kind that exists. An event with a section and no id prints the section in the "who" column, and a kind name over 17 characters breaks the columns. The test pins today's format and has to change with it.
+status: open
+
+### DW-29: `EYE_HEIGHT` is in `SpanGeometry`, and AD-67 puts it in `WardenConstants`
+
+origin: gds-code-review of story 1.2, 2026-11-20 (Acceptance Auditor)
+location: game/watch/sim/span_geometry.gd, line 45
+owner: story 1.3, which adds the warden
+severity: low
+reason: The code follows the story's decision D2; the architecture (AD-67) says `WardenConstants.EYE_HEIGHT` gives the eye for `LookRules` and the camera. Move the constant when `WardenConstants` is created, and point the night camera at it.
+status: open
+
+### DW-30: `Main`'s launch branches have no test
+
+origin: gds-code-review of story 1.2, 2026-11-20 (Blind Hunter)
+location: game/watch/main.gd, `_ready()`
+owner: the next story that changes `Main` (story 1.3 makes the night a first-person screen)
+severity: medium
+reason: The "--show wins over --start", unknown-show and no-debug branches each raise a warning, and a smoke run fails on any warning, so CI runs only the clean paths. Inverting "--show wins", or opening the night on an unknown show, would pass every check. Move the choice of screen into a function a test can call, or add smoke runs that expect one named warning.
+status: open
