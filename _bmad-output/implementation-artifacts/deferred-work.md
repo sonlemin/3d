@@ -42,7 +42,8 @@ location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md
 owner: gds-game-architecture, as its first step (auto-assigned 2026-11-20)
 severity: medium
 reason: The GD-52 to GD-55 fixes went in after the validator finished, so nobody has read the result; architecture is the next reader anyway.
-status: open
+status: done 2026-11-20
+resolution: Read in full as step 2 of gds-game-architecture. Seven gaps found and listed in game-architecture.md (Project Context, Gaps found); five settled there, two left open for their stories (DW-17).
 
 ### DW-5: Walk the UX reviews' medium and low findings
 
@@ -143,4 +144,40 @@ location: n/a
 owner: Sonlm
 severity: low
 reason: Commits are local only; pushing was never asked for.
+status: open
+
+### DW-16: Write the architecture's rule changes back into the GDD
+
+origin: gds-game-architecture, validation, 2026-11-20
+location: _bmad-output/game-architecture.md, Architecture Validation, Handed on
+owner: a gds-gdd Update run before epic 2's stories are created
+severity: medium
+reason: AD-6 (smooth distance loudness), AD-7 (cut and skip, three falling cries, warning spacing), AD-17 (the wounded ear is per source), AD-26 (what a replay resets; hints on leaving), AD-34 (dawn wins a tie) and AD-50/AD-67 (a hold that becomes impossible cancels on the next tick) change or add to the GDD's wording. The GDD still says "3 dB per section".
+status: open
+
+### DW-17: Two GDD gaps left open by the architecture
+
+origin: gds-game-architecture, 2026-11-20
+location: game-architecture.md, Gaps found (6 and 7)
+owner: put to Sonlm as options when epic 3 story 3 and epic 5 story 5 are created
+severity: low
+reason: A Diver whose picked section opens or falls during its 1 s drop; whether a Grappler still hanging stands still for the 20 s after the name is called.
+status: open
+
+### DW-18: Epic 1 needs a setup story, and epic 2's "In" list needs the pieces the architecture moved into it
+
+origin: gds-game-architecture, Built when (AD-54, AD-66), 2026-11-20
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md
+owner: gds-create-epics-and-stories, when epic 1's stories are written
+severity: medium
+reason: epics.md has only its dependency line changed. The setup story (main scene switch, test runner split, CI checks) is not in epic 1's story list or its hours, and epic 2 now also builds warning phases, a timetable with tolls and the carried lantern's light.
+status: open
+
+### DW-19: Architecture's second round of validation fixes was not re-read
+
+origin: gds-game-architecture, validation, 2026-11-20
+location: _bmad-output/game-architecture.md
+owner: gds-check-implementation-readiness
+severity: low
+reason: Two cold reads found 39 and then 37 problems; the fixes for the second set had mechanical checks only.
 status: open

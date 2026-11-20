@@ -805,7 +805,7 @@ Eight epics for the one-night game (GD-36). Each ends in something playable. Det
 | 7 | The look | The same night in the woodcut look, at the performance target | 40 to 80 h |
 | 8 | Going public | The itch.io release for Windows and Linux, with the accessibility extras | 30 to 45 h |
 
-**Sequence.** 1 and 2 first, in either order: they carry the two biggest risks. Epic 2 ends with the early listen (GD-43). Then 3, 4, 5. Epic 6 is the gate: 7 and 8 start only when it passes. The Fog Season is planned after gate 2.
+**Sequence.** 1 first, then 2: they carry the two biggest risks, and epic 2 runs on the simulation that epic 1 builds (architecture AD-66). Epic 2 ends with the early listen (GD-43). Then 3, 4, 5. Epic 6 is the gate: 7 and 8 start only when it passes. The Fog Season is planned after gate 2.
 
 Total: about 325 to 510 hours, against the brief's 250 to 500 hours in a year. The UX decisions added about 35 to 50 hours (GD-50), and the top of the range is now 10 hours over the brief's. Gate 2 is reached after about 255 to 385 hours.
 

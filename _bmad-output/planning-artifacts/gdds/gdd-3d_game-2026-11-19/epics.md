@@ -17,7 +17,7 @@ Sizes are rough guesses at 5 to 10 hours a week. The ear test ran from 12 to 19 
 | # | Epic | Depends on | Rough size |
 |---|---|---|---|
 | 1 | The span | Nothing | 30 to 50 h |
-| 2 | The ear | Nothing (1 helps) | 55 to 75 h |
+| 2 | The ear | 1 (its setup and simulation stories; architecture AD-66) | 55 to 75 h |
 | 3 | The dead | 1, 2 | 40 to 60 h |
 | 4 | Rigs and hands | 1, 2, 3 | 45 to 70 h |
 | 5 | The night | 1 to 4 | 65 to 90 h |
@@ -27,7 +27,7 @@ Sizes are rough guesses at 5 to 10 hours a week. The ear test ran from 12 to 19 
 
 Total: about 325 to 510 hours. The UX decisions added about 35 to 50 of them (GD-50). Gate 2 is reached after about 255 to 385 hours.
 
-Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear with several cries and a walking player) and come first, in either order. Epic 2 ends with the early listen: the first time anyone but Sonlm hears the game. Epics 7 and 8 start only when gate 2 passes.
+Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear with several cries and a walking player) and come first: epic 1, then epic 2, because the lesson and the listening round run on the simulation that epic 1 builds (architecture AD-66). Epic 2 ends with the early listen: the first time anyone but Sonlm hears the game. Epics 7 and 8 start only when gate 2 passes.
 
 ## What the ear-test prototype already provides
 
