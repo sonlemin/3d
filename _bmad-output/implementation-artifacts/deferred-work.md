@@ -153,7 +153,8 @@ location: _bmad-output/game-architecture.md, Architecture Validation, Handed on
 owner: a gds-gdd Update run before epic 2's stories are created
 severity: medium
 reason: AD-6 (smooth distance loudness), AD-7 (cut and skip, three falling cries, warning spacing), AD-17 (the wounded ear is per source), AD-26 (what a replay resets; hints on leaving), AD-34 (dawn wins a tie) and AD-50/AD-67 (a hold that becomes impossible cancels on the next tick) change or add to the GDD's wording. The GDD still says "3 dB per section".
-status: open
+status: done 2026-11-20
+resolution: GDD draft 0.7, GD-56 to GD-59 and GD-62. The hold wording was left as it is on purpose (see the GDD's decision log).
 
 ### DW-17: Two GDD gaps left open by the architecture
 
@@ -162,7 +163,8 @@ location: game-architecture.md, Gaps found (6 and 7)
 owner: put to Sonlm as options when epic 3 story 3 and epic 5 story 5 are created
 severity: low
 reason: A Diver whose picked section opens or falls during its 1 s drop; whether a Grappler still hanging stands still for the 20 s after the name is called.
-status: open
+status: done 2026-11-20
+resolution: Sonlm chose from options. GD-60: the Diver falls through. GD-61: the dead on and under the span stand still.
 
 ### DW-18: Epic 1 needs a setup story, and epic 2's "In" list needs the pieces the architecture moved into it
 
@@ -171,7 +173,8 @@ location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md
 owner: gds-create-epics-and-stories, when epic 1's stories are written
 severity: medium
 reason: epics.md has only its dependency line changed. The setup story (main scene switch, test runner split, CI checks) is not in epic 1's story list or its hours, and epic 2 now also builds warning phases, a timetable with tolls and the carried lantern's light.
-status: open
+status: open (epic level done 2026-11-20)
+resolution-so-far: epics.md draft 0.7 has the setup story, epic 2's additions and new hours (GD-63). Still owed: the story files, and a re-guess of epics 2 to 5 for the test paths and show-me setups every story now carries.
 
 ### DW-19: Architecture's second round of validation fixes was not re-read
 

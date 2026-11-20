@@ -382,3 +382,57 @@ Not done: a per-wave economy line (validator minor 18). Several starting values 
 - External handoffs: none configured.
 - Owed: nobody has read the draft after the third round of fixes.
 - Next step: `gds-game-architecture`.
+
+## Update 2026-11-20: the architecture's decisions written back (draft 0.7)
+
+Change signal: `gds-game-architecture` finished on 2026-11-20 (`_bmad-output/game-architecture.md`, AD-1 to AD-68). It settled cases draft 0.6 left open, changed the wording of three rules, and left two gaps for the designer. DW-16, DW-17 and the epic-level part of DW-18 are closed by this update.
+
+| ID | Date | Decision | From |
+|---|---|---|---|
+| GD-56 | 2026-11-20 | Farther is quieter smoothly: 0.6 dB per metre along the span (3 dB per section), up to 15 dB, with no jump at section edges. Only distance along the span counts. Amends GD-40. Chosen by Sonlm from options in the architecture session. (Declined: a step per whole section; true straight-line distance, which would let loudness hint at level.) | AD-6 |
+| GD-57 | 2026-11-20 | The 4-cry limit in full. A warning sounds for its whole length and may fade out the farthest deck cry in 0.1 s. A deck cry with no place is skipped until its next 8 s mark, nearest first. The tune counts; the hum, falling cries, the ally and ambience do not. A warning that cannot start waits, and its threat waits with it. At most three falling cries at once. Chosen by Sonlm from options. (Declined: deck cries waiting their turn; never cutting a sounding cry.) | AD-7 |
+| GD-58 | 2026-11-20 | A replay starts with the oil and the flask full, as another night does. Hints survive a return to the title and end when the game is closed. The night's random rolls are listed in full: a Grappler's rail, a deck hook's edge, the side of a sideless wound, which name, and where it lies; all follow from one number, so a night can be played back. Accepted by Sonlm as the plainest reading of GD-52 and UX-41. | AD-26, AD-3 |
+| GD-59 | 2026-11-20 | If the night would be lost in the same instant dawn comes, it is dawn. Accepted by Sonlm. | AD-34 |
+| GD-60 | 2026-11-20 | A Diver whose section opens or falls during its 1 s drop, after its warning has ended, falls through and is gone until dawn. Chosen by Sonlm from options. (Declined: it swerves to the next section; it pulls up and dives again 8 s later.) | Architecture gap 6 |
+| GD-61 | 2026-11-20 | When the name is called, the dead on and under the span stand still for 20 s: walkers stop and hanging Grapplers stop hauling, their hooks keeping their load. Warnings already sounding finish and their threats arrive; the timetable and the clock to dawn keep running. Chosen by Sonlm from options. (Declined: walkers only; no new warnings for the 20 s.) | Architecture gap 7 |
+| GD-62 | 2026-11-20 | A wound makes every sound on that side 12 dB quieter for 20 s; cries, the tune and ambience are also dulled above 1 kHz, while footsteps, hooks and creaks keep their tone. Amends GD-27. Chosen by Sonlm from options. (Declined: cries and ambience only, as the architecture first had it; everything quieter and dulled, which needs a filter on every sound.) | AD-17, which is amended to match |
+| GD-63 | 2026-11-20 | Build order is epic 1, then epic 2 (was: either order), because the lesson and the listening round run on what epic 1 builds. Epic 1 gains a setup story and is re-guessed at 40 to 65 h (was 30 to 50); the 10 to 15 h is the facilitator's guess. Total about 335 to 525 h, 25 h over the brief's ceiling; gate 2 after about 265 to 400 h. The order was chosen by Sonlm; the hours were not put to Sonlm as options. | AD-54, AD-66 |
+
+Applied to `gdd.md`: Win/Loss Conditions (dawn's tie, a replay's oil, hints); Listening (distance; the limit; falling cries); Lanterns and light (the Diver that falls through); The bell and the name; Wounds; the rig table and the abilities table; Difficulty (the list of rolls); Development Epics (order, hours); assumptions 3 and 7; two notes for the designer.
+
+Applied to `epics.md`: order and hours; epic 1's setup story and "In" line; epic 2's distance and limit rules, the warnings it needs from the dead, a test timetable with the toll, and its dependence on epic 1; one line each in epics 3, 4 and 5 for GD-59 to GD-62.
+
+Not written back, on purpose: that a hold which becomes impossible is cancelled a sixtieth of a second later, not "the moment". To a player the GDD's wording is still true; the tick belongs to the architecture.
+
+Not re-guessed: the sizes of epics 2 to 5. The architecture asks every story for a scripted test path and a show-me setup. A note for the designer says so.
+
+UX documents: read for conflicts with GD-56 to GD-62; none found, nothing changed.
+
+### Discipline pass on draft 0.7 (2026-11-20)
+
+A validator read the changes against `gdd.md`, `epics.md`, the architecture and `EXPERIENCE.md`: no critical, 10 major, 20 minor. Hours, totals, the "3 dB" mentions and story numbers were checked and found right. Decided by Sonlm from its findings:
+
+| ID | Date | Decision | Closes |
+|---|---|---|---|
+| GD-64 | 2026-11-20 | The stillness in full. For the 20 s the dead on and under the span stop everything they were doing and fall silent: no deck cries, no footsteps. Warnings sounding finish and what they announce arrives, then stands still until the 20 s end, as does the threat of a warning that starts during them. The bridge and the rigs still act on the standing dead. (Sonlm chose silence over crying on, and stilled arrivals over arrivals that act.) Applied by the facilitator from those choices: a wrong ring during the stillness does nothing and a right ring ends a hurry; a wrong ring hurries walkers only; an owner called during its own warning has the warning stop, its rail unlock and no hook land. | Validator F9, F12 to F16 |
+| GD-65 | 2026-11-20 | The tune comes before every other cry on the deck for a free place and is never the cry a warning cuts; it still cannot sound while four warnings are sounding. Chosen by Sonlm. (Declined: the tune as a fifth voice; no protection.) Applied by the facilitator: the tune's resolving phrase is outside the limit; a fall while three falling cries are fading is silent; a stranded Diver's second dive is a full 8 s warning under the limit and may sound in a lull. | Validator F17 to F20 |
+| GD-66 | 2026-11-20 | A wound in detail. The side is the warden's own and turns with the head. The cut grows from nothing ahead or behind to 12 dB at the side. It applies to every sound that has a place (cries, the tune, the hum, footsteps, hooks, creaks, both bells, the windows, the wind); the ally's voice and the warden's own hands are never cut. Cries, the tune and the wind are also dulled by up to 10 dB above 1 kHz. A second wound on the same side restarts its 20 s and does not stack. Chosen by Sonlm; the 10 dB is the facilitator's starting value. (Declined: the ally cut too; a hard cut at the midline.) | Validator F22 to F24 |
+| GD-67 | 2026-11-20 | What happens in dawn's instant does not count: the window stays lit, the section stands. Applied by the facilitator from GD-59. | Validator F21 |
+
+Other fixes applied: a replay restores the span as the plan had it (F1); epic 2 proves the limit for warnings and epic 3 the cutting and skipping of deck cries (F2); the list of what changes between runs (F3); the timetable's note on waiting (F4); decisions added to each epic's Delivers line (F5); "setup and span stories" (F6); GD-60's trapdoor case in epic 4, three falling cries in epic 3, hints in epic 5 (F7); "1 s drop" (F8); the two notes for the designer (F10); when a trapdoor's section counts as open, and a Diver landing in a sweep (F11); the sentence about playing a night back moved out, as it is the architecture's (F25).
+
+Kept in step: the architecture (AD-7, AD-17, the stillness in its state pattern, two rows of its Handed on table); `EXPERIENCE.md` (the pause question's wording; two lines on the wound).
+
+Known consequence, not changed: a nest holds one of the four places for its whole 40 s, so in wave 6 from 20 to 40 s at most two places are left for the cries of up to 18 dead on the deck.
+
+## Finalized (2026-11-20, draft 0.7)
+
+- `gdd.md` and `epics.md` are at draft 0.7.
+- Decision log audit: GD-56 to GD-67 are all captured in `gdd.md` or `epics.md`.
+- Input reconciliation: not re-run. This update came from the architecture, not from the brief or the brainstorm, and it removed nothing of theirs.
+- Polish: no document standards are configured for this skill, so none were applied.
+- Narrative design: unchanged from GD-45.
+- External handoffs: none configured.
+- Owed: nobody has read the draft after GD-64 to GD-67. The sizes of epics 2 to 5 were not re-guessed (DW-18).
+- Next step: `gds-check-implementation-readiness`.
+

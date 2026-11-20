@@ -129,7 +129,7 @@ Complete. Created through the GDS Architecture Workflow on 2026-11-20: 9 of 9 st
 
 ### Gaps found in GDD draft 0.6 (DW-4)
 
-None blocks architecture. Gaps 1 to 5 are settled here; 6 and 7 are deferred on purpose (AD-55).
+None blocks architecture. Gaps 1 to 5 are settled here; 6 and 7 were settled in the GDD's draft 0.7.
 
 1. The GDD says nothing in the night is random except the Grappler's rail and the name's place, but the deck-hook edge, the wound side on a fall, and which of the 6 names are also rolled.
 2. The 4-cry limit says which cries are dropped first, but not what happens to a dropped cry's 8 s repeat, or whether the tune and the hum count toward the limit.
@@ -139,8 +139,8 @@ None blocks architecture. Gaps 1 to 5 are settled here; 6 and 7 are deferred on 
 Gap 2 is settled by AD-7; gaps 1, 3 and 4 by AD-26. Three more were found later in the workflow:
 
 5. Loss and dawn on the same tick: settled by AD-34 (dawn wins).
-6. A Diver whose picked section opens or falls during its 1 s drop, after its warning has ended. Open: to be put to Sonlm as options when epic 3 story 3 is created.
-7. Whether a Grappler still hanging from its hook stands still for the 20 s after the name is called. Open: to be put to Sonlm as options when epic 5 story 5 is created.
+6. A Diver whose picked section opens or falls during its 1 s drop, after its warning has ended. Settled by GD-60 (2026-11-20): it falls through. `ConsequenceRules`' footing step handles a Diver in its drop like any body with no footing.
+7. Whether a Grappler still hanging from its hook stands still for the 20 s after the name is called. Settled by GD-61 (2026-11-20): the dead on and under the span stand still; warnings sounding finish; the timetable and the clock keep running.
 
 ---
 
@@ -207,7 +207,7 @@ Decision IDs are AD-n. AD-1 to AD-12 and AD-27 were chosen by Sonlm from option 
 | AD-4 | Night lifecycle | Each night: a new `NightSim` and a freshly instanced night scene, built from a stored `NightPlan`. The old ones are freed. | Nothing survives, so nothing leaks (20-night target); the scene is preloaded (3 s target) |
 | AD-5 | Audio voices | Four cry slots, each a bus with its own rear-shadow and wound filter, routed per cry into the level's room bus. Separate slots for falling cries and the hum. The game loads its own bus layout. | Godot effects live on buses, so a per-cry filter needs a per-cry bus; the 4-cry limit becomes physical; the ear test's layout is untouched |
 | AD-6 | Distance loudness | 0.6 dB per metre of distance along the span, capped at 15 dB. Engine attenuation is off. | No jump at section edges; height never hints at level; one pure function is both played and tested |
-| AD-7 | 4-cry limit | A warning holds a slot for its whole length and may cut the farthest deck cry (0.1 s fade). A deck cry without a slot skips to its next 8 s mark; nearest dead first. Falling cries are outside the limit, but at most three sound at once; more falls in the same moment share them. The tune is a cry like any other: its warning holds a slot and its deck repeats count. The hum is outside the limit. A warning starts only when 1.5 s have passed since the last warning started and a slot can be had; otherwise it waits, and the whole threat waits with it (owned by `wave_rules`, which asks `voice_rules` for the slot). | No threat's warning is ever delayed by a deck cry (fairness); the 8 s rhythm is kept |
+| AD-7 | 4-cry limit | A warning holds a slot for its whole length and may cut the farthest deck cry (0.1 s fade). A deck cry without a slot skips to its next 8 s mark; nearest dead first. Falling cries are outside the limit, but at most three sound at once; a fall while three are fading is silent (GD-65). The tune's warning holds a slot like any warning; on the deck the tune takes a free slot before any other deck cry and is never the one cut (GD-65). The hum and the tune's resolving phrase are outside the limit. A stranded Diver's second dive is a warning like any other. A warning starts only when 1.5 s have passed since the last warning started and a slot can be had; otherwise it waits, and the whole threat waits with it (owned by `wave_rules`, which asks `voice_rules` for the slot). | No threat's warning is ever delayed by a deck cry (fairness); the 8 s rhythm is kept |
 | AD-8 | Views of the dead | Instanced through one `DeadViews` factory when one of the dead first has a body (its hook lands, it dives, it hatches), freed when it is gone. Pooling is decided in epic 7 by measurement. | Gray boxes cost nothing; the seam makes a pool a local change |
 | AD-9 | Data | Rule numbers are named constants per system. A night's content is a `NightDef` built in code and passed to `NightSim`. | Tuning stays in git with its GD-n; `NightDef` is the Fog Season's growth seam |
 | AD-10 | Globals | No autoloads. `Main` owns the flow and hands one `WatchSession` to each screen. | Screens stay testable; nothing global loads with the ear test |
@@ -217,7 +217,7 @@ Decision IDs are AD-n. AD-1 to AD-12 and AD-27 were chosen by Sonlm from option 
 | AD-14 | The dead | No physics and no navigation mesh: a position along the span, a side lane, and one `DeadState.Phase` enum in the sim; each kind's rules use the phases they need. | The span is one line; 18 bodies need no physics |
 | AD-15 | Hands | The sim works out the look target itself from the warden's position and view direction (amended by AD-47: no physics ray); a pure `HandRules` picks the action for each input; holds run inside the sim. | Pause, cancel, "can't", Press once, the 2 m rule and "the section ahead" share one implementation and are testable headless |
 | AD-16 | Light and cues | "Lit" is distance math in the sim (4 m carried, 5 m placed, the gate on section 6). Lights only draw. A pure `CueRules` answers whether a cue shows, per cue mode. | Diver targeting and cue visibility must not depend on the renderer |
-| AD-17 | Wounded ear | Per cry: a source on the wounded side is 12 dB quieter and cut above 1 kHz in its slot. Ambience is ducked on that side by pan. | Reads the GDD's "everything on that side" as sources on that side; uses the slot filters of AD-5 |
+| AD-17 | Wounded ear | A pure `WoundMix` gives the cut for a source from its bearing to the warden's head: nothing ahead or behind, growing to 12 dB directly at the wounded side. It is applied to every sound that has a place (cries and the tune through `CryMix`; the hum; bridge and town sounds through `SfxAudio`; the wind by pan). The `Ally` and `Hands` buses are never cut. Cries, the tune and the wind are also cut by up to 10 dB above 1 kHz, growing the same way (cries in their slot). A second wound on the same side restarts the timer. Amended on 2026-11-20 to match GD-62 and GD-66. | GD-62: quieter for everything is one volume per sound; dulled needs a filter, which only the slots and the ambience bus have |
 | AD-18 | Mono and swap | One `AudioEffectStereoEnhance` on Master: `pan_pullout` 0 for Mono sound, −1 to swap left and right. Proven by a measurement test in epic 2 before the lesson relies on it. | No addon; Godot 4.7.2 accepts both values (checked 2026-11-20); the sound itself is unverified |
 | AD-19 | Pause | The sim is not ticked; the tree is paused and only the pause overlay keeps processing; the game's buses are muted. Detailed by AD-67. | UX-24: everything stops and falls silent, including reverb tails |
 | AD-20 | Input | Actions are registered in code from one table of physical keycodes. Key names are shown through `DisplayServer.keyboard_get_label_from_physical`. | `project.godot` stays shared with the ear test; closes GDD assumption 11 for keys |
@@ -263,11 +263,11 @@ The Fog Season's save (dawn as the save point) is expected to serialise `WatchSe
 
 **AD-5: voice slots.** Considered: twelve fixed buses (three times the reverbs); the ear test's single shared shadow bus (loses the measured front/back cue with two cries). Consequence: the game's bus layout differs from the ear test's, so the loudness table is measured again for the game in epic 2 story 1.
 
-**AD-6, AD-7 and AD-17 change the GDD's wording.** Distance is smooth, not stepped, and measured along the span only. A deck cry can be cut mid-clip by a warning. A wound dulls the cries and ambience on its side, not footsteps and hooks. All three are to be written back into the GDD (Listening; Wounds).
+**AD-6, AD-7 and AD-17 changed the GDD's wording,** and GDD draft 0.7 (2026-11-20) now carries them as GD-56, GD-57 and GD-62.
 
 **AD-12: one project, two games.** The ear test's scripts, scene, clips and loudness table are not edited. Its two export presets gain the `eartest` feature and `project.godot` gains `run/main_scene.eartest` and `config/name.eartest` overrides. Details and the checks that keep it whole are under Project Structure (AD-39, AD-43).
 
-**AD-17: the wounded ear is per source.** A true one-ear filter would need a custom audio effect, which typed GDScript without addons cannot provide. If playtests show the wound does not read, revisit.
+**AD-17: the wounded ear is per source.** A true one-ear filter would need a custom audio effect, which typed GDScript without addons cannot provide. GD-62 settled what the player hears: everything on that side quieter, cries, the tune and ambience also dulled. Footsteps, hooks and creaks keep their tone. If playtests show the wound does not read, revisit.
 
 **AD-18 is unproven.** That `pan_pullout` −1 swaps the channels cleanly is read from how the effect is computed, not heard. Fallback if the measurement test fails: mirror every source's position across the span's centre line in `CryMix`, which swaps the engine's panning.
 
@@ -836,7 +836,7 @@ static func tick(dead: DeadState, sim: NightSim) -> void:
 
 - A phase change always emits one event, from the function that makes the change.
 - A timed rule counts ticks down to zero. Nothing compares against the clock except the wave timetable.
-- A night-wide effect (the dead standing still for 20 s, hurrying for 10 s) is a countdown on the sim; walking speed is derived from it (AD-35).
+- A night-wide effect (the dead standing still for 20 s, hurrying for 10 s) is a countdown on the sim. **While the stillness counts down, no countdown of the dead moves** (GD-61, GD-64): every per-kind `tick` returns at once, so walking, hauling, a recovery and a crossing all wait, and the dead emit no cries or footsteps; a warning in progress is the one thing that still runs, and what it announces arrives and then waits. Stillness wins over hurrying. The example above shows a kind's own phases; the stillness check sits in `DeadRules`, before any of them is called.
 
 ### Data Patterns
 
@@ -971,7 +971,7 @@ The playtest log and night recordings are written only when the build has the `p
 
 ### Built when (AD-54, corrected by AD-66)
 
-The architecture is built as epics need it, not all first. **Order: epic 1, then epic 2** (AD-66): the lesson and the listening round run on the sim that epic 1 builds. Epic 1 gains a setup story, sized when its stories are created.
+The architecture is built as epics need it, not all first. **Order: epic 1, then epic 2** (AD-66): the lesson and the listening round run on the sim that epic 1 builds. Epic 1 gains a setup story (GD-63 guesses it at 10 to 15 h).
 
 | Epic | Infrastructure it builds |
 |---|---|
@@ -1003,7 +1003,6 @@ These are undecided on purpose. An agent that meets one stops and puts options t
 | Gamepad and key rebinding (DW-8) | When the Fog Season is planned | The table in `InputActions`; `NightTypes.HandInput` |
 | Saving | When the Fog Season is planned | `WatchSession` and `NightPlan` are plain data |
 | Several spans; falling back from pier to pier | When the Fog Season is planned | `NightDef` and `SpanGeometry` (AD-42) |
-| GDD gaps 6 and 7 | When their stories are created | `diver_rules.gd`; `name_rules.gd` |
 
 ---
 
@@ -1066,9 +1065,9 @@ Validated on 2026-11-20 by mechanical checks and by two independent readers who 
 | Item | To |
 |---|---|
 | `project-context.md`: 8 open markers to fill and 12 rules this document overturns (rays and overlaps, `advance(delta)` and the clock, who owns the random generator, no `class_name`, the single test file, the single smoke run, the bus layout, folders, the loudness tool, the 3 dB step, "`project.godot` is still the ear test", "both presets") | `gds-generate-project-context`, run next |
-| GDD wording: AD-6 (smooth distance), AD-7 (cut and skip, three falling cries, warning spacing), AD-17 (the wounded ear), AD-34 (dawn wins a tie), AD-26 (what a replay resets; hints on leaving), AD-50 and AD-67 (a hold that becomes impossible is cancelled on the next tick, not the same moment) | A `gds-gdd` update |
-| GDD gaps 6 and 7 (a Diver whose section opens during its drop; hanging Grapplers when the name is called) | Option lists when epic 3 story 3 and epic 5 story 5 are created |
-| Epic 1's setup story, and the pieces the built-when table adds to epic 2 | `gds-create-epics-and-stories`, when stories are written |
+| Done 2026-11-20 in GDD draft 0.7 (GD-56 to GD-62). GDD wording: AD-6 (smooth distance), AD-7 (cut and skip, three falling cries, warning spacing), AD-17 (the wounded ear), AD-34 (dawn wins a tie), AD-26 (what a replay resets; hints on leaving). The hold wording (cancelled on the next tick) was left as it is in the GDD on purpose: to a player "the moment" is still true | Done |
+| GDD gaps 6 and 7 (a Diver whose section opens during its drop; hanging Grapplers when the name is called) | Done 2026-11-20: GD-60 and GD-61 |
+| Epic 1's setup story, and the pieces the built-when table adds to epic 2 | In `epics.md` draft 0.7 at epic level (GD-63); the story files are written by `gds-create-epics-and-stories` |
 | The full table of input actions (only the mechanism and two examples are here) | Epic 1's setup story; it follows the GDD's Controls tables one to one |
 | Whether the `eartest` feature override picks the main scene in an exported build | Checked by CI in epic 1's setup story (AD-43) |
 | Whether `pan_pullout` −1 swaps the channels cleanly | The measurement test in epic 2 (AD-18) |
@@ -1114,5 +1113,5 @@ godot --path game -- --show=list             # the show-me setups for manual che
 
 1. Refresh `_bmad-output/project-context.md` with `gds-generate-project-context`: 8 open markers to fill and 12 rules that this architecture overturns. Agents read that file first, so it must not contradict this one.
 2. Run `gds-check-implementation-readiness` across the GDD, the UX documents, this architecture and the epics.
-3. Write the GDD's wording changes back (see Handed on, in Architecture Validation).
+3. Done 2026-11-20: the GDD's wording changes are written back (draft 0.7).
 4. Create epic 1's stories, starting with the setup story in "Built when".

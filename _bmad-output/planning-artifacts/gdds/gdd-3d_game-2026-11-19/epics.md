@@ -2,8 +2,8 @@
 title: The Mourning Watch - Development Epics
 scope: the one-night game
 created: 2026-11-19
-updated: 2026-11-19
-status: draft 0.6 (UX decisions and third validation applied)
+updated: 2026-11-20
+status: draft 0.7 (architecture decisions written back)
 ---
 
 # The Mourning Watch - Development Epics
@@ -16,8 +16,8 @@ Sizes are rough guesses at 5 to 10 hours a week. The ear test ran from 12 to 19 
 
 | # | Epic | Depends on | Rough size |
 |---|---|---|---|
-| 1 | The span | Nothing | 30 to 50 h |
-| 2 | The ear | 1 (its setup and simulation stories; architecture AD-66) | 55 to 75 h |
+| 1 | The span | Nothing | 40 to 65 h |
+| 2 | The ear | 1 (its setup and span stories; architecture AD-66) | 55 to 75 h |
 | 3 | The dead | 1, 2 | 40 to 60 h |
 | 4 | Rigs and hands | 1, 2, 3 | 45 to 70 h |
 | 5 | The night | 1 to 4 | 65 to 90 h |
@@ -25,7 +25,9 @@ Sizes are rough guesses at 5 to 10 hours a week. The ear test ran from 12 to 19 
 | 7 | The look | 6 passed | 40 to 80 h |
 | 8 | Going public | 7 | 30 to 45 h |
 
-Total: about 325 to 510 hours. The UX decisions added about 35 to 50 of them (GD-50). Gate 2 is reached after about 255 to 385 hours.
+Total: about 335 to 525 hours. The UX decisions added about 35 to 50 of them (GD-50) and the architecture's setup story about 10 to 15 (GD-63). Gate 2 is reached after about 265 to 400 hours.
+
+How each epic is built is in `../../../game-architecture.md`; its "Built when" table says which parts of the architecture each epic brings in.
 
 Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear with several cries and a walking player) and come first: epic 1, then epic 2, because the lesson and the listening round run on the simulation that epic 1 builds (architecture AD-66). Epic 2 ends with the early listen: the first time anyone but Sonlm hears the game. Epics 7 and 8 start only when gate 2 passes.
 
@@ -48,6 +50,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **In**
 
+- Setting up: the game starts beside the ear test, which keeps working unchanged; the checks that run before every commit cover both; a way to start the game in a chosen situation, for Sonlm's checks by eye and ear (architecture AD-54, AD-56).
 - 6 sections of 8 planks and 2 rail ropes each; the two piers; the town pier landing.
 - The warden walks at 3.5 m/s and looks around.
 - Strip a plank (2 s), strip a rail rope (3 s), re-lay a plank (3 s). Parts are carried; the forearm shows the tallies while Tab is held, and the warden can still walk and look.
@@ -65,14 +68,15 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **Stories**
 
-1. The span exists as 6 sections with countable planks and rails, drawn to the count.
-2. The warden walks and looks in first person.
-3. The warden strips and re-lays, carries what is stripped, and reads the tallies on the forearm.
-4. Sections have strength, take load, creak, groan and collapse.
-5. Open sections and gaps: what the warden can cross, and how long it takes.
-6. The overhead read-out shows planks, rails and strength per section.
+1. Setup: the game runs beside the unchanged ear test, with its checks and a way to start in a chosen situation.
+2. The span exists as 6 sections with countable planks and rails, drawn to the count.
+3. The warden walks and looks in first person.
+4. The warden strips and re-lays, carries what is stripped, and reads the tallies on the forearm.
+5. Sections have strength, take load, creak, groan and collapse.
+6. Open sections and gaps: what the warden can cross, and how long it takes.
+7. The overhead read-out shows planks, rails and strength per section.
 
-**Delivers.** GDD Game Mechanics 2 and 3. Decisions GD-19, GD-21 (planks, rope); UX-8, UX-11.
+**Delivers.** GDD Game Mechanics 2 and 3. Decisions GD-19, GD-21 (planks, rope), GD-63; UX-8, UX-11.
 
 ---
 
@@ -84,10 +88,11 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 - The cries re-cut from the original downloads at full quality, with loudness re-measured.
 - The ear test's rules carried into the game: one kind of cry per level, the rear shadow, equal loudness at equal distance, the three room sounds.
-- Farther is quieter: 3 dB per section, up to 15 dB.
+- Farther is quieter: 3 dB per section, smoothly, along the span only, up to 15 dB (GD-56).
 - Cries that come from places: the rails, the piers, overhead.
 - The four warnings, built from whole clips: Grappler, Diver, nest (sobs that quicken), and the tune of the one who keeps coming back.
-- Several cries at once: never more than 4, warnings at least 1.5 s apart, ambience at least 6 dB under the quietest a cry can be.
+- Several cries at once: never more than 4, warnings at least 1.5 s apart, ambience at least 6 dB under the quietest a cry can be. A warning that cannot start waits, and its threat with it (GD-57). Cutting and skipping the cries of the dead on the deck is epic 3, where those cries arrive.
+- Enough of the dead to warn: each kind's warning sounds from its place and ends; what they do after arriving is epic 3. A test timetable with the bell's toll; the full six waves are epic 5.
 - The ally's calls, each with a caption at the bottom centre of the view: every warning 2 s in, or only the warnings the player has not turned toward within 4 s.
 - The bridge shows where, inside the carried lantern's light: shaking rope, falling dust, swirling fog, and the flame leaning toward the nearest cry inside its light. A cue lasts for the whole of its warning.
 - The town bell, and a tally chalked at each toll.
@@ -98,7 +103,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 
 **Out.** What the dead do after they arrive; rigs; oil and hung lanterns.
 
-**Needs.** The ally's recorded lines (stand-in recordings are fine until epic 6). The original downloads of the 11 recordings. Two or three newcomers.
+**Needs.** Epic 1's setup and span stories. The ally's recorded lines (stand-in recordings are fine until epic 6). The original downloads of the 11 recordings. Two or three newcomers.
 
 **Playable at the end.** The listening lesson and the listening round.
 
@@ -117,7 +122,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 11. Every warning is logged: turn, dark or lit, called or not.
 12. The early listen is run and written up.
 
-**Delivers.** GDD Game Mechanics 1 and 8; the early listen in Success Metrics. Decisions GD-7, GD-8, GD-9 (carried lantern only), GD-24, GD-26, GD-39 (the rule), GD-40, GD-43; IN-19, IN-20; UX-1, UX-20, UX-22 (the look and walk prompts), UX-26, UX-38 (the left/right check).
+**Delivers.** GDD Game Mechanics 1 and 8; the early listen in Success Metrics. Decisions GD-7, GD-8, GD-9 (carried lantern only), GD-24, GD-26, GD-39 (the rule), GD-40, GD-43, GD-56, GD-57 (warnings); IN-19, IN-20; UX-1, UX-20, UX-22 (the look and walk prompts), UX-26, UX-38 (the left/right check).
 
 ---
 
@@ -130,9 +135,10 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 - Grapplers, step by step: the warning under a rail on sections 1 to 5 (the rail locks); the hook lands (at most 2 per rail) and the Grappler hangs for 6 s with a load of 1; then it walks to the town.
 - No rail, no hook; with no free rail, a hook on the deck of the section with the most planks, tearing one off. The deck hook picks an edge at random, and its warning rattles that edge's planks.
 - Section 6 takes no hooks and no Divers while any other section has planks.
-- Divers: a section picked when the warning starts, and the shrieks come from over it; here the section with the fewest planks (the light rule arrives in epic 4); a landing that counts 5; then a walk.
+- Divers: a Diver whose section opens or falls during its 1 s drop falls through (GD-60). A section picked when the warning starts, and the shrieks come from over it; here the section with the fewest planks (the light rule arrives in epic 4); a landing that counts 5; then a walk.
 - Hollow Nesters: 40 s of quickening sobs in a pier, then 4 hatchlings at 3.0 m/s.
-- On the deck each of the dead repeats its cry every 8 s with footsteps; anything that falls lets out a cry that fades.
+- On the deck each of the dead repeats its cry every 8 s with footsteps. Warnings come first: one may cut the farthest cry on the deck, and a deck cry with no place is skipped until its next 8 s mark (GD-57). Anything that falls lets out a cry that fades; at most three at once.
+- A stranded Diver's second dive is a full 8 s warning (GD-65).
 - Loads on sections from every body and every set hook.
 - The town's 12 windows; a crossing is stepping off section 6 onto the landing; each puts one window out; hatchlings put one out per two. A window going out makes a small sound from the town side; a lone hatchling's crossing makes the next window flicker low.
 - Losing the night: section 6 falls, or the last window goes dark.
@@ -155,7 +161,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 8. The fallen are gone until dawn.
 9. Each kind handles open sections and gaps as the GDD states.
 
-**Delivers.** GDD Enemy Wave Design (types), Win/Loss Conditions. Decisions GD-12, GD-13, GD-15, GD-16, GD-17, GD-20; UX-30, UX-37.
+**Delivers.** GDD Enemy Wave Design (types), Win/Loss Conditions. Decisions GD-12, GD-13, GD-15, GD-16, GD-17, GD-20, GD-57 (deck cries), GD-60, GD-65 (the second dive); UX-30, UX-37.
 
 ---
 
@@ -176,8 +182,8 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 - Lanterns: three; one pole on each section; the lantern held over the centre of the section; one lantern in hand, hung, taken or swapped at a pole with one press, and kept lit in hand through holds and wounds; 4 m and 5 m of light; cues wherever light falls, which includes the town gate's light on section 6.
 - Oil: 6-minute tanks; one spare flask that stays at the town pier and refills the lantern in hand, once; the shutter (carried and hung); the level read from the lantern's glass, a shrinking, sputtering flame in the last 60 s, and a seam glow when shuttered.
 - E acts on what the warden looks at: a pole or the flask (re-laying a plank is already in epic 1). F acts on the hung lantern looked at, otherwise on the lantern in hand.
-- Divers pick their section by the light rule, at the start of the warning. An open section cannot be picked, and a redirected Diver lands within sections 1 to 5 when it can.
-- Wounds: knocked down for 1.5 s, one ear dulled and that side of the view darkened for 20 s; from the dead, the warden's own beam, a Diver's landing, or a falling section. A wound cancels a hold.
+- Divers pick their section by the light rule, at the start of the warning. An open section cannot be picked, and a redirected Diver lands within sections 1 to 5 when it can. A trapdoor sprung during a Diver's 1 s drop catches it (GD-60); a Diver landing in a beam's sweep is swept off.
+- Wounds: knocked down for 1.5 s; sounds on that side of the head quieter, growing to 12 dB at the side, cries also dulled, the ally's voice and the warden's hands never cut, and that side of the view darkened for 20 s (GD-62, GD-66); from the dead, the warden's own beam, a Diver's landing, or a falling section. A wound cancels a hold.
 
 **Out.** The planning view; the full wave timetable; the name.
 
@@ -196,7 +202,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 9. Divers follow the light.
 10. Wounds.
 
-**Delivers.** GDD Game Mechanics 4, 5, 6, 9; Controls and Input (night). Decisions GD-18, GD-19 (costs), GD-22, GD-27, GD-28, GD-38, GD-41, GD-49; UX-2, UX-5, UX-6, UX-7, UX-9, UX-29, UX-36.
+**Delivers.** GDD Game Mechanics 4, 5, 6, 9; Controls and Input (night). Decisions GD-18, GD-19 (costs), GD-22, GD-27, GD-28, GD-38, GD-41, GD-49, GD-62, GD-66; UX-2, UX-5, UX-6, UX-7, UX-9, UX-29, UX-36.
 
 ---
 
@@ -211,12 +217,13 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 - The ally's calls fade to a safety net from wave 4.
 - The name under the planks: a random section from 2 to 5, the hum, the leaning flame, read on foot by lantern light with about 1 s of looking, the forearm rising once to show it.
 - The one who keeps coming back.
-- Calling the name at the bell: its owner passes, the wave stands still for 20 s. A wrong ring hurries the dead.
-- Dawn: the silence, the ally's one line, then the ledger page written in beside the span, with the name learned, its epitaph and the soul released, ending on "The fallen will return." (GD-53); then another night on a fresh span, or leave.
-- A lost night: dark, then the journal page with the hint, or the same hint again if its cause repeats; replay from planning, on the plan that night was started with. Every night start rolls the name and its section again and clears the forearm (GD-52).
+- Calling the name at the bell: its owner passes, and the dead on and under the span stand still and silent for 20 s, hanging Grapplers and anything that arrives meanwhile included (GD-61, GD-64). A wrong ring hurries the walkers; during the stillness it does nothing.
+- The tune comes before every other cry on the deck and is never cut by a warning (GD-65).
+- Dawn wins if the night would be lost in the same instant, and that instant's loss does not count (GD-59, GD-67). Dawn: the silence, the ally's one line, then the ledger page written in beside the span, with the name learned, its epitaph and the soul released, ending on "The fallen will return." (GD-53); then another night on a fresh span, or leave.
+- A lost night: dark, then the journal page with the hint, or the same hint again if its cause repeats; replay from planning, on the plan that night was started with. Every night start rolls the name and its section again and clears the forearm (GD-52), and the oil and the flask are full again (GD-58).
 - Starting up: the title (Begin the watch, Settings, Credits, Quit), the headphones-or-speakers question, and skipping the lesson once it has been finished on this machine.
 - The lesson's hands-on part, with its key prompts: strike a practice pin on the landing, strip a plank, hang and shutter the lantern, raise the forearm. The span and lanterns are put back before planning.
-- Pause as a full stop, which also freezes a hold, with five entries: Resume, Keys, Journal, Settings, and Leave the bridge, which asks first. The key card. The journal page, opened with J in planning and from pause.
+- Pause as a full stop, which also freezes a hold, with five entries: Resume, Keys, Journal, Settings, and Leave the bridge, which asks first. The key card. The journal page, opened with J in planning and from pause; its hints survive a return to the title (GD-58).
 - Settings: Visual cues (In the light, Everywhere, Ears only), with the cues drawn self-lit in the dark for Everywhere; centre dot; volume; headphones or speakers; swap and check left and right; mouse sensitivity; invert look; fullscreen or window; resolution; brightness; field of view; fog quality; caption size. The left/right check's offer of Cues everywhere is wired here.
 - Every screen in the Lantern light look from `DESIGN.md`. Keys bound by physical position.
 - The night's few texts are written: 6 names with epitaphs, 6 journal hints, the ally's lines.
@@ -241,7 +248,7 @@ Epics 1 and 2 carry the two biggest risks (the bridge as a system; play by ear w
 11. The lesson's hands-on part and its key prompts.
 12. Every screen in the Lantern light look.
 
-**Delivers.** GDD Core Gameplay Loop; Game Mechanics 7 and 10; Enemy Wave Design (waves); Difficulty and Replayability. Decisions GD-11, GD-14, GD-23, GD-25, GD-35 (one-night items), GD-39 (from wave 4), GD-42, GD-52, GD-53; UX-3, UX-4, UX-10, UX-12 to UX-25, UX-27, UX-31 to UX-34, UX-39 (brightness, field of view), UX-40, UX-41.
+**Delivers.** GDD Core Gameplay Loop; Game Mechanics 7 and 10; Enemy Wave Design (waves); Difficulty and Replayability. Decisions GD-11, GD-14, GD-23, GD-25, GD-35 (one-night items), GD-39 (from wave 4), GD-42, GD-52, GD-53, GD-58, GD-59, GD-61, GD-64, GD-65 (the tune), GD-67; UX-3, UX-4, UX-10, UX-12 to UX-25, UX-27, UX-31 to UX-34, UX-39 (brightness, field of view), UX-40, UX-41.
 
 ---
 

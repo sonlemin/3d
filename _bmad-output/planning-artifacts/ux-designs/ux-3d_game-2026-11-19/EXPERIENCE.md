@@ -43,7 +43,7 @@ flowchart LR
   T --> C[Credits]
 ```
 
-Pause (Esc) is reachable from the dusk lesson, planning, the night and dawn. It holds: Resume · Keys · Journal · Settings · Leave the bridge. From Pause, Leave the bridge asks first ("Leave the bridge? Nothing is kept." · Stay · Leave), because nothing is saved (UX-24). The dawn's Leave the bridge does not ask.
+Pause (Esc) is reachable from the dusk lesson, planning, the night and dawn. It holds: Resume · Keys · Journal · Settings · Leave the bridge. From Pause, Leave the bridge asks first ("Leave the bridge? This night is not kept." · Stay · Leave), because nothing is saved (UX-24). The dawn's Leave the bridge does not ask.
 
 | Surface | Reached from | Holds | Leaves to |
 |---|---|---|---|
@@ -143,7 +143,7 @@ Ledger line formats, in order. The "·" separates label from value here; on the 
 | The night | Hold cancelled | The hand lets go and drops back, with a slack or dropped-tool sound (UX-6). Same for mouse and keys. |
 | The night | Action impossible | The hand reaches, stops short and opens empty, with a dull knock (UX-6). Same for mouse and keys. No text: the reason is read from the forearm tallies or the object itself. |
 | The night | Forearm raised | Walk and look; no hand actions until Tab is released; Tab is ignored during a hold (UX-11). |
-| The night | Wounded | The ear on the wounded side is dulled and that side of the view darkens for 20 s (GDD). |
+| The night | Wounded | Sounds on the wounded side are quieter, cries also dulled, and that side of the view darkens for 20 s (GDD). |
 | The night | Knocked down, hanging, crossing a gap | The view shows it; no input but look until it ends (GDD timings). |
 | The night | Lantern near empty | Flame shrinks and sputters; the reservoir shows low. Look and sound only: the light's reach does not change (UX-7). |
 | The night | Lantern shuttered | Glows through its seams. Empty: dark (UX-7). |
@@ -190,7 +190,7 @@ The night has no HUD. The table below lists everything the player can know at ni
 | Which way is home | The bell's side; the warm windows | GDD |
 | Windows left | The windows themselves; a small sound from the town as each goes out | GDD, UX-30 |
 | A lone hatchling got through | A window flickers low; a fainter window sound | UX-37 |
-| Wounded | One ear dulled; that side of the view darkened | GDD |
+| Wounded | Sounds on that side quieter, cries also dulled; that side of the view darkened | GDD |
 | The ally spoke | Voice and caption | UX-1 |
 
 **The one overlay.** The caption line (and the centre dot, if switched on). Nothing else is ever drawn over the night view: no prompts, markers, bars, timers, counters or damage flashes.

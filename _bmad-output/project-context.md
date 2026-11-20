@@ -152,6 +152,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Distance loudness is a rule, not the engine's** (AD-6): 0.6 dB per metre along the span only, capped at 15 dB. Players use `ATTENUATION_DISABLED`; `CryMix` sets the gain and the engine only pans.
 - **Four cry slots** (AD-5, AD-7). A warning holds a slot for its whole length and may cut the farthest deck cry; a deck cry without a slot skips to its next 8 s mark. At most three falling cries at once.
 - Keep the rear-shadow front/back cue, applied per cry in its slot. No HRTF.
+- **A wound** (GD-62, GD-66) cuts every sound that has a place by up to 12 dB, growing from nothing ahead or behind to the full cut at that side of the head; cries, the tune and the wind are also dulled. The ally's voice and the warden's hands are never cut. One pure function gives the cut for every sound.
+- **The tune** takes a free cry slot before any other deck cry and is never the cry a warning cuts (GD-65).
 - No AI voices and no AI-made cries. Every asset allows commercial use and is credited.
 
 **The night screen**
@@ -163,8 +165,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 **Decisions**
 
-- Rules and numbers are decided in the GDD and UX decision logs (GD-n, UX-n); structure in the architecture (AD-n). Read the decision log first. **Where the GDD and the architecture differ on a rule the architecture changed (AD-6, AD-7, AD-17, AD-26, AD-34), the architecture holds** until the GDD is updated (DW-16).
-- **Deferred on purpose** (AD-55): the woodcut technique, fog and its fallback, pooling, the hands' models, HRTF, gamepad and rebinding, saving, several spans, and GDD gaps 6 and 7. An agent that meets one stops and puts options to Sonlm. Silence is not permission to choose.
+- Rules and numbers are decided in the GDD and UX decision logs (GD-n, UX-n); structure in the architecture (AD-n). Read the decision log first. GDD draft 0.7 carries the rules the architecture changed (GD-56 to GD-62). If the two still differ on a rule of play, the GDD holds and the difference goes to Sonlm.
+- **Deferred on purpose** (AD-55): the woodcut technique, fog and its fallback, pooling, the hands' models, HRTF, gamepad and rebinding, saving, and several spans. An agent that meets one stops and puts options to Sonlm. Silence is not permission to choose.
 - A case neither the GDD nor the architecture covers goes to Sonlm as options. Never pick one silently.
 - Never claim that newcomers can place threats by ear (only Sonlm was tested), or that the game is deaf-playable (the muted night in epic 8 has not run).
 
