@@ -1,17 +1,19 @@
 ## The night screen (AD-2, AD-30): builds the night's NightSim and its views, ticks the sim once
 ## per physics tick and hands every tick's events, in order, to each consumer. It holds no rule.
-## The scene is thin (AD-62): a camera, a light and the environment; everything on the span is
-## built in code and placed by asking SpanGeometry.
+## The scene is thin (AD-62): the warden (with its camera), a light and the environment;
+## everything on the span is built in code and placed by asking SpanGeometry.
 ##
-## Story 1.2: no warden yet. The camera stands still at the warden's start, at eye height,
-## facing the far pier; story 1.3 replaces it with warden.gd. Gray boxes, plain light and a
-## black sky (gaps read as the abyss) until epics 2 and 7.
+## Each tick (architecture, Novel Pattern 3): the warden's move wish and view go in, the sim
+## advances, and the consumers read what came out: the span view, then the warden's node, which
+## follows the sim's position through its TickBlend. Gray boxes, plain light and a black sky (gaps
+## read as the abyss) until epics 2 and 7.
 extends Node3D
 
 var _session: WatchSession
 var _faults: WatchFaults
 var _sim: NightSim
 var _consumers: Array[Callable] = []
+var _warden: Warden
 
 
 ## Called by Main before the screen is added to the tree.
@@ -23,8 +25,9 @@ func setup(session: WatchSession, def: NightDef, night_seed: int) -> void:
 	span_view.name = "SpanView"
 	add_child(span_view)
 	add_consumer(span_view.on_tick)
-	var camera: Camera3D = $Camera3D
-	camera.position = _sim.geometry.warden_start() + Vector3(0.0, SpanGeometry.EYE_HEIGHT, 0.0)
+	_warden = $Warden as Warden
+	_warden.start_at(_sim)
+	add_consumer(_warden.on_tick)
 
 
 ## A consumer is `(events: Array[NightEvent], sim: NightSim)`, called after every tick in the
@@ -41,8 +44,8 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	_sim.set_move(Vector2.ZERO)
-	_sim.set_view(0.0, 0.0)
+	_sim.set_move(_warden.move_direction())
+	_sim.set_view(_warden.yaw(), _warden.pitch())
 	var events: Array[NightEvent] = _sim.advance()
 	for consumer: Callable in _consumers:
 		consumer.call(events, _sim)

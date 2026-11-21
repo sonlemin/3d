@@ -73,6 +73,24 @@ func _test_same_seed_same_night() -> void:
 	_check("sim: a different seed gives a different rng state", c.rng.state != a.rng.state)
 
 
+func _test_other_inputs_other_checksum() -> void:
+	# DW-26: the warden walks, so the inputs reach the checksum. Toward the far pier at full and
+	# at half speed for 600 ticks ends at two different places (along 0.3 and 14.5).
+	var a: NightSim = _sim_with(NightDefs.one_night(), 7)
+	var b: NightSim = _sim_with(NightDefs.one_night(), 7)
+	for i: int in 600:
+		a.set_move(Vector2(0.0, -1.0))
+		b.set_move(Vector2(0.0, -0.5))
+		a.advance()
+		b.advance()
+	_check("sim: same seed, different move wishes, different checksums", a.checksum() != b.checksum())
+	var c: NightSim = _sim_with(NightDefs.one_night(), 7)
+	for i: int in 600:
+		c.set_move(Vector2(0.0, -1.0))
+		c.advance()
+	_check("sim: and the same wishes again give the same checksum", a.checksum() == c.checksum())
+
+
 func _test_inputs_are_taken_in_step_1() -> void:
 	# AD-34 step 1: the wish, the view and the commands set before a tick are that tick's.
 	var sim: NightSim = _sim_with(NightDefs.one_night(), 3)

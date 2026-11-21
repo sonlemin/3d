@@ -22,13 +22,17 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var faults: WatchFaults
 ## The tick advance() runs next.
 var tick: int = 0
-## This tick's move wish: world X/Z, length <= 1. No rule reads it yet (walking is story 1.3).
+## This tick's move wish: world X/Z, length <= 1. WardenRules.walk() reads it.
 var move_wish: Vector2 = Vector2.ZERO
 ## This tick's view in radians: yaw 0 faces -Z, positive turns left; pitch 0 is level, positive up.
 var yaw: float = 0.0
 var pitch: float = 0.0
 ## The commands taken this tick, in arrival order. No rule reads them yet (hands are story 1.4).
 var commands: Array[NightCommand] = []
+## Where the warden stands (AD-67). Only WardenRules moves it.
+var warden: WardenState = WardenState.new()
+## GD-19's walking speed in metres a tick, converted once (AD-33).
+var walk_step: float = 0.0
 
 ## The 13 steps of AD-34, in order.
 var _steps: Array[Callable] = []
@@ -58,6 +62,8 @@ func _init(night: NightDef, from_seed: int, night_faults: WatchFaults) -> void:
 	geometry = SpanGeometry.new(def, faults)
 	span = SpanState.new(def.section_count, def.planks_per_section, faults)
 	_apply_start(def.start)
+	walk_step = WardenConstants.WALK_SPEED / NightTicks.TICKS_PER_SECOND
+	_place_warden(def.start)
 	_steps = [
 		_step_inputs, _step_holds, _step_rigs, _step_consequences_of_actions, _step_clock,
 		_step_dead, _step_loads, _step_consequences_of_loads, _step_crossings_and_windows,
@@ -112,21 +118,22 @@ func emit(event: NightEvent) -> void:
 	_events.append(event)
 
 
-## A hash of the tick, every part count and the generator's state (AD-37): the determinism
-## test now, the replay check in epic 6.
+## A hash of the tick, every part count, the warden's position and the generator's state
+## (AD-37): the determinism test now, the replay check in epic 6.
 func checksum() -> int:
-	var values: Array = [tick, rng.state]
+	var values: Array = [tick, rng.state, warden.position]
 	values.append_array(span.counts())
 	return hash(values)
 
 
 ## 1. Inputs (AD-34): the move wish and the view; the warden moves (AD-52); the look target is
-## worked out (AD-47); then queued commands in the order they arrived. For now the wish, the
-## view and the commands are only taken (walking is story 1.3, hands story 1.4).
+## worked out (AD-47); then queued commands in the order they arrived. Walking is done
+## (WardenRules); the look target is story 1.4; the commands are only taken (hands, story 1.4).
 func _step_inputs() -> void:
 	move_wish = _next_move
 	yaw = _next_yaw
 	pitch = _next_pitch
+	WardenRules.walk(self)
 	commands = _queued
 	_queued = []
 
@@ -219,3 +226,18 @@ func _apply_start(start: StartState) -> void:
 			continue
 		SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.rail(rail.x, rail.y as NightTypes.Side),
 				PartPlace.hand(), self)
+
+
+## Story 1.3 decision D3: the warden starts at `start.warden_along` on the centre line, or on the
+## landing's centre for -1.0. A start that cannot be stood on is `warden.bad_start`, and the
+## warden starts on the landing. Runs after the planks are set, which decide what can be stood on.
+func _place_warden(start: StartState) -> void:
+	warden.position = geometry.warden_start()
+	if start.warden_along == -1.0:
+		return
+	var placed: Vector3 = Vector3(0.0, 0.0, geometry.world_z(start.warden_along))
+	if not WardenRules.can_stand(placed, self):
+		faults.report(&"warden.bad_start", "along %f cannot be stood on; the warden starts on the landing"
+				% start.warden_along)
+		return
+	warden.position = placed

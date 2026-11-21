@@ -11,8 +11,10 @@ const PLANK_COLOR: Color = Color(0.72, 0.72, 0.70)
 const BEAM_COLOR: Color = Color(0.36, 0.36, 0.35)
 ## Gray box until epic 7. Rail ropes: lighter than everything else.
 const RAIL_COLOR: Color = Color(0.88, 0.88, 0.86)
-## Gray box until epic 7. Both piers.
-const PIER_COLOR: Color = Color(0.5, 0.5, 0.5)
+## Gray box until epic 7. Both piers. Dark (0.5 until M2 of story 1.3, DW-31): seen from
+## mid-span, every gap more than about 10 m ahead looks down onto the far pier's face, which must
+## read near-black like the abyss for a sparse section to read as open. Chosen by Sonlm (variant B).
+const PIER_COLOR: Color = Color(0.12, 0.12, 0.12)
 ## Gray box until epic 7. The landing, a shade off the pier it tops.
 const LANDING_COLOR: Color = Color(0.6, 0.6, 0.58)
 ## Gray box until epic 7. The landing is a surface; it is drawn as a slab this thick on the

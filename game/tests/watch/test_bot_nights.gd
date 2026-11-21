@@ -1,5 +1,6 @@
 ## Bot nights (AD-63): every bot path over many seeds, on the one night and on a 4-section
-## night, checking on every tick that parts are conserved and nothing faults; one seed run twice
+## night, checking on every tick that parts are conserved, nothing faults and the warden stands
+## where it can (story 1.3 AC 7); one seed run twice
 ## gives the same events and checksum; and every NightEvent kind is produced by some path (the
 ## event-coverage check; NightTypes.Reason joins it in story 1.4).
 extends WatchTest
@@ -18,8 +19,12 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 		_seen[event.kind] = true
 	var planks: int = sim.span.total(NightTypes.Part.PLANK)
 	var ropes: int = sim.span.total(NightTypes.Part.ROPE)
-	if (planks != _want_planks or ropes != _want_ropes or sim.faults.total() != 0) and _broken.size() < 5:
-		_broken.append("tick %d: %d planks, %d ropes, faults %s" % [sim.tick, planks, ropes, sim.faults.codes()])
+	# Story 1.3 AC 7: the warden is never outside what can be walked on.
+	var standing: bool = WardenRules.can_stand(sim.warden.position, sim)
+	if (planks != _want_planks or ropes != _want_ropes or sim.faults.total() != 0 or not standing) \
+			and _broken.size() < 5:
+		_broken.append("tick %d: %d planks, %d ropes, faults %s, warden at %s%s" % [sim.tick, planks, ropes,
+				sim.faults.codes(), sim.warden.position, "" if standing else " (cannot stand there)"])
 
 
 ## Every path over seeds 1 to 20, noting the kinds seen and any broken tick. Checks nothing.
@@ -71,3 +76,22 @@ func _test_every_kind_produced() -> void:
 		if not _seen.has(NightEvent.Kind[kind_name]):
 			missing.append(kind_name)
 	_check("bot: every NightEvent kind is produced by some path", missing.is_empty(), str(missing))
+
+
+func _test_walk_reaches_the_edges() -> void:
+	# The walk path really meets what it is written to meet: the plankless section 2 (stop at
+	# along 10.3), both rails (x -2.2 and 2.2) and the landing's back (along 33.7), D1.
+	var reached: Dictionary[String, bool] = {}
+	NightBot.walk(NightDefs.one_night(), 3, WatchFaults.new(),
+			func(_events: Array[NightEvent], sim: NightSim) -> void:
+				var along: float = sim.warden.position.z + 30.0
+				if absf(along - 10.3) < 0.001:
+					reached["plankless edge"] = true
+				if absf(sim.warden.position.x + 2.2) < 0.001:
+					reached["left rail"] = true
+				if absf(sim.warden.position.x - 2.2) < 0.001:
+					reached["right rail"] = true
+				if absf(along - 33.7) < 0.001:
+					reached["landing's back"] = true)
+	_check("bot: walk meets the plankless edge, both rails and the landing's back", reached.size() == 4,
+			str(reached.keys()))

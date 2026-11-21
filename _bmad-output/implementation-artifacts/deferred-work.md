@@ -251,7 +251,8 @@ location: game/tests/watch/test_night_sim.gd and test_bot_nights.gd; `NightSim.c
 owner: story 1.3, the first story whose rules read the move wish and the view
 severity: medium
 reason: `checksum()` hashes the tick, the generator's state and the part counts, and no rule reads `rng`, `move_wish`, `yaw`, `pitch` or `commands` yet. "Same seed and inputs, same checksum" therefore passes with any inputs, and "a different seed gives a different rng state" only shows that seeding differs. Once the warden walks, add a check that different inputs give a different checksum and that a roll changes the events.
-status: open
+status: open (narrowed)
+resolution: story 1.3, 2026-11-21, in part. The warden walks and `checksum()` hashes its position; `test_night_sim.gd` checks that the same seed with different move wishes gives different checksums and the same wishes the same one. Still open: "a roll changes the events" (no rule rolls `sim.rng` yet); owner: the first story whose rule rolls.
 
 ### DW-27: A view test changes part counts outside the tick
 
@@ -278,7 +279,8 @@ location: game/watch/sim/span_geometry.gd, line 45
 owner: story 1.3, which adds the warden
 severity: low
 reason: The code follows the story's decision D2; the architecture (AD-67) says `WardenConstants.EYE_HEIGHT` gives the eye for `LookRules` and the camera. Move the constant when `WardenConstants` is created, and point the night camera at it.
-status: open
+status: done 2026-11-21
+resolution: story 1.3. `EYE_HEIGHT` moved to `WardenConstants`; the warden's camera uses it; its check is in `test_warden.gd`.
 
 ### DW-30: `Main`'s launch branches have no test
 
@@ -287,7 +289,8 @@ location: game/watch/main.gd, `_ready()`
 owner: the next story that changes `Main` (story 1.3 makes the night a first-person screen)
 severity: medium
 reason: The "--show wins over --start", unknown-show and no-debug branches each raise a warning, and a smoke run fails on any warning, so CI runs only the clean paths. Inverting "--show wins", or opening the night on an unknown show, would pass every check. Move the choice of screen into a function a test can call, or add smoke runs that expect one named warning.
-status: open
+status: done 2026-11-21
+resolution: story 1.3. The choice of screen is `Main.choose()`; `tests/watch/test_main_flow.gd` covers the conflict, unknown-show, no-debug and list branches.
 
 ### DW-31: Far sections cannot be read from the landing
 
@@ -296,4 +299,5 @@ location: game/watch/sim/span_geometry.gd (D2's gray-box sizes); game/watch/nigh
 owner: story 1.3, its walk check (where D2's sizes are tuned by eye)
 severity: medium
 reason: From the landing (eye 1.6 m, looking along a 30 m span), sections 20 to 25 m away are seen nearly edge-on: at 4, 1 and 0 planks they are a stack of thin lines that cannot be told apart at a glance. The piers are now 2 m deep, so every gap reads black, but that does not fix the angle. In story 1.3, check whether walking up to a section is enough to read it. If not, levers are plank and gap sizes, more contrast between planks and the void, or a cue other than the gaps. Also check that a 2 m pier still looks like a pier in the fog.
-status: open
+status: done 2026-11-21
+resolution: story 1.3 (M2, `--show=walk_close`, Xvfb on llvmpipe, not a real GPU). From mid-span, sections 4 and 3 read, but section 2 (1 plank, 12.5 to 17.5 m ahead) did not: any gap more than about 10 m ahead looks down onto the far pier's face, which was gray. Sonlm chose variant B from rendered options: both piers dark (`SpanView.PIER_COLOR` 0.12); D2's sizes unchanged. Re-rendered: 5, 4 and 1 read apart. Not checked: how a 2 m pier looks in fog (no fog until epic 7).

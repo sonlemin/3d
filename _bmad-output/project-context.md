@@ -74,6 +74,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - `SpanGeometry` is the only source of positions and shapes. **Scenes are thin** (AD-62): a `.tscn` holds a root node, its script and children with no place on the span. Everything on the span is created in code and placed by asking `SpanGeometry`. Never type a span coordinate into a `.tscn`.
 - **The span's numbers:** sections are 1 to 6 (1 at the far pier), never zero-based; `0` means none. `along` is metres from the far pier. The span runs along Z with the town at +Z; `world_z = along − length`. Left and right are the warden's when facing the far pier (`LEFT` = −X), also in planning.
 - **No literal 6 or 30** outside `night_defs.gd` and tests: ask the `NightDef` (AD-42).
+- The warden's position is `sim.warden.position` (the feet; `WardenState`). What can be walked on is `WardenRules.can_stand()`; the eye is `WardenConstants.EYE_HEIGHT` above the feet.
 - A view that moves holds a `TickBlend` and blends the last two ticks; a teleport calls `snap()`. Project-wide physics interpolation stays off.
 - In a hand-written scene, reference resources by `res://` path only and never invent a `uid://` value. Commit the `.uid` and `.import` files the import writes.
 
@@ -162,6 +163,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 **The night screen**
 
+- The night is a first-person screen (`EngineGlobals.ScreenKind.FIRST_PERSON`, mouse captured). Until epic 5's pause overlay, Esc only frees the mouse (`EngineGlobals.capture_mouse(false)`) and a left click takes it back; the night keeps running.
+
 - **No HUD at night:** no prompts, bars, rings or icons. The only things drawn over the view are the ally's caption and, if switched on, the centre dot. The F3 overlay is a debug tool and never appears in a session.
 - No screen shake, no full-screen flash, no camera bob or roll. Nothing flickers faster than 3 times a second. Full-view changes are slow fades.
 - **Gray boxes until gate 2 passes.** No art, shader or woodcut work before epic 7.
@@ -189,4 +192,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Update when the architecture, the engine version, CI or the folder layout changes.
 - Remove a rule once the code makes it obvious.
 
-Last Updated: 2026-11-20
+Last Updated: 2026-11-21

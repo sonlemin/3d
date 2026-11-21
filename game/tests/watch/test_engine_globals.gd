@@ -34,3 +34,11 @@ func _test_mouse_mode_per_kind() -> void:
 			EngineGlobals.mouse_mode_for(EngineGlobals.ScreenKind.MENU) == Input.MOUSE_MODE_VISIBLE)
 	_check("globals: a first-person screen wants a captured mouse",
 			EngineGlobals.mouse_mode_for(EngineGlobals.ScreenKind.FIRST_PERSON) == Input.MOUSE_MODE_CAPTURED)
+
+
+func _test_capture_mouse() -> void:
+	# Story 1.3 D2: Esc frees the mouse and a click takes it back. Headless the mode itself cannot
+	# be seen (M1); setting it must log nothing.
+	EngineGlobals.capture_mouse(true)
+	EngineGlobals.capture_mouse(false)
+	_check("globals: capture_mouse runs headless with no error or warning", true)

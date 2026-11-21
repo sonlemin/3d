@@ -210,3 +210,26 @@ func _test_key_names() -> void:
 	_check("input: watch_rope is Right mouse", InputActions.key_name(&"watch_rope") == "Right mouse",
 			InputActions.key_name(&"watch_rope"))
 	_check("input: an unknown action has no name", InputActions.key_name(&"watch_nothing") == "")
+
+
+func _test_keys_act_by_position() -> void:
+	# AC 3 (AD-20): on AZERTY the key in W's place prints Z. It must still walk forward, and the
+	# key in Z's place, printing W, must not.
+	InputActions.register()
+	var azerty_w: InputEventKey = InputEventKey.new()
+	azerty_w.physical_keycode = KEY_W
+	azerty_w.keycode = KEY_Z
+	var azerty_z: InputEventKey = InputEventKey.new()
+	azerty_z.physical_keycode = KEY_Z
+	azerty_z.keycode = KEY_W
+	_check("input: the key in W's place is forward, whatever it prints",
+			InputMap.event_is_action(azerty_w, &"watch_move_forward"))
+	_check("input: a key printing W elsewhere is not forward", not InputMap.event_is_action(azerty_z, &"watch_move_forward"))
+	var azerty_a: InputEventKey = InputEventKey.new()
+	azerty_a.physical_keycode = KEY_A
+	azerty_a.keycode = KEY_Q
+	var azerty_q: InputEventKey = InputEventKey.new()
+	azerty_q.physical_keycode = KEY_Q
+	azerty_q.keycode = KEY_A
+	_check("input: the key in A's place is left, whatever it prints", InputMap.event_is_action(azerty_a, &"watch_move_left"))
+	_check("input: a key printing A elsewhere is not left", not InputMap.event_is_action(azerty_q, &"watch_move_left"))

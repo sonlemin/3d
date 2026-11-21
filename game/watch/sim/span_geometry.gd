@@ -43,8 +43,6 @@ const FAR_PIER_RISE: float = 3.0
 const LANDING_WIDTH: float = 5.0
 ## Gray-box size, D2; not a rule.
 const LANDING_LENGTH: float = 4.0
-## Gray-box size, D2; not a rule. The warden's eye above the feet.
-const EYE_HEIGHT: float = 1.6
 
 var _sections: int
 var _places: int
@@ -112,7 +110,7 @@ func plank_size() -> Vector3:
 	return Vector3(SpanConstants.SECTION_WIDTH, PLANK_THICKNESS, PLANK_ALONG)
 
 
-## The deck's whole surface, planked or not (for LookRules in stories 1.3 and 1.4).
+## The deck's whole surface, planked or not (for WardenRules, and LookRules in story 1.4).
 func deck_box(section: int) -> AABB:
 	var half: float = SpanConstants.SECTION_WIDTH / 2.0
 	return AABB(Vector3(-half, -PLANK_THICKNESS, world_z(section_start(section))),

@@ -11,6 +11,8 @@ extends RefCounted
 static func _table() -> Dictionary[StringName, Array]:
 	return {
 		&"span_counts": ["sections at 8, 5, 4, 1 and 0 planks, seen from the landing", ShowSetups.span_counts],
+		&"walk": ["walk the span and back from the landing (M1 of story 1.3)", ShowSetups.walk],
+		&"walk_close": ["the span from mid-span: sections ahead at 5, 4 and 1 planks (M2, DW-31)", ShowSetups.walk_close],
 	}
 
 
@@ -49,4 +51,28 @@ static func span_counts_start(section_count: int) -> StartState:
 	for section: int in all:
 		if section <= section_count:
 			start.planks[section] = all[section]
+	return start
+
+
+## M1 of story 1.3: the whole span can be walked (every section has a plank; crossing a
+## plankless one is story 1.6), and it passes the sparse sections up close. From the landing.
+static func walk() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = walk_start()
+	return def
+
+
+## M2 of story 1.3 (DW-31): walk's planks, the warden mid section 5 (along 22.5) facing the far
+## pier, so the sections ahead at 5 (s4), 4 (s3) and 1 (s2) planks are 2.5 to 17.5 m away.
+static func walk_close() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = walk_start()
+	def.start.warden_along = 22.5
+	return def
+
+
+## The planks of walk and walk_close: 8, 1, 4, 5, 8 and section 6 full.
+static func walk_start() -> StartState:
+	var start: StartState = StartState.new()
+	start.planks = {1: 8, 2: 1, 3: 4, 4: 5, 5: 8}
 	return start

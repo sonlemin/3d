@@ -71,7 +71,6 @@ func _test_piers_landing_start() -> void:
 			str(g.landing_box()))
 	_check("geometry: the warden starts at the landing's centre (along 32)",
 			g.warden_start().is_equal_approx(Vector3(0.0, 0.0, 2.0)), str(g.warden_start()))
-	_check("geometry: eye height 1.6", is_equal_approx(SpanGeometry.EYE_HEIGHT, 1.6))
 
 
 func _test_four_sections() -> void:

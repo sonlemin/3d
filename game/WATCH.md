@@ -20,14 +20,25 @@ elsewhere), or says "No setup problems."
 ```
 godot --path game -- --start=night --seed=1       # the one-night span
 godot --path game -- --show=span_counts           # a show-me setup
+godot --path game -- --show=walk                  # walk the span and back from the landing
+godot --path game -- --show=walk_close            # stand mid-span, facing the far pier
 godot --path game -- --show=list                  # list the show-me setups, then quit
 godot --path game -- --start=night --trace        # print every event of the night
 ```
 
-`--start=night` opens the one-night span as gray boxes, seen from the landing at the town end:
-six sections of 5 m, each with its eight planks, two side beams, posts and two rail ropes,
-the far pier beyond and the town pier under you. Nothing moves yet: walking and looking arrive
-in story 1.3, stripping and re-laying in 1.4. The mouse stays free.
+`--start=night` opens the one-night span as gray boxes, and you stand on the landing at the
+town end, facing the far pier: six sections of 5 m, each with its eight planks, two side beams,
+posts and two rail ropes, the far pier beyond and the town pier under you.
+
+The night is first person. Walk with **W A S D** (by key position, so the same keys on AZERTY
+and other layouts) at 3.5 m/s; there is no sprint and no jump. Look with the mouse, which the
+night captures. You stop 0.3 m short of the rails, the far pier, the landing's edges and any
+section with no planks; you cannot cross a plankless section yet (story 1.6). Until the pause
+screen arrives in epic 5, **Esc** only frees the mouse (the night keeps running, and you can
+still walk), and a **left click** captures it again. Stripping and re-laying arrive in 1.4.
+
+Show-me setups for story 1.3: `walk` (the landing, every section walkable, with sparse sections
+at 1, 4 and 5 planks on the way) and `walk_close` (the same planks, standing mid section 5).
 
 ## Running the ear test
 
