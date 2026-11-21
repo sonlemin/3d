@@ -329,7 +329,7 @@ origin: dev-story of story 1.4, 2026-11-21 (Known gap, story 1.4 T1.2 AC 5)
 location: game/watch/sim/hold_rules.gd, `tick()` (the `HandRules.check()` cancel branch); game/tests/watch/test_hands.gd
 owner: story 1.5, the first rule that can change the span under a running hold (a section falling)
 severity: medium
-reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls.
+reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls. Also unreached: the side branch of `NightSim.refuse()` (a refused rail action names its side). A rail is only a target while it stands, so no rail action is refused at the press yet; the first refusal of a rail action (a locked rail, epic 3) should check it.
 status: open
 
 ### DW-35: D3 can hand the warden on to a neighbouring section that was already bare
