@@ -76,7 +76,7 @@ static func choose(options: LaunchOptions, debug: Object, debug_allowed: bool) -
 	var choice: Choice = Choice.new()
 	if not debug_allowed and (not options.show.is_empty() or options.trace):
 		choice.problems.append("launch.no_debug: --show and --trace work only from source and in playtest builds")
-	var show_name: StringName = options.show if debug != null else &""
+	var show_name: StringName = options.show if debug != null and debug_allowed else &""
 	if not show_name.is_empty() and options.start != &"":
 		choice.problems.append("launch.conflict: --show=%s and --start=%s were both given; --show wins"
 				% [show_name, options.start])

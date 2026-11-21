@@ -89,6 +89,19 @@ func _test_other_inputs_other_checksum() -> void:
 		c.set_move(Vector2(0.0, -1.0))
 		c.advance()
 	_check("sim: and the same wishes again give the same checksum", a.checksum() == c.checksum())
+	# The view is an input too (story 1.4's look target reads it): same wishes, another view.
+	var d: NightSim = _sim_with(NightDefs.one_night(), 7)
+	for i: int in 600:
+		d.set_move(Vector2(0.0, -1.0))
+		d.set_view(0.5, 0.0)
+		d.advance()
+	_check("sim: same seed and wishes, a different yaw, different checksums", a.checksum() != d.checksum())
+	var e: NightSim = _sim_with(NightDefs.one_night(), 7)
+	for i: int in 600:
+		e.set_move(Vector2(0.0, -1.0))
+		e.set_view(0.0, 0.5)
+		e.advance()
+	_check("sim: and a different pitch too", a.checksum() != e.checksum() and d.checksum() != e.checksum())
 
 
 func _test_inputs_are_taken_in_step_1() -> void:

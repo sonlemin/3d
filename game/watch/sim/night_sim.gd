@@ -118,10 +118,10 @@ func emit(event: NightEvent) -> void:
 	_events.append(event)
 
 
-## A hash of the tick, every part count, the warden's position and the generator's state
+## A hash of the tick, every part count, the warden's position, the view and the generator's state
 ## (AD-37): the determinism test now, the replay check in epic 6.
 func checksum() -> int:
-	var values: Array = [tick, rng.state, warden.position]
+	var values: Array = [tick, rng.state, warden.position, yaw, pitch]
 	values.append_array(span.counts())
 	return hash(values)
 

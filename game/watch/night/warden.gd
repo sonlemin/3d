@@ -5,7 +5,8 @@
 ##
 ## Mouse look is not a rule (AD-52): the view turns at once on mouse motion, between ticks. The
 ## position follows the sim through a TickBlend. No bob and no roll (EXPERIENCE.md, Accessibility
-## Floor): the camera's local position is set once and its rotation.z is never written.
+## Floor): the camera's local position is only ever (0, EYE_HEIGHT, 0) and its roll only ever 0;
+## both are written by start_at() alone, and look() turns nothing but yaw and pitch.
 class_name Warden
 extends Node3D
 
@@ -20,6 +21,12 @@ var _blend: TickBlend = TickBlend.new()
 ## Radians, AD-67: yaw 0 faces -Z and positive turns left, kept in -pi to pi; pitch positive up.
 var _yaw: float = 0.0
 var _pitch: float = 0.0
+## True once start_at() has run. A night scene opened on its own (no setup(), no input actions
+## registered) takes no input at all, as the night screen itself does not tick.
+var _started: bool = false
+## True between the click that takes the mouse back and that click's release, so the release
+## is swallowed with its press and no hand sees half a click.
+var _swallow_release: bool = false
 
 
 ## Where a night starts (AC 1): on the sim's warden, facing the far pier, the blend snapped.
@@ -32,6 +39,8 @@ func start_at(sim: NightSim) -> void:
 	var camera: Camera3D = _camera()
 	camera.position = Vector3(0.0, WardenConstants.EYE_HEIGHT, 0.0)
 	camera.rotation = Vector3.ZERO
+	_started = true
+	_swallow_release = false
 
 
 ## A consumer of the night (`on_tick(events, sim)`): the sim's new position joins the blend.
@@ -80,20 +89,26 @@ func blend() -> TickBlend:
 
 ## Mouse look while the mouse is captured. Story 1.3 decision D2, until epic 5's pause overlay
 ## replaces it: Esc frees the mouse (the night keeps running and walking still works), and a
-## left click while it is free captures it again and goes nowhere else.
+## left click while it is free captures it again and goes nowhere else, press and release both.
+## Whether the mouse is captured is asked of EngineGlobals (AD-51), not of the engine.
 func _unhandled_input(event: InputEvent) -> void:
-	var captured: bool = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-	if event is InputEventMouseMotion and captured:
+	if not _started:
+		return
+	var captured: bool = EngineGlobals.mouse_captured()
+	var button: InputEventMouseButton = event as InputEventMouseButton
+	if button != null and button.button_index == MOUSE_BUTTON_LEFT and not button.pressed and _swallow_release:
+		_swallow_release = false
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and captured:
 		look((event as InputEventMouseMotion).screen_relative)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed(&"watch_pause") and captured:
+	elif captured and event.is_action_pressed(&"watch_pause"):
 		EngineGlobals.capture_mouse(false)
 		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseButton and not captured:
-		var button: InputEventMouseButton = event as InputEventMouseButton
-		if button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
-			EngineGlobals.capture_mouse(true)
-			get_viewport().set_input_as_handled()
+	elif button != null and not captured and button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
+		EngineGlobals.capture_mouse(true)
+		_swallow_release = true
+		get_viewport().set_input_as_handled()
 
 
 func _camera() -> Camera3D:

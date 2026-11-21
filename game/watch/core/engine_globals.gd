@@ -14,16 +14,29 @@ enum ScreenKind {
 }
 
 
+## What was last asked of the mouse, by enter_screen() or capture_mouse(). The engine's own
+## Input.mouse_mode cannot stand in for it: with no display it never reads as captured, so
+## nothing that depends on it could be tested.
+static var _mouse_captured: bool = false
+
+
 ## Clears the tree pause and sets the mouse for the kind of screen being entered.
 static func enter_screen(tree: SceneTree, kind: ScreenKind) -> void:
 	tree.paused = false
-	Input.mouse_mode = mouse_mode_for(kind)
+	capture_mouse(mouse_mode_for(kind) == Input.MOUSE_MODE_CAPTURED)
 
 
 ## Captures the mouse for mouse look, or frees it. Story 1.3 decision D2: the night's Esc frees
 ## it and a click takes it back, until epic 5's pause overlay.
 static func capture_mouse(on: bool) -> void:
+	_mouse_captured = on
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if on else Input.MOUSE_MODE_VISIBLE
+
+
+## True when the mouse was last asked to be captured (mouse look is on). What the warden reads
+## to tell a look from a pointer move.
+static func mouse_captured() -> bool:
+	return _mouse_captured
 
 
 static func set_paused(tree: SceneTree, on: bool) -> void:

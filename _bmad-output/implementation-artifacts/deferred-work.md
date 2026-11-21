@@ -248,11 +248,11 @@ status: open
 
 origin: gds-code-review of story 1.2, 2026-11-20 (Blind Hunter)
 location: game/tests/watch/test_night_sim.gd and test_bot_nights.gd; `NightSim.checksum()`
-owner: story 1.3, the first story whose rules read the move wish and the view
+owner: the first story whose rule rolls `sim.rng` (was story 1.3, which closed the input half)
 severity: medium
 reason: `checksum()` hashes the tick, the generator's state and the part counts, and no rule reads `rng`, `move_wish`, `yaw`, `pitch` or `commands` yet. "Same seed and inputs, same checksum" therefore passes with any inputs, and "a different seed gives a different rng state" only shows that seeding differs. Once the warden walks, add a check that different inputs give a different checksum and that a roll changes the events.
 status: open (narrowed)
-resolution: story 1.3, 2026-11-21, in part. The warden walks and `checksum()` hashes its position; `test_night_sim.gd` checks that the same seed with different move wishes gives different checksums and the same wishes the same one. Still open: "a roll changes the events" (no rule rolls `sim.rng` yet); owner: the first story whose rule rolls.
+resolution: story 1.3, 2026-11-21, in part. The warden walks and `checksum()` hashes its position; `test_night_sim.gd` checks that the same seed with different move wishes gives different checksums and the same wishes the same one. The code review of story 1.3 added `yaw` and `pitch` to the hash, with a test, so the input half is whole. Still open: "a roll changes the events" (no rule rolls `sim.rng` yet); owner: the first story whose rule rolls.
 
 ### DW-27: A view test changes part counts outside the tick
 
@@ -299,5 +299,23 @@ location: game/watch/sim/span_geometry.gd (D2's gray-box sizes); game/watch/nigh
 owner: story 1.3, its walk check (where D2's sizes are tuned by eye)
 severity: medium
 reason: From the landing (eye 1.6 m, looking along a 30 m span), sections 20 to 25 m away are seen nearly edge-on: at 4, 1 and 0 planks they are a stack of thin lines that cannot be told apart at a glance. The piers are now 2 m deep, so every gap reads black, but that does not fix the angle. In story 1.3, check whether walking up to a section is enough to read it. If not, levers are plank and gap sizes, more contrast between planks and the void, or a cue other than the gaps. Also check that a 2 m pier still looks like a pier in the fog.
-status: done 2026-11-21
-resolution: story 1.3 (M2, `--show=walk_close`, Xvfb on llvmpipe, not a real GPU). From mid-span, sections 4 and 3 read, but section 2 (1 plank, 12.5 to 17.5 m ahead) did not: any gap more than about 10 m ahead looks down onto the far pier's face, which was gray. Sonlm chose variant B from rendered options: both piers dark (`SpanView.PIER_COLOR` 0.12); D2's sizes unchanged. Re-rendered: 5, 4 and 1 read apart. Not checked: how a 2 m pier looks in fog (no fog until epic 7).
+status: open (reopened 2026-11-21 by the code review of story 1.3; owner: Sonlm, M2 of story 1.3 on a real GPU)
+resolution: not yet. The code review could not confirm the reading below from the one llvmpipe frame: sections 5, 4 and 3 are clear, but past about 10 m section 2 (1 plank) and section 1 (8 planks) could not be told apart with confidence. Sonlm judges `--show=walk_close` in M1; if it does not read, the levers are the ones in "reason". The fog check moved to DW-32. What story 1.3 did: (M2, `--show=walk_close`, Xvfb on llvmpipe, not a real GPU). From mid-span, sections 4 and 3 read, but section 2 (1 plank, 12.5 to 17.5 m ahead) did not: any gap more than about 10 m ahead looks down onto the far pier's face, which was gray. Sonlm chose variant B from rendered options: both piers dark (`SpanView.PIER_COLOR` 0.12); D2's sizes unchanged. Re-rendered: 5, 4 and 1 read apart. Not checked: how a 2 m pier looks in fog (no fog until epic 7).
+
+### DW-32: How the dark 2 m piers look in fog is not checked
+
+origin: gds-code-review of story 1.3, 2026-11-21 (Acceptance Auditor); carried over from DW-31
+location: game/watch/night/span_view.gd (`PIER_COLOR` 0.12, piers 2 m deep)
+owner: epic 7, the story that adds the fog
+severity: low
+reason: DW-31 asked "check that a 2 m pier still looks like a pier in the fog" and was closed without it, as there is no fog yet. Story 1.3 then darkened both piers from 0.5 to 0.12 gray so far gaps read black. When fog exists, check from the landing and from mid-span that the piers still read as piers and that far gaps still read as gaps.
+status: open
+
+### DW-33: A click that refocuses the window reaches the hands
+
+origin: gds-code-review of story 1.3, 2026-11-21 (Edge Case Hunter)
+location: game/watch/night/warden.gd, `_unhandled_input`
+owner: epic 5, the focus-loss pause
+severity: low
+reason: After alt-tab the mouse mode is still captured, so the click that gives the window its focus back is not the "take the mouse back" click and passes through unhandled. Harmless in story 1.3 (nothing reads `watch_hammer`); from story 1.4 it is a hammer press the player did not mean. The focus-loss pause of epic 5 is where it is settled.
+status: open

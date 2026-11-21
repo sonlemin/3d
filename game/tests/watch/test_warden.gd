@@ -204,3 +204,42 @@ func _test_can_stand() -> void:
 	_check("warden: not at along length + 3.8", not WardenRules.can_stand(Vector3(0, 0, 3.8), sim))
 	_check("warden: not at a point that is not a number", not WardenRules.can_stand(Vector3(NAN, 0, 2), sim))
 	_check("warden: asking reports no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+## Walks from `from` by `step` a tick on `floors` until a tick moves nothing; where it stopped.
+func _walk_until_stopped(from: Vector3, step: Vector3, floors: Array[Rect2]) -> Vector3:
+	var at: Vector3 = from
+	for i: int in 600:
+		var next: Vector3 = WardenRules.reach(at, step, floors)
+		if next == at:
+			break
+		at = next
+	return at
+
+
+func _test_stops_exactly_where_floors_differ_in_width() -> void:
+	# The landing's width is a gray-box size (D2 of story 1.2), so the rule may not lean on it
+	# being the sections' 5 m. A deck 5 m wide (x -2.5 to 2.5, z -30 to 0) with a landing 7 m wide
+	# and then 3 m wide (z 0 to 4): the stop is where a probe 0.3 m (D1) to the side or ahead
+	# leaves the floor, to within 0.001 m, whatever the step's phase.
+	var deck: Rect2 = Rect2(-2.5, -30.0, 5.0, 30.0)
+	var wide: Array[Rect2] = [deck, Rect2(-3.5, 0.0, 7.0, 4.0)]
+	# At x 2.3 the right-hand probe (x 2.6) is only on the landing: walking to the span stops at z 0.
+	var a: Vector3 = _walk_until_stopped(Vector3(2.3, 0.0, 1.0), Vector3(0.0, 0.0, -STEP), wide)
+	_check("warden: wide landing, x 2.3, toward the span: stops at z 0", absf(a.z) < TOL and absf(a.x - 2.3) < TOL, str(a))
+	# At z 0.1 the probe toward the span (z -0.2) is on the deck only up to x 2.5.
+	var b: Vector3 = _walk_until_stopped(Vector3(2.0, 0.0, 0.1), Vector3(STEP, 0.0, 0.0), wide)
+	_check("warden: wide landing, z 0.1, to the right: stops at x 2.5", absf(b.x - 2.5) < TOL, str(b))
+	# Further in (z 1.0) nothing but the landing's own side stops it: 3.5 - 0.3.
+	var c: Vector3 = _walk_until_stopped(Vector3(2.0, 0.0, 1.0), Vector3(STEP, 0.0, 0.0), wide)
+	_check("warden: wide landing, z 1.0, to the right: stops at x 3.2", absf(c.x - 3.2) < TOL, str(c))
+	var narrow: Array[Rect2] = [deck, Rect2(-1.5, 0.0, 3.0, 4.0)]
+	# At x 1.3 the right-hand probe (x 1.6) is only on the deck: walking to the town stops at z 0.
+	var d: Vector3 = _walk_until_stopped(Vector3(1.3, 0.0, -1.0), Vector3(0.0, 0.0, STEP), narrow)
+	_check("warden: narrow landing, x 1.3, toward the town: stops at z 0", absf(d.z) < TOL, str(d))
+	# On the centre line the narrow landing is walked onto, to its back less the clearance.
+	var e: Vector3 = _walk_until_stopped(Vector3(0.0, 0.0, -1.0), Vector3(0.0, 0.0, STEP), narrow)
+	_check("warden: narrow landing, centre line: on to z 3.7", absf(e.z - 3.7) < TOL, str(e))
+	for stopped: Vector3 in [a, b, c, d, e]:
+		var floors: Array[Rect2] = wide if stopped in [a, b, c] else narrow
+		_check("warden: where it stopped (%s) can be stood on" % stopped, WardenRules.stands_on(stopped, floors))

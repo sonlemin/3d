@@ -7,7 +7,9 @@ extends RefCounted
 
 ## How long each path runs: 10 s of night (AD-33: 60 ticks a second).
 const PATH_TICKS: int = 600
-## Story 1.3's walk: 40 s, long enough for the span and back (about 64 m at 3.5 m/s) and a wander.
+## Story 1.3's walk: 40 s. The scripted part takes the first 23 s (WALK_SCRIPT); the wander has
+## the rest. Section 2 is plankless, so the bot never reaches section 1 or the far pier (those
+## limits are checked in test_warden.gd).
 const WALK_TICKS: int = 2400
 ## The walk's scripted part: [the tick it ends before, the move wish]. Toward the far pier until
 ## the plankless section 2 stops it; into the left rail, the right rail; a diagonal; then back past
@@ -30,7 +32,8 @@ static func paths() -> Array[Callable]:
 
 
 ## Story 1.2: the span_counts show's StartState, then 600 ticks with a changing move wish,
-## view and button presses. Inputs are taken and stored; nothing moves yet.
+## view and button presses. Since story 1.3 the warden walks: the turning wish takes it round a
+## small circle on the landing and into the landing's back edge. The presses do nothing yet.
 static func span_counts(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
 	def.start = ShowSetups.span_counts_start(def.section_count)
 	var sim: NightSim = NightSim.new(def, night_seed, faults)
