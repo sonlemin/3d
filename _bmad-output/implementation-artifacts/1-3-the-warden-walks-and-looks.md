@@ -4,7 +4,7 @@ baseline_commit: e83e2da5dfd47be2a96424c131507bb81d34d062
 
 # Story 1.3: The warden walks and looks
 
-Status: review
+Status: done
 
 <!-- Created 2026-11-21 by gds-create-story from epics.md draft 0.8 ("Epic 1: story detail"). -->
 
@@ -354,7 +354,11 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-21.
 - **Tests.** The night's own loop is driven through `_physics_process` (wish, view, the warden as a consumer, the frame drawn from the blend); D2 through events sent into the tree; the bot's per-tick check has its own arithmetic beside `can_stand`; "walk reaches the edges" runs on both nights and three seeds.
 - **M2: NOT verified, needs Sonlm** (`--show=walk_close`, on a real GPU). Changed from "verified" by this review: on the one llvmpipe frame, sections 5, 4 and 3 are clear, but past about 10 m two readers could not tell section 2 (1 plank) from section 1 (8 planks). DW-31 is open again until Sonlm says it reads.
 - **The landing view after the darker piers** (`--show=span_counts`): rendered on a virtual display, Forward+ on llvmpipe, not a real GPU: `/tmp/claude-1000/-home-sonlm-project-3d-game/57cd6202-0a98-4c14-bdbf-d39915b1fc26/scratchpad/landing/frame00000059.png`. Gaps read black as in story 1.2's M1; the far pier is a dark slab, faint against the black sky. Worth Sonlm's glance in M1 (DW-32 carries the fog check).
-- Status stays `review`, not `done`: the story's own closing step asks that Sonlm has run the show-me setups (M1, and now M2).
+- **Manual checks done by Sonlm, 2026-11-21, on the laptop (Godot editor, real GPU), at commit `fb2ef00`:**
+  - **M1: passed.** Walking, turning, the edges, Esc and the click that takes the mouse back: all fine.
+  - **M2: passed as "read up close".** From mid-span, missing planks read on the sections near the warden; on the far sections they do not. Sonlm accepted that: planks are read within roughly 10 m, and the warden walks closer to check. This is narrower than M2's wording ("5, 4 and 1 told apart at a glance"): the 1-plank section, 12.5 to 17.5 m ahead, is not read from there. DW-31 closed on that decision; no size or colour changed.
+  - **Landing view with the darker piers: fine.** The gaps read as black holes and the far pier still reads as a pier.
+- Status `done` 2026-11-21. (Before Sonlm's checks:) Status stayed `review`, not `done`: the story's own closing step asks that Sonlm has run the show-me setups (M1, and now M2).
 - Agent time for the review and its fixes: 2026-11-21 14:20 +0700 to 15:10 +0700 (about 0 h 50 min), estimated by the agent from the session, not clocked.
 
 ### File List
@@ -392,6 +396,7 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-21.
 
 ### Change Log
 
+- 2026-11-21: Sonlm ran M1, M2 and the landing view: M1 passed; M2 accepted as "planks read within about 10 m"; piers fine. DW-31 closed. Status done.
 - 2026-11-21: Code review. 2 decisions and 11 patches applied (mouse seam and D2 tests, exact stops for floors of any width, input ignored without setup, `choose()` when tools are not allowed, the view in the checksum, tests of the night's loop, the bot's own check); M2 back to "needs Sonlm" and DW-31 reopened; DW-32 and DW-33 added. Tests 522 to 570.
 
 - 2026-11-21: Story 1.3 implemented. The warden walks (WardenRules, 0.3 m clearance) and looks (Warden node, TickBlend); the night is first person, Esc frees the mouse until epic 5; Main.choose() with tests (DW-30); EYE_HEIGHT moved (DW-29); checksum covers the warden (DW-26 in part); piers darkened after M2 (DW-31, Sonlm chose variant B); bot path `walk`, shows `walk` and `walk_close`. Tests 402 to 522.
