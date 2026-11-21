@@ -378,3 +378,23 @@ owner: epic 5, the pause overlay (the Holds row itself is epic 8)
 severity: low
 reason: Since the code review of story 1.4 (Sonlm, 2026-11-21), a change of the Holds option cancels the running hold and lowers the forearm, so a mode always starts from idle hands. The architecture applies a Holds change made on the pause screen as `set_option()` on the first tick after resume, and EXPERIENCE.md says a pause freezes a hold and does not cancel it. The two meet in one case only: a player pauses during a hold, changes Holds, and resumes; that hold is then cancelled (no part moves, nothing is lost). No planning document states the old reading ("a mode change leaves the running hold as it is"); it was the story's own. When the pause overlay is built, confirm with Sonlm that this cancel is wanted, and say so in EXPERIENCE.md or the architecture.
 status: open
+
+## Deferred from: Sonlm's play of story 1.4 (2026-11-21)
+
+### DW-40: The strip and re-lay holds felt too slow in play
+
+origin: Sonlm's M1 and M2 of story 1.4, 2026-11-21 ("shouldnt it be faster or even instant")
+location: game/watch/sim/span_constants.gd (`STRIP_PLANK_S` 2 s, `STRIP_RAIL_S` 3 s, `RELAY_PLANK_S` 3 s); gdd.md, the costs table of Game Mechanics (GD-19)
+owner: epic 5, the first played night with waves (and epic 4 story 1 for how a hold feels once the hands show it)
+severity: medium
+reason: Played with nothing attacking and nothing showing a hold, the three holds felt like waiting. Sonlm chose to keep the numbers for now (2026-11-21): they are GD-19's starting values, and the time is the cost that makes stripping a choice while the dead arrive. Judge them again once a hold has its own animation and sound and the night has threats. If they still feel slow, shorten them in the GDD and in `SpanConstants` together; the bot and the tests read the lengths from `sim.ticks`, so nothing else changes. Instant actions were offered and not chosen.
+status: open
+
+### DW-41: The temporary aim aid must go when the hands arrive
+
+origin: Sonlm's M1 and M2 of story 1.4, 2026-11-21 ("i have to aim because i can't know if i am targetting it or not"); Sonlm chose a temporary aid the same day
+location: game/watch/debug/aim_aid.gd; game/watch/debug/debug_tools.gd, `make_aim_aid()`; game/watch/main.gd, `_show_night()`; game/tests/watch/test_aim_aid.gd; game/WATCH.md
+owner: epic 4 story 1 (the hands: ready pose, hold feedback, cancel, can't), and in any case before the first gate 2 build
+severity: medium
+reason: Until the hands show what a click will do (UX-5), a debug aid draws a centre dot over the night view: dim with nothing in reach, the word `deck` or `rail` for what is in reach, bright when a button would start a hold, and a ring for a hold's progress. It is on in every run that has the debug tools (the editor and playtest builds), so a playtest build would show it. EXPERIENCE.md allows nothing over the night view but the caption and the optional plain centre dot, and no bars or rings: the aid breaks that on purpose and must not reach a player. Remove the files and the call in `_show_night()` when epic 4 story 1 lands. The settings' plain centre dot (UX-5, epic 8) is a separate thing and is not built by this.
+status: open
