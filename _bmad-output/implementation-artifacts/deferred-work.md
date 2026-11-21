@@ -261,7 +261,8 @@ location: game/tests/watch/test_span_view.gd, the reconcile checks (lines 85 to 
 owner: story 1.4, which adds the strip command
 severity: low
 reason: The test calls `SpanRules.move_parts()` directly and then checks that the view follows on the next tick. The testing rule is a `StartState`, then only commands and ticks. No command can change a count until story 1.4; replace the direct call with a strip command then.
-status: open
+status: done 2026-11-21
+resolution: story 1.4. `_test_reconcile_follows_state` starts from a `StartState` (section 1 at 5, the warden on it) and drives the counts with strip, rail-strip and re-lay commands and ticks; the view checks are the same. The old last check, "the rail is back", is dropped: no rule puts a rope back on a rail yet (re-hanging is epic 4), and keeping it would need the direct ledger call this item removes.
 
 ### DW-28: The trace line has no side, and its "who" is only the event id
 
@@ -270,7 +271,8 @@ location: game/watch/debug/trace.gd, `line()`; game/tests/watch/test_trace.gd
 owner: the first story that emits an event with a side or an actor (story 1.4 at the latest)
 severity: low
 reason: The story's Dev Notes give "where" as `s3 L` and "who" as `grappler#3` or `warden`. The trace prints `s3` and the event's `id`, which is right for `NIGHT_STARTED`, the only kind that exists. An event with a section and no id prints the section in the "who" column, and a kind name over 17 characters breaks the columns. The test pins today's format and has to change with it.
-status: open
+status: done 2026-11-21
+resolution: story 1.4. `NightTrace.line()` names `warden` as who for the hands' six kinds, followed by the action (`strip_plank`); where is `s3`, plus ` L` or ` R` for a rail action; a refusal ends with its reason. Every kind name fits the 17-wide column (a test checks the longest). `NIGHT_STARTED`'s line is unchanged.
 
 ### DW-29: `EYE_HEIGHT` is in `SpanGeometry`, and AD-67 puts it in `WardenConstants`
 
@@ -318,4 +320,23 @@ location: game/watch/night/warden.gd, `_unhandled_input`
 owner: epic 5, the focus-loss pause
 severity: low
 reason: After alt-tab the mouse mode is still captured, so the click that gives the window its focus back is not the "take the mouse back" click and passes through unhandled. Harmless in story 1.3 (nothing reads `watch_hammer`); from story 1.4 it is a hammer press the player did not mean. The focus-loss pause of epic 5 is where it is settled.
+status: open
+note (story 1.4, 2026-11-21): from this story such a click is a real `HAMMER` press: at a deck within 2 m it starts a strip (cancelled when the button comes up, 2 s before it could complete), and anywhere else it is a `REFUSED` (`NO_ACTION_HERE`). No part moves unless the button stays down for 2 s.
+
+### DW-34: A hold made impossible by the span changing under it has no test through the tick
+
+origin: dev-story of story 1.4, 2026-11-21 (Known gap, story 1.4 T1.2 AC 5)
+location: game/watch/sim/hold_rules.gd, `tick()` (the `HandRules.check()` cancel branch); game/tests/watch/test_hands.gd
+owner: story 1.5, the first rule that can change the span under a running hold (a section falling)
+severity: medium
+reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls.
+status: open
+
+### DW-35: D3 can hand the warden on to a neighbouring section that was already bare
+
+origin: dev-story of story 1.4, 2026-11-21
+location: game/watch/sim/warden_rules.gd, `walk()` and `held_by_bare()`
+owner: story 1.6, which replaces D3 with edging toward the town (GD-68)
+severity: low
+reason: D3 (Sonlm, 2026-11-21) lets every bare section under the feet or a clearance probe count as floor while the warden cannot stand. If the section next to the one that just went bare was already bare, a warden held near their shared edge may step onto that older bare section too. The rule does what D3 says; whether it should is left to story 1.6, which replaces D3. The bot paths never reach the case (no two neighbouring sections are bare in them), and test_bot_nights.gd's own arithmetic would flag it.
 status: open

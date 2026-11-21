@@ -260,3 +260,107 @@ func _test_a_night_opened_alone_takes_no_input() -> void:
 	_check("night alone: the warden takes no input", not taken)
 	_check("night alone: and a click does not capture the mouse", not EngineGlobals.mouse_captured())
 	night.free()
+
+
+## Every command the night sends its sim from now on, through a spy on the sim's queue: a tick is
+## run and the commands it took are read (the sim keeps them for the recording).
+func _commands_after(night: NightScreen, events: Array[InputEvent]) -> Array[String]:
+	for event: InputEvent in events:
+		root.push_input(event)
+	var sim: NightSim = night._sim
+	sim.advance()
+	var out: Array[String] = []
+	for cmd: NightCommand in sim.commands:
+		out.append("%s %s" % [NightCommand.Kind.find_key(cmd.kind), NightTypes.HandInput.find_key(cmd.input)])
+	return out
+
+
+func _key(code: Key, pressed: bool, echo: bool = false) -> InputEventKey:
+	var key: InputEventKey = InputEventKey.new()
+	key.physical_keycode = code
+	key.pressed = pressed
+	key.echo = echo
+	return key
+
+
+func _right_click(pressed: bool) -> InputEventMouseButton:
+	var click: InputEventMouseButton = InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_RIGHT
+	click.pressed = pressed
+	return click
+
+
+func _test_buttons_reach_the_sim() -> void:
+	# Story 1.4 T6: a press and a release of each night button reach the sim as commands, button
+	# states and nothing more (Novel Pattern 3).
+	InputActions.register()
+	var night: NightScreen = _night()
+	EngineGlobals.enter_screen(root.get_tree(), EngineGlobals.ScreenKind.FIRST_PERSON)
+	_check("input: a left click is HAMMER press, then release",
+			_commands_after(night, [_left_click(true)]) == ["PRESS HAMMER"]
+			and _commands_after(night, [_left_click(false)]) == ["RELEASE HAMMER"])
+	_check("input: a right click is ROPE", _commands_after(night, [_right_click(true), _right_click(false)])
+			== ["PRESS ROPE", "RELEASE ROPE"])
+	_check("input: E is USE", _commands_after(night, [_key(KEY_E, true), _key(KEY_E, false)]) == ["PRESS USE", "RELEASE USE"])
+	_check("input: Tab is FOREARM", _commands_after(night, [_key(KEY_TAB, true), _key(KEY_TAB, false)])
+			== ["PRESS FOREARM", "RELEASE FOREARM"])
+	_check("input: a key's echo is not a press", _commands_after(night, [_key(KEY_E, true), _key(KEY_E, true, true),
+			_key(KEY_E, false)]) == ["PRESS USE", "RELEASE USE"])
+	_check("input: a key no night button uses sends nothing", _commands_after(night, [_key(KEY_J, true), _key(KEY_J, false)]).is_empty())
+	# The hand acts on the next tick: E at the sky (the view starts level) is refused.
+	root.push_input(_key(KEY_E, true))
+	var refused: NightEvent.Kind = NightEvent.Kind.NIGHT_STARTED
+	var sim: NightSim = night._sim
+	for event: NightEvent in sim.advance():
+		refused = event.kind
+	_check("input: the next tick acts on it (E at nothing: REFUSED)", refused == NightEvent.Kind.REFUSED)
+	EngineGlobals.enter_screen(root.get_tree(), EngineGlobals.ScreenKind.MENU)
+	night.free()
+
+
+func _test_the_recapture_click_reaches_no_hand() -> void:
+	# Story 1.3 D2: with the mouse free, the click that takes it back goes nowhere else, press and
+	# release both: no HAMMER command at all. The warden's node sees it first.
+	InputActions.register()
+	var night: NightScreen = _night()
+	EngineGlobals.enter_screen(root.get_tree(), EngineGlobals.ScreenKind.FIRST_PERSON)
+	root.push_input(_esc())
+	_check("recapture: Esc freed the mouse", not EngineGlobals.mouse_captured())
+	_check("recapture: the click that takes it back sends no command",
+			_commands_after(night, [_left_click(true), _left_click(false)]).is_empty())
+	_check("recapture: and the mouse is captured again", EngineGlobals.mouse_captured())
+	_check("recapture: the next click is the hammer's", _commands_after(night, [_left_click(true), _left_click(false)])
+			== ["PRESS HAMMER", "RELEASE HAMMER"])
+	# With the mouse free, the other buttons still reach the hands.
+	root.push_input(_esc())
+	_check("recapture: free, E still reaches the sim", _commands_after(night, [_key(KEY_E, true)]) == ["PRESS USE"])
+	EngineGlobals.enter_screen(root.get_tree(), EngineGlobals.ScreenKind.MENU)
+	night.free()
+
+
+func _test_a_night_without_setup_sends_nothing() -> void:
+	InputActions.register()
+	EngineGlobals.enter_screen(root.get_tree(), EngineGlobals.ScreenKind.MENU)
+	var night: NightScreen = NightScene.instantiate() as NightScreen
+	_expect_begin()
+	root.add_child(night)
+	root.push_input(_left_click(true))
+	root.push_input(_key(KEY_E, true))
+	_expect_end("no setup: only its night.no_setup warning", [["WARNING", "night.no_setup", 1]])
+	_check("no setup: no sim, nothing sent and nothing broke", night._sim == null)
+	night.free()
+
+
+func _test_the_forearm_is_drawn_from_the_camera() -> void:
+	# HandsView is a child of the warden's camera, after the warden among the consumers.
+	InputActions.register()
+	var night: NightScreen = _night()
+	var hands: HandsView = night.get_node_or_null("Warden/Camera3D/Hands") as HandsView
+	_check("forearm: a HandsView under the warden's camera", hands != null)
+	if hands != null:
+		_check("forearm: down at the start", not hands.visible)
+		var sim: NightSim = night._sim
+		sim.command(NightCommand.press(NightTypes.HandInput.FOREARM))
+		night._physics_process(1.0 / 60.0)
+		_check("forearm: the night's tick shows it once raised", hands.visible)
+	night.free()

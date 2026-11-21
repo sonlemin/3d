@@ -87,26 +87,50 @@ func _test_stripped_start_is_drawn_from_geometry() -> void:
 
 
 func _test_reconcile_follows_state() -> void:
-	# The view reconciles with state every tick: after the ledger moves parts, the next tick
-	# shows the new count with no event telling it.
-	var sim: NightSim = _sim_with(_def_with(StartState.new()), 1)
+	# The view reconciles with state every tick: after a strip or a re-lay completes, the next
+	# on_tick shows the new count with no event telling it (DW-27: driven by commands and ticks
+	# from a StartState, never by moving parts directly). Section 1 at 5 (3 in hand), the warden
+	# on it at along 2.5 looking down at its deck (GD-19: strip 2 s = 120 ticks, re-lay 3 s = 180).
+	var start: StartState = StartState.new()
+	start.planks = {1: 5}
+	start.warden_along = 2.5
+	var sim: NightSim = _sim_with(_def_with(start), 1)
 	var view: SpanView = _view_of(sim)
-	SpanRules.move_parts(NightTypes.Part.PLANK, 4, PartPlace.deck(1), PartPlace.hand(), sim)
-	SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.rail(1, RIGHT), PartPlace.hand(), sim)
+	sim.set_view(0.0, -1.2)
 	view.on_tick(sim.advance(), sim)
 	var section1: SectionView = view.get_node("Section1")
+	for i: int in 2:
+		sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+		for t: int in 121:
+			view.on_tick(sim.advance(), sim)
 	var names: Array = _planks_of(section1).map(func(n: Node) -> String: return String(n.name))
 	names.sort()
-	_check("view: 4 planks left on section 1, at places 2 4 6 8", names == ["Plank2", "Plank4", "Plank6", "Plank8"], str(names))
-	_check("view: section 1's right rail is gone", section1.get_node_or_null("RailR") == null)
-	SpanRules.move_parts(NightTypes.Part.PLANK, 2, PartPlace.hand(), PartPlace.deck(1), sim)
-	SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.hand(), PartPlace.rail(1, RIGHT), sim)
+	_check("view: two strips, 3 planks left on section 1, at places 2 4 6", sim.span.planks(1) == 3
+			and names == ["Plank2", "Plank4", "Plank6"], str(names))
+	# The rope hand at section 1's right rail: walk into it (x 2.2), face +X, aim at the rope.
+	for t: int in 60:
+		sim.set_move(Vector2(1.0, 0.0))
+		view.on_tick(sim.advance(), sim)
+	sim.set_move(Vector2.ZERO)
+	sim.set_view(-PI / 2.0, -1.107)
 	view.on_tick(sim.advance(), sim)
+	sim.command(NightCommand.press(NightTypes.HandInput.ROPE))
+	for t: int in 181:
+		view.on_tick(sim.advance(), sim)
+	_check("view: section 1's right rail is gone", not sim.span.rail_standing(1, RIGHT)
+			and section1.get_node_or_null("RailR") == null)
+	# Back to the deck: re-lay two.
+	sim.set_view(PI / 2.0, -1.2)
+	view.on_tick(sim.advance(), sim)
+	for i: int in 2:
+		sim.command(NightCommand.press(NightTypes.HandInput.USE))
+		for t: int in 181:
+			view.on_tick(sim.advance(), sim)
 	names = _planks_of(section1).map(func(n: Node) -> String: return String(n.name))
 	names.sort()
-	_check("view: re-laid to 6, at places 1 2 4 5 6 8",
-			names == ["Plank1", "Plank2", "Plank4", "Plank5", "Plank6", "Plank8"], str(names))
-	_check("view: the rail is back", section1.get_node_or_null("RailR") != null)
+	_check("view: re-laid to 5, at places 1 2 4 6 8", sim.span.planks(1) == 5
+			and names == ["Plank1", "Plank2", "Plank4", "Plank6", "Plank8"], str(names))
+	_check("view: driven by commands, no fault", _faults.total() == 0, str(_faults.codes()))
 	view.free()
 
 

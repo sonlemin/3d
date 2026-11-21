@@ -22,8 +22,9 @@ func _test_span_counts_def() -> void:
 
 func _test_debug_tools_list() -> void:
 	var tools: DebugTools = DebugTools.new()
-	_check("show: the debug tools list span_counts, walk and walk_close",
-			tools.show_names() == PackedStringArray(["span_counts", "walk", "walk_close"]), str(tools.show_names()))
+	_check("show: the debug tools list span_counts, walk, walk_close, strip and forearm",
+			tools.show_names() == PackedStringArray(["span_counts", "walk", "walk_close", "strip", "forearm"]),
+			str(tools.show_names()))
 	_check("show: the debug tools give its def", tools.show_def(&"span_counts") is NightDef)
 	_check("show: and null for an unknown name", tools.show_def(&"nope") == null)
 	_check("show: list line format", ShowSetups.list_line(&"span_counts").begins_with("show: span_counts  "),
@@ -65,3 +66,25 @@ func _test_walk_setups() -> void:
 	_check("show: walk_close starts mid section 5 (along 22.5)", close.warden.position.is_equal_approx(Vector3(0.0, 0.0, -7.5)),
 			str(close.warden.position))
 	_check("show: walk_close faces the far pier (yaw 0, pitch 0)", close.yaw == 0.0 and close.pitch == 0.0)
+
+
+func _test_strip_and_forearm_setups() -> void:
+	# Story 1.4 Dev Notes, "Show-me setups".
+	var strip: NightSim = _sim_with(ShowSetups.def_of(&"strip"), 1)
+	_check("show: strip is a full span", _counts(strip) == [8, 8, 8, 8, 8, 8], str(_counts(strip)))
+	_check("show: strip has nothing in hand", strip.span.in_hand(NightTypes.Part.PLANK) == 0
+			and strip.span.in_hand(NightTypes.Part.ROPE) == 0)
+	_check("show: strip starts mid section 5 (along 22.5: z -7.5)",
+			strip.warden.position.is_equal_approx(Vector3(0.0, 0.0, -7.5)), str(strip.warden.position))
+	_advance(strip, 60)
+	_check("show: building and running strip reports no fault", _faults.total() == 0, str(_faults.codes()))
+	var forearm: NightSim = _sim_with(ShowSetups.def_of(&"forearm"), 1)
+	# M2: 12 planks (8 from section 1, 4 from section 2) and 3 ropes in hand.
+	_check("show: forearm has 12 planks and 3 ropes in hand", forearm.span.in_hand(NightTypes.Part.PLANK) == 12
+			and forearm.span.in_hand(NightTypes.Part.ROPE) == 3,
+			"%d %d" % [forearm.span.in_hand(NightTypes.Part.PLANK), forearm.span.in_hand(NightTypes.Part.ROPE)])
+	_check("show: forearm's sections are 0 4 8 8 8 8", _counts(forearm) == [0, 4, 8, 8, 8, 8], str(_counts(forearm)))
+	_check("show: forearm starts on the landing", forearm.warden.position.is_equal_approx(Vector3(0.0, 0.0, 2.0)),
+			str(forearm.warden.position))
+	_advance(forearm, 60)
+	_check("show: building and running forearm reports no fault", _faults.total() == 0, str(_faults.codes()))

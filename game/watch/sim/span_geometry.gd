@@ -26,6 +26,10 @@ const BEAM_DEPTH: float = 0.3
 const RAIL_HEIGHT: float = 1.0
 ## Gray-box size, D2; not a rule.
 const RAIL_THICKNESS: float = 0.05
+## Story 1.4 decision D1: how far across and how tall the box is that counts as "looking at the
+## rail" (LookRules), centred on the drawn rope. Wider than the 5 cm rope so a person can hold
+## the view on it for a 3 s strip. Gray-box size, not a rule; tuned in M1 of story 1.4.
+const RAIL_GRAB_SIZE: float = 0.3
 ## Gray-box size, D2; not a rule. A post at each section end, under each rail.
 const POST_SIZE: float = 0.1
 ## Gray-box size, D2; not a rule.
@@ -110,7 +114,7 @@ func plank_size() -> Vector3:
 	return Vector3(SpanConstants.SECTION_WIDTH, PLANK_THICKNESS, PLANK_ALONG)
 
 
-## The deck's whole surface, planked or not (for WardenRules, and LookRules in story 1.4).
+## The deck's whole surface, planked or not (for WardenRules and LookRules).
 func deck_box(section: int) -> AABB:
 	var half: float = SpanConstants.SECTION_WIDTH / 2.0
 	return AABB(Vector3(-half, -PLANK_THICKNESS, world_z(section_start(section))),
@@ -122,6 +126,15 @@ func rail_box(section: int, side: NightTypes.Side) -> AABB:
 	var half: float = RAIL_THICKNESS / 2.0
 	return AABB(Vector3(_edge_x(side) - half, RAIL_HEIGHT - half, world_z(section_start(section))),
 			Vector3(RAIL_THICKNESS, RAIL_THICKNESS, SpanConstants.SECTION_LENGTH))
+
+
+## Story 1.4 decision D1: what LookRules hits for a rail. Centred on rail_box() (the drawn rope
+## stays where it is), the rope's full length, RAIL_GRAB_SIZE across and tall.
+func rail_grab_box(section: int, side: NightTypes.Side) -> AABB:
+	var rope: AABB = rail_box(section, side)
+	var grow: float = (RAIL_GRAB_SIZE - RAIL_THICKNESS) / 2.0
+	return AABB(rope.position - Vector3(grow, grow, 0.0),
+			Vector3(RAIL_GRAB_SIZE, RAIL_GRAB_SIZE, rope.size.z))
 
 
 ## The two posts of a rail, one inside each end of the section.

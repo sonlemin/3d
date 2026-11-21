@@ -233,3 +233,28 @@ func _test_keys_act_by_position() -> void:
 	azerty_q.keycode = KEY_A
 	_check("input: the key in A's place is left, whatever it prints", InputMap.event_is_action(azerty_a, &"watch_move_left"))
 	_check("input: a key printing A elsewhere is not left", not InputMap.event_is_action(azerty_q, &"watch_move_left"))
+
+
+func _test_night_inputs() -> void:
+	# Novel Pattern 3: every HandInput once, each read from its night action of the table.
+	var wanted: Dictionary[NightTypes.HandInput, StringName] = {
+		NightTypes.HandInput.HAMMER: &"watch_hammer",
+		NightTypes.HandInput.ROPE: &"watch_rope",
+		NightTypes.HandInput.USE: &"watch_use",
+		NightTypes.HandInput.SHUTTER: &"watch_shutter",
+		NightTypes.HandInput.BUILD_TRAPDOOR: &"watch_build_trapdoor",
+		NightTypes.HandInput.BUILD_BEAM: &"watch_build_swing_beam",
+		NightTypes.HandInput.DISMANTLE: &"watch_dismantle",
+		NightTypes.HandInput.FOREARM: &"watch_forearm",
+	}
+	var inputs: Array = Array(InputActions.NIGHT_INPUTS)
+	_check("input: NIGHT_INPUTS has every HandInput once",
+			inputs.size() == NightTypes.HandInput.size() and NightTypes.HandInput.values().all(
+					func(v: int) -> bool: return inputs.count(v) == 1), str(inputs))
+	var used: Dictionary[StringName, bool] = {}
+	for input: NightTypes.HandInput in wanted:
+		var action: StringName = InputActions.action_of(input)
+		_check("input: %s reads %s" % [NightTypes.HandInput.find_key(input), wanted[input]],
+				action == wanted[input] and InputActions.ACTIONS.has(action), str(action))
+		used[action] = true
+	_check("input: no two inputs share an action", used.size() == wanted.size())

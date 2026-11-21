@@ -27,12 +27,21 @@ var move_wish: Vector2 = Vector2.ZERO
 ## This tick's view in radians: yaw 0 faces -Z, positive turns left; pitch 0 is level, positive up.
 var yaw: float = 0.0
 var pitch: float = 0.0
-## The commands taken this tick, in arrival order. No rule reads them yet (hands are story 1.4).
+## The commands taken this tick, in arrival order, each already handed to HoldRules; kept for
+## the night recording (epic 6).
 var commands: Array[NightCommand] = []
 ## Where the warden stands (AD-67). Only WardenRules moves it.
 var warden: WardenState = WardenState.new()
 ## GD-19's walking speed in metres a tick, converted once (AD-33).
 var walk_step: float = 0.0
+## Every duration in ticks, converted once (AD-33, Data Patterns).
+var ticks: NightTicks
+## What the warden looks at this tick (LookRules, step 1): derived each tick, never carried over.
+var look: LookTarget = LookTarget.none()
+## The hands: the hold in progress and the forearm (Novel Pattern 3). Only HoldRules changes them.
+var hands: HandsState = HandsState.new()
+## UX-39's Holds option, a rule: set by NightCommand.set_option(). Hold until then.
+var holds: NightTypes.Holds = NightTypes.Holds.HOLD
 
 ## The 13 steps of AD-34, in order.
 var _steps: Array[Callable] = []
@@ -63,6 +72,7 @@ func _init(night: NightDef, from_seed: int, night_faults: WatchFaults) -> void:
 	span = SpanState.new(def.section_count, def.planks_per_section, faults)
 	_apply_start(def.start)
 	walk_step = WardenConstants.WALK_SPEED / NightTicks.TICKS_PER_SECOND
+	ticks = NightTicks.new()
 	_place_warden(def.start)
 	_steps = [
 		_step_inputs, _step_holds, _step_rigs, _step_consequences_of_actions, _step_clock,
@@ -118,30 +128,50 @@ func emit(event: NightEvent) -> void:
 	_events.append(event)
 
 
-## A hash of the tick, every part count, the warden's position, the view and the generator's state
-## (AD-37): the determinism test now, the replay check in epic 6.
+## A designed "no" (AD-28, AD-67): emits REFUSED with its reason. For an action that has a
+## target (every reason but NO_ACTION_HERE) the event also names the section, the action as `id`
+## and, for a rail, the side.
+func refuse(reason: NightTypes.Reason, target: LookTarget, action: NightTypes.HandAction) -> void:
+	var event: NightEvent = NightEvent.make(NightEvent.Kind.REFUSED)
+	event.reason = reason
+	if action != NightTypes.HandAction.NONE:
+		event.section = target.section
+		event.id = HandRules.id_of(action)
+		if action == NightTypes.HandAction.STRIP_RAIL:
+			event.side = target.side
+	emit(event)
+
+
+## A hash of the tick, every part count, the warden's position, the view, the hands (the hold and
+## the forearm), the Holds option and the generator's state (AD-37): the determinism test now,
+## the replay check in epic 6.
 func checksum() -> int:
-	var values: Array = [tick, rng.state, warden.position, yaw, pitch]
+	var values: Array = [tick, rng.state, warden.position, yaw, pitch, holds]
 	values.append_array(span.counts())
+	values.append_array(hands.values())
 	return hash(values)
 
 
-## 1. Inputs (AD-34): the move wish and the view; the warden moves (AD-52); the look target is
-## worked out (AD-47); then queued commands in the order they arrived. Walking is done
-## (WardenRules); the look target is story 1.4; the commands are only taken (hands, story 1.4).
+## 1. Inputs (AD-34): the move wish and the view; the warden moves (AD-52, WardenRules); the
+## look target is worked out from the eye (AD-47, LookRules); then each queued command, in the
+## order it arrived, goes to HoldRules, which starts, refuses or cancels a hold.
 func _step_inputs() -> void:
 	move_wish = _next_move
 	yaw = _next_yaw
 	pitch = _next_pitch
 	WardenRules.walk(self)
+	look = LookRules.target(warden.position + Vector3(0.0, WardenConstants.EYE_HEIGHT, 0.0), yaw, pitch,
+			geometry, span)
 	commands = _queued
 	_queued = []
+	for cmd: NightCommand in commands:
+		HoldRules.take(cmd, self)
 
 
 ## 2. Holds and taps (AD-34): first whether the running action is still possible, then
-## progress, then completion. No rule yet (story 1.4).
+## progress, then completion (HoldRules). Taps arrive in epic 4.
 func _step_holds() -> void:
-	pass
+	HoldRules.tick(self)
 
 
 ## 3. Rigs in motion (AD-34): a trapdoor's drop, a beam's sweep. No rule yet (epic 4).

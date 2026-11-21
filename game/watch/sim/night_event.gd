@@ -7,6 +7,12 @@ extends RefCounted
 
 enum Kind {
 	NIGHT_STARTED,  ## The night began: its first tick, step 5 (AD-33); `id` is the def's name. Fields: t, id, seed.
+	HOLD_STARTED,  ## The warden began a hold (step 1); `id` the action, `side` set for a rail. Fields: t, section, side, id.
+	HOLD_CANCELLED,  ## Let go, pressed again (Press once), moved over 0.5 m, or impossible on its target. Fields: t, section, side, id.
+	PLANK_STRIPPED,  ## A strip completed (step 2): one plank from that deck to the hand. Fields: t, section.
+	RAIL_STRIPPED,  ## A rail strip completed: that rail's rope to the hand. Fields: t, section, side.
+	PLANK_RELAID,  ## A re-lay completed: one plank from the hand to that deck. Fields: t, section.
+	REFUSED,  ## A designed "no" (AD-28), from sim.refuse(); NO_ACTION_HERE leaves section 0 and id empty. Fields: t, reason, section, side, id.
 }
 
 var kind: Kind = Kind.NIGHT_STARTED
@@ -27,8 +33,8 @@ var dead_kind: int = -1
 var slot: int = 0
 ## A sound id of content/sound_cues.gd (AD-45).
 var sound: StringName = &""
-## Plain int, -1 for none, until NightTypes.Reason arrives (story 1.4).
-var reason: int = -1
+## Why a press was refused, on REFUSED; NONE on every other kind.
+var reason: NightTypes.Reason = NightTypes.Reason.NONE
 var amount: float = 0.0
 ## A line, hint, name, night or fault code.
 var id: StringName = &""

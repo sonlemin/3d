@@ -45,6 +45,34 @@ const ACTIONS: Dictionary[StringName, Array] = {
 	&"watch_ring_again": [[Device.KEY, KEY_R]],                  # the left/right check
 }
 
+## Architecture, Novel Pattern 3: the warden's buttons, each sent into the sim as a press and a
+## release by the night screen. Every NightTypes.HandInput once.
+const NIGHT_INPUTS: Array[NightTypes.HandInput] = [
+	NightTypes.HandInput.HAMMER, NightTypes.HandInput.ROPE, NightTypes.HandInput.USE,
+	NightTypes.HandInput.SHUTTER, NightTypes.HandInput.BUILD_TRAPDOOR, NightTypes.HandInput.BUILD_BEAM,
+	NightTypes.HandInput.DISMANTLE, NightTypes.HandInput.FOREARM,
+]
+
+
+## The night action of the table that `input` is read from (Novel Pattern 3).
+static func action_of(input: NightTypes.HandInput) -> StringName:
+	match input:
+		NightTypes.HandInput.HAMMER:
+			return &"watch_hammer"
+		NightTypes.HandInput.ROPE:
+			return &"watch_rope"
+		NightTypes.HandInput.USE:
+			return &"watch_use"
+		NightTypes.HandInput.SHUTTER:
+			return &"watch_shutter"
+		NightTypes.HandInput.BUILD_TRAPDOOR:
+			return &"watch_build_trapdoor"
+		NightTypes.HandInput.BUILD_BEAM:
+			return &"watch_build_swing_beam"
+		NightTypes.HandInput.DISMANTLE:
+			return &"watch_dismantle"
+	return &"watch_forearm"
+
 
 ## Adds every action of the table to the InputMap. Safe to call again: an action that already
 ## has exactly its bindings is left alone. Returns the setup problems found (AD-28), one line

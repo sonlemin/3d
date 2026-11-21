@@ -22,6 +22,8 @@ godot --path game -- --start=night --seed=1       # the one-night span
 godot --path game -- --show=span_counts           # a show-me setup
 godot --path game -- --show=walk                  # walk the span and back from the landing
 godot --path game -- --show=walk_close            # stand mid-span, facing the far pier
+godot --path game -- --show=strip                 # mid section 5, nothing in hand: strip and re-lay
+godot --path game -- --show=forearm               # 12 planks and 3 ropes in hand, on the landing
 godot --path game -- --show=list                  # list the show-me setups, then quit
 godot --path game -- --start=night --trace        # print every event of the night
 ```
@@ -35,10 +37,34 @@ and other layouts) at 3.5 m/s; there is no sprint and no jump. Look with the mou
 night captures. You stop 0.3 m short of the rails, the far pier, the landing's edges and any
 section with no planks; you cannot cross a plankless section yet (story 1.6). Until the pause
 screen arrives in epic 5, **Esc** only frees the mouse (the night keeps running, and you can
-still walk), and a **left click** captures it again. Stripping and re-laying arrive in 1.4.
+still walk), and a **left click** captures it again (that click does nothing else).
+
+The hands act on what you look at within 2 m (measured along the view from the eye), and every
+action is a hold:
+
+| Button | Looking at | Hold | Does |
+|---|---|---|---|
+| Left mouse | a section's deck | 2 s | strips one plank into your hands |
+| Right mouse | a standing rail rope | 3 s | strips the rope |
+| E | a deck with room, a plank in hand | 3 s | re-lays one plank (a bare deck takes one too) |
+| Tab | | held | raises the forearm: planks and ropes in hand as tally strokes in fives |
+
+A part moves only when the hold completes. Letting go, walking more than 0.5 m from where you
+began, or the action becoming impossible cancels it; looking around does not. One action at a
+time: another button pressed during a hold is ignored, and with the forearm up neither hand acts
+(you can still walk and look). A press that can't be done (nothing in hand, a full deck, the town
+section at its last 4 planks, a bare deck, or nothing there) is refused: nothing happens yet (the
+hands' "can't" gesture is epic 4), but `--trace` prints a `REFUSED` line with the reason. There is
+no carry limit. Holds have a Press once option (a press starts it, a second press stops it, Tab
+toggles); its setting arrives in epic 8.
+
+Strip the last plank of the section you stand on and you stay where you are, and can walk off it;
+once off, it blocks like any bare section (story 1.6 brings edging round an open section).
 
 Show-me setups for story 1.3: `walk` (the landing, every section walkable, with sparse sections
-at 1, 4 and 5 planks on the way) and `walk_close` (the same planks, standing mid section 5).
+at 1, 4 and 5 planks on the way) and `walk_close` (the same planks, standing mid section 5). For
+story 1.4: `strip` (mid section 5 of a full span, nothing in hand) and `forearm` (12 planks and 3
+ropes in hand, on the landing).
 
 ## Running the ear test
 
@@ -94,7 +120,7 @@ than once, the first good value stands.
 |---|---|
 | `--seed=N` | The seed for the night's randomness, a whole number. Without it a night gets a fresh random seed, which `NIGHT_STARTED` carries and `--trace` prints, so the night can be run again with `--seed=N` |
 | `--start=<value>` | Start on that screen instead of the title. Today the one value is `night`; `planning` (story 1.7), `lesson` and `round` (epic 2) follow |
-| `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night seed=7`). No value |
+| `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night seed=7`, `  4.000 RAIL_STRIPPED     warden s5 L`); a refusal ends with its reason. No value |
 | `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. `--show=list` lists them and quits (with exit code 1 when the launch had a setup problem). Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
 
 The debug switches (`--trace`, `--show`) work when run from source and in playtest builds only;

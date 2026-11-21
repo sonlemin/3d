@@ -235,3 +235,58 @@ func _fields_per_kind() -> Dictionary[String, PackedStringArray]:
 			fields.append(field.strip_edges())
 		out[kind_name] = fields
 	return out
+
+
+func _test_checksum_covers_the_hands() -> void:
+	# Story 1.4: the hold, the forearm and the Holds option are state, so they reach the checksum.
+	var plain: NightSim = _sim_with(NightDefs.one_night(), 7)
+	var raised: NightSim = _sim_with(NightDefs.one_night(), 7)
+	raised.command(NightCommand.press(NightTypes.HandInput.FOREARM))
+	plain.advance()
+	raised.advance()
+	_check("sim: a raised forearm changes the checksum", plain.checksum() != raised.checksum())
+	var again: NightSim = _sim_with(NightDefs.one_night(), 7)
+	again.command(NightCommand.press(NightTypes.HandInput.FOREARM))
+	again.advance()
+	_check("sim: and the same command again gives the same checksum", raised.checksum() == again.checksum())
+	var option: NightSim = _sim_with(NightDefs.one_night(), 7)
+	option.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
+	option.advance()
+	_check("sim: the Holds option alone changes the checksum", plain.checksum() != option.checksum())
+	# A hold in progress: the warden on section 6 looking down at its deck, section 1 at 7 so a
+	# strip of section 6 (at 8) is allowed.
+	var start: StartState = StartState.new()
+	start.warden_along = 27.5
+	var def_a: NightDef = _def_with(start)
+	var a: NightSim = _sim_with(def_a, 7)
+	var b: NightSim = _sim_with(_def_with(start), 7)
+	for sim: NightSim in [a, b]:
+		sim.set_view(0.0, -1.2)
+		sim.advance()
+	a.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	a.advance()
+	b.advance()
+	_check("sim: a hold in progress changes the checksum", a.hands.holding() and a.checksum() != b.checksum())
+
+
+func _test_set_option() -> void:
+	var sim: NightSim = _sim_with(NightDefs.one_night(), 3)
+	_check("sim: Holds starts as Hold", sim.holds == NightTypes.Holds.HOLD)
+	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
+	_check("sim: set_option waits for the tick", sim.holds == NightTypes.Holds.HOLD)
+	sim.advance()
+	_check("sim: set_option(HOLDS, PRESS_ONCE) is taken on the tick", sim.holds == NightTypes.Holds.PRESS_ONCE)
+	var before: int = sim.checksum()
+	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, 7))
+	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, -1))
+	sim.command(NightCommand.set_option(5 as NightTypes.Option, NightTypes.Holds.HOLD))
+	_expect_begin()
+	var events: Array[NightEvent] = sim.advance()
+	_expect_end("sim: a value or option outside its enum is sim.bad_input", [["ERROR", "sim.bad_input", 1]])
+	_check("sim: all three were counted", _faults.count(&"sim.bad_input") == 3, str(_faults.count(&"sim.bad_input")))
+	_check("sim: and changed nothing", sim.holds == NightTypes.Holds.PRESS_ONCE and events.is_empty())
+	var twin: NightSim = _sim_with(NightDefs.one_night(), 3)
+	twin.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
+	twin.advance()
+	twin.advance()
+	_check("sim: the checksum is a twin's that got no bad option", sim.checksum() == twin.checksum() and before != 0)

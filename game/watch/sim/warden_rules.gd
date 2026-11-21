@@ -48,16 +48,21 @@ static func walkable(sim: NightSim) -> Array[Rect2]:
 ## so a diagonal into a rail slides along it. A zero wish moves nothing. Pushing into an edge is not
 ## a mistake: nothing is emitted and nothing faults.
 ##
-## Story 1.4 will let a warden whose section lost its last plank step off it ("may step from a
-## spot that cannot be stood on onto one that can"): that belongs in reach(). Today such a warden
-## moves only if one tick's step ends on a spot that can be stood on; otherwise it stays where it
-## is, on both axes. No rule can take a plank yet, so no warden is in that state.
+## Story 1.4 decision D3, until story 1.6's edging: a section that went bare under the warden, or
+## within CLEARANCE of the feet, still holds them. When the feet cannot be stood on, this tick's
+## floors also take every section with no plank that holds the feet or one of the four clearance
+## probes (held_by_bare()), so the warden walks out through the 0.3 m band. Once can_stand() is
+## true again nothing is added and the bare section blocks as before (story 1.3 D1). Normal
+## walking never reaches a spot that cannot be stood on, so "cannot stand here" already means
+## "was here when it went bare": nothing is stored.
 static func walk(sim: NightSim) -> void:
 	var step: Vector2 = sim.move_wish * sim.walk_step
 	if step == Vector2.ZERO:
 		return
 	var floors: Array[Rect2] = walkable(sim)
 	var at: Vector3 = sim.warden.position
+	if not stands_on(at, floors):
+		floors.append_array(held_by_bare(at, sim))
 	if step.x != 0.0:
 		at = reach(at, Vector3(step.x, 0.0, 0.0), floors)
 	if step.y != 0.0:
@@ -100,6 +105,23 @@ static func reach(from: Vector3, move: Vector3, floors: Array[Rect2]) -> Vector3
 			stop[axis] += ahead * sign_of
 			return stop
 	return from
+
+
+## Pure: story 1.4 D3. The floor of every section with no plank that holds the feet at
+## `position` or one of its four clearance probes.
+static func held_by_bare(position: Vector3, sim: NightSim) -> Array[Rect2]:
+	var c: float = WardenConstants.CLEARANCE
+	var feet: Vector2 = Vector2(position.x, position.z)
+	var out: Array[Rect2] = []
+	for n: int in range(1, sim.def.section_count + 1):
+		if sim.span.planks(n) > 0:
+			continue
+		var rect: Rect2 = _floor_of(sim.geometry.deck_box(n))
+		for offset: Vector2 in [Vector2.ZERO, Vector2(c, 0.0), Vector2(-c, 0.0), Vector2(0.0, c), Vector2(0.0, -c)]:
+			if _on_floor(feet + offset, [rect]):
+				out.append(rect)
+				break
+	return out
 
 
 ## A deck or landing box seen from above: x across, z along.

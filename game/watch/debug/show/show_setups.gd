@@ -13,6 +13,8 @@ static func _table() -> Dictionary[StringName, Array]:
 		&"span_counts": ["sections at 8, 5, 4, 1 and 0 planks, seen from the landing", ShowSetups.span_counts],
 		&"walk": ["walk the span and back from the landing (M1 of story 1.3)", ShowSetups.walk],
 		&"walk_close": ["the span from mid-span: sections ahead at 5, 4 and 1 planks (M2, DW-31)", ShowSetups.walk_close],
+		&"strip": ["strip planks and a rail, re-lay one, read the forearm (M1 of story 1.4)", ShowSetups.strip],
+		&"forearm": ["12 planks and 3 ropes in hand; hold Tab on the landing (M2 of story 1.4)", ShowSetups.forearm],
 	}
 
 
@@ -76,3 +78,23 @@ static func walk_start() -> StartState:
 	var start: StartState = StartState.new()
 	start.planks = {1: 8, 2: 1, 3: 4, 4: 5, 5: 8}
 	return start
+
+
+## M1 of story 1.4: a full span, nothing in hand, the warden mid section 5 (along 22.5) facing
+## the far pier: strip three planks and a rail, re-lay one, then raise the forearm.
+static func strip() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = StartState.new()
+	def.start.warden_along = 22.5
+	return def
+
+
+## M2 of story 1.4: 12 planks in hand (section 1 bare, section 2 at 4) and 3 ropes (both rails of
+## section 1 and section 2's left), the warden on the landing. 12 reads as two crossed fives and 2.
+static func forearm() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = StartState.new()
+	def.start.planks = {1: 0, 2: 4}
+	def.start.stripped_rails = [Vector2i(1, NightTypes.Side.LEFT), Vector2i(1, NightTypes.Side.RIGHT),
+			Vector2i(2, NightTypes.Side.LEFT)]
+	return def

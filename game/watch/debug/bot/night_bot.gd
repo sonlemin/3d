@@ -23,17 +23,29 @@ const WALK_SCRIPT: Array[Array] = [
 ]
 ## The wander picks a new wish this often, in ticks.
 const WANDER_EVERY: int = 30
+## Story 1.4's strip path: the wander after its script, in ticks.
+const STRIP_WANDER_TICKS: int = 600
+## Closer than this to a walk's goal, in metres, the bot has arrived.
+const ARRIVED: float = 0.0005
+## The most ticks one walk of the script may take before the bot gives up on it (a guard: the
+## script never needs more than a span's length at walking speed).
+const WALK_GUARD: int = 1200
+## Story 1.4, GD-19: a plank strip is 2 s, a rail strip and a re-lay 3 s (ticks, AD-33). The bot
+## holds a button this long and one tick more, so the completion lands while it still holds.
+const STRIP_PLANK_TICKS: int = 120
+const LONG_HOLD_TICKS: int = 180
 
 
 ## Every path, each `(def, seed, faults, each_tick) -> NightSim`: it builds its night on `def`
 ## (the one night or a shorter test def), runs it and returns the sim.
 static func paths() -> Array[Callable]:
-	return [NightBot.span_counts, NightBot.walk]
+	return [NightBot.span_counts, NightBot.walk, NightBot.strip]
 
 
 ## Story 1.2: the span_counts show's StartState, then 600 ticks with a changing move wish,
 ## view and button presses. Since story 1.3 the warden walks: the turning wish takes it round a
-## small circle on the landing and into the landing's back edge. The presses do nothing yet.
+## small circle on the landing and into the landing's back edge. Since story 1.4 its USE presses
+## meet the hand rules: the view never looks within 2 m of a deck, so each is refused.
 static func span_counts(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
 	def.start = ShowSetups.span_counts_start(def.section_count)
 	var sim: NightSim = NightSim.new(def, night_seed, faults)
@@ -80,3 +92,168 @@ static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick:
 		sim.set_move(wish)
 		each_tick.call(sim.advance(), sim)
 	return sim
+
+
+## Story 1.4 (AD-63): the warden strips, re-lays, is refused, cancels and reads the forearm, on a
+## full span with an empty hand, starting on the landing. Every section number comes from the def:
+## `a` is the town's third section toward the far pier (section 4 of 6, 2 of 4) and `b` the next
+## one (3 of 6, 1 of 4). The bot aims by working out yaw and pitch from the eye to a point that
+## SpanGeometry gives; the sim is never asked where to look. In order:
+## - at mid a: the hammer at the sky (NO_ACTION_HERE); E at the deck with nothing in hand
+##   (NO_PLANK_IN_HAND); Tab held, walked with, a hammer press ignored, lowered; a strip;
+## - at mid b: E at its full deck (DECK_FULL); cancels by letting go, by walking 0.6 m, and by a
+##   second press in Press once;
+## - back at a: a re-lay; at b: all 8 of b's planks stripped from where the warden stands, the last
+##   one underfoot, then walking off it toward the town (D3);
+## - from a's edge, looking back at bare b: the hammer (NO_PLANKS_LEFT), then a re-lay onto it;
+## - at mid town: stripped down to its floor of 4, once more (LAST_SECTION_MINIMUM), then its left
+##   rail stripped at 4 planks;
+## - a wander (the bot's own generator, as in walk) with taps of random buttons: each is refused
+##   or starts a hold the release cancels at once, so the script's work stands.
+static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	def.start = StartState.new()
+	var sim: NightSim = NightSim.new(def, night_seed, faults)
+	var g: SpanGeometry = sim.geometry
+	var town: int = def.section_count
+	var a: int = maxi(town - 2, 1)
+	var b: int = maxi(town - 3, 1)
+	var mid_a: float = g.section_start(a) + SpanConstants.SECTION_LENGTH / 2.0
+	var mid_b: float = g.section_start(b) + SpanConstants.SECTION_LENGTH / 2.0
+	var mid_town: float = g.section_start(town) + SpanConstants.SECTION_LENGTH / 2.0
+	var hammer: NightTypes.HandInput = NightTypes.HandInput.HAMMER
+	var use: NightTypes.HandInput = NightTypes.HandInput.USE
+	var forearm: NightTypes.HandInput = NightTypes.HandInput.FOREARM
+	# At mid a.
+	_go_to(sim, 0.0, mid_a, each_tick)
+	_look(sim, 0.0, 0.5, each_tick)
+	_tap(sim, hammer, each_tick)
+	_aim_at_deck(sim, mid_a - 0.6, each_tick)
+	_tap(sim, use, each_tick)
+	sim.command(NightCommand.press(forearm))
+	_ticks(sim, 1, each_tick)
+	for i: int in 20:
+		sim.set_move(Vector2(0.0, -1.0))
+		_ticks(sim, 1, each_tick)
+	sim.set_move(Vector2.ZERO)
+	_tap(sim, hammer, each_tick)
+	sim.command(NightCommand.release(forearm))
+	_ticks(sim, 1, each_tick)
+	_go_to(sim, 0.0, mid_a, each_tick)
+	_aim_at_deck(sim, mid_a - 0.6, each_tick)
+	_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+	# At mid b.
+	_go_to(sim, 0.0, mid_b, each_tick)
+	_aim_at_deck(sim, mid_b - 0.6, each_tick)
+	_tap(sim, use, each_tick)
+	sim.command(NightCommand.press(hammer))
+	_ticks(sim, 30, each_tick)
+	sim.command(NightCommand.release(hammer))
+	_ticks(sim, 1, each_tick)
+	sim.command(NightCommand.press(hammer))
+	for i: int in 11:
+		sim.set_move(Vector2(0.0, -1.0))
+		_ticks(sim, 1, each_tick)
+	sim.set_move(Vector2.ZERO)
+	sim.command(NightCommand.release(hammer))
+	_go_to(sim, 0.0, mid_b, each_tick)
+	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
+	_aim_at_deck(sim, mid_b - 0.6, each_tick)
+	sim.command(NightCommand.press(hammer))
+	_ticks(sim, 30, each_tick)
+	sim.command(NightCommand.press(hammer))
+	_ticks(sim, 1, each_tick)
+	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.HOLD))
+	# A re-lay at a, then b stripped bare from where the warden stands, and off it toward the town.
+	_go_to(sim, 0.0, mid_a, each_tick)
+	_aim_at_deck(sim, mid_a - 0.6, each_tick)
+	_hold(sim, use, LONG_HOLD_TICKS, each_tick)
+	_go_to(sim, 0.0, mid_b, each_tick)
+	_aim_at_deck(sim, mid_b - 0.6, each_tick)
+	for i: int in def.planks_per_section:
+		_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+	_go_to(sim, 0.0, mid_a, each_tick)
+	# From a's edge, looking back at bare b.
+	var edge: float = g.section_start(a) + 0.4
+	_go_to(sim, 0.0, edge, each_tick)
+	_aim_at_deck(sim, g.section_end(b) - 0.4, each_tick)
+	_tap(sim, hammer, each_tick)
+	_hold(sim, use, LONG_HOLD_TICKS, each_tick)
+	# The town section down to its floor, once more, then its left rail.
+	_go_to(sim, 0.0, mid_town, each_tick)
+	_aim_at_deck(sim, mid_town - 0.6, each_tick)
+	for i: int in def.planks_per_section - SpanConstants.LAST_SECTION_MIN_PLANKS:
+		_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+	_tap(sim, hammer, each_tick)
+	var rope: Vector3 = g.rail_box(town, NightTypes.Side.LEFT).get_center()
+	_go_to(sim, rope.x + WardenConstants.CLEARANCE, mid_town, each_tick)
+	_aim(sim, Vector3(rope.x, rope.y, sim.warden.position.z), each_tick)
+	_hold(sim, NightTypes.HandInput.ROPE, LONG_HOLD_TICKS, each_tick)
+	_strip_wander(sim, night_seed, each_tick)
+	return sim
+
+
+## The end of strip: a wander like walk's, with a tap (press, then release on the next tick) of a
+## random night button every WANDER_EVERY ticks.
+static func _strip_wander(sim: NightSim, night_seed: int, each_tick: Callable) -> void:
+	var wander: RandomNumberGenerator = RandomNumberGenerator.new()
+	wander.seed = night_seed
+	for i: int in STRIP_WANDER_TICKS:
+		if i % WANDER_EVERY == 0:
+			sim.set_move(Vector2.from_angle(wander.randf_range(-PI, PI)) * wander.randf_range(0.0, 1.0))
+			sim.set_view(wander.randf_range(-PI, PI), wander.randf_range(-1.3, 1.3))
+			sim.command(NightCommand.press(wander.randi_range(0, NightTypes.HandInput.size() - 1) as NightTypes.HandInput))
+		elif i % WANDER_EVERY == 1:
+			for input: int in NightTypes.HandInput.size():
+				sim.command(NightCommand.release(input as NightTypes.HandInput))
+		each_tick.call(sim.advance(), sim)
+	sim.set_move(Vector2.ZERO)
+
+
+static func _ticks(sim: NightSim, count: int, each_tick: Callable) -> void:
+	for i: int in count:
+		each_tick.call(sim.advance(), sim)
+
+
+## Press, one tick, release, one tick.
+static func _tap(sim: NightSim, input: NightTypes.HandInput, each_tick: Callable) -> void:
+	sim.command(NightCommand.press(input))
+	_ticks(sim, 1, each_tick)
+	sim.command(NightCommand.release(input))
+	_ticks(sim, 1, each_tick)
+
+
+## Holds `input` for `ticks` and one tick more (the completion's tick), then lets go.
+static func _hold(sim: NightSim, input: NightTypes.HandInput, ticks: int, each_tick: Callable) -> void:
+	sim.command(NightCommand.press(input))
+	_ticks(sim, ticks + 1, each_tick)
+	sim.command(NightCommand.release(input))
+
+
+## Walks the feet to (x, along) at up to full speed, the last step shortened to land on it.
+static func _go_to(sim: NightSim, x: float, along: float, each_tick: Callable) -> void:
+	var goal: Vector2 = Vector2(x, sim.geometry.world_z(along))
+	for i: int in WALK_GUARD:
+		var delta: Vector2 = goal - Vector2(sim.warden.position.x, sim.warden.position.z)
+		if delta.length() < ARRIVED:
+			break
+		sim.set_move((delta / sim.walk_step).limit_length(1.0))
+		_ticks(sim, 1, each_tick)
+	sim.set_move(Vector2.ZERO)
+
+
+## Looks at `yaw`, `pitch` for one tick.
+static func _look(sim: NightSim, yaw: float, pitch: float, each_tick: Callable) -> void:
+	sim.set_view(yaw, pitch)
+	_ticks(sim, 1, each_tick)
+
+
+## Looks from the eye at `point` (world) for one tick: yaw and pitch of AD-67 worked out here.
+static func _aim(sim: NightSim, point: Vector3, each_tick: Callable) -> void:
+	var to: Vector3 = point - (sim.warden.position + Vector3(0.0, WardenConstants.EYE_HEIGHT, 0.0))
+	_look(sim, atan2(-to.x, -to.z), atan2(to.y, Vector2(to.x, to.z).length()), each_tick)
+
+
+## Aims at the middle of the deck's thickness at `along`, straight ahead along the span.
+static func _aim_at_deck(sim: NightSim, along: float, each_tick: Callable) -> void:
+	_aim(sim, Vector3(sim.warden.position.x, -SpanGeometry.PLANK_THICKNESS / 2.0, sim.geometry.world_z(along)),
+			each_tick)
