@@ -258,3 +258,4 @@ func _test_night_inputs() -> void:
 				action == wanted[input] and InputActions.ACTIONS.has(action), str(action))
 		used[action] = true
 	_check("input: no two inputs share an action", used.size() == wanted.size())
+	_check("input: a value outside HandInput reads no action", InputActions.action_of(99 as NightTypes.HandInput) == &"")

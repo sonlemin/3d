@@ -1,7 +1,7 @@
 ## The warden's walking (AD-52, story 1.3): the feet move inside what can be walked on, and stop
 ## at its edges. No physics body, collider or ray decides anything: what can be walked on is the
 ## floor rectangle of every section that has at least one plank, and the landing, all asked of
-## SpanGeometry. Every rectangle is axis-aligned, so an edge is found from the rectangles' sides,
+## SpanGeometry (plus, until story 1.6, a bare section that still holds the warden: D3 in walk()). Every rectangle is axis-aligned, so an edge is found from the rectangles' sides,
 ## never by searching in small steps.
 class_name WardenRules
 extends RefCounted

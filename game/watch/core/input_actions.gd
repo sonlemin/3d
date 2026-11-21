@@ -54,7 +54,8 @@ const NIGHT_INPUTS: Array[NightTypes.HandInput] = [
 ]
 
 
-## The night action of the table that `input` is read from (Novel Pattern 3).
+## The night action of the table that `input` is read from (Novel Pattern 3); empty for a value
+## outside the enum (no action, so nothing is read).
 static func action_of(input: NightTypes.HandInput) -> StringName:
 	match input:
 		NightTypes.HandInput.HAMMER:
@@ -71,7 +72,9 @@ static func action_of(input: NightTypes.HandInput) -> StringName:
 			return &"watch_build_swing_beam"
 		NightTypes.HandInput.DISMANTLE:
 			return &"watch_dismantle"
-	return &"watch_forearm"
+		NightTypes.HandInput.FOREARM:
+			return &"watch_forearm"
+	return &""
 
 
 ## Adds every action of the table to the InputMap. Safe to call again: an action that already

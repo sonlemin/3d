@@ -198,10 +198,19 @@ func _test_event_fields_match_comments() -> void:
 	# Every event the sim emits sets only the fields its kind names.
 	# The other direction (a named field left unset) cannot be told from a value: a set field
 	# may hold its default (side LEFT, seed 0). Each kind's own test checks the fields it sets.
+	# The strip bot's night emits every kind of story 1.4, with a right rail (a side that is not
+	# the default) among them.
 	var sim: NightSim = _sim_with(NightDefs.one_night(), 1)
 	var unset: NightEvent = NightEvent.new()
 	var bad: PackedStringArray = []
-	for event: NightEvent in _drive(sim, 600):
+	var all: Array[NightEvent] = _drive(sim, 600)
+	NightBot.strip(NightDefs.one_night(), 1, WatchFaults.new(),
+			func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
+	var kinds: Dictionary[NightEvent.Kind, bool] = {}
+	for event: NightEvent in all:
+		kinds[event.kind] = true
+	_check("sim: the events checked include every kind", kinds.size() == NightEvent.Kind.size(), str(kinds.keys()))
+	for event: NightEvent in all:
 		var kind_name: String = NightEvent.Kind.find_key(event.kind)
 		for field: String in fields:
 			if field == "t" or named.get(kind_name, PackedStringArray()).has(field):

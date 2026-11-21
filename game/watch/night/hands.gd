@@ -17,9 +17,13 @@ extends Node3D
 const PLACE: Vector3 = Vector3(0.0, -0.13, -0.35)
 ## Tilted toward the eye, in radians (the top leans away, as a raised forearm does).
 const TILT: float = -0.35
+## The skin plate, across and up, sized for three rows (48 planks take two, 12 ropes one).
 const SKIN_SIZE: Vector2 = Vector2(0.27, 0.12)
+## How thick the skin plate is.
 const SKIN_THICKNESS: float = 0.004
+## Light skin: the ink reads on it with no lantern lit.
 const SKIN_COLOR: Color = Color(0.86, 0.80, 0.70)
+## DESIGN.md: one dark ink.
 const INK_COLOR: Color = Color(0.08, 0.07, 0.06)
 ## One stroke: thin and short enough that 25 fit a row.
 const STROKE_WIDTH: float = 0.003
@@ -30,7 +34,9 @@ const STROKE_GAP: float = 0.008
 const GROUP_GAP: float = 0.014
 ## How far the stroke across a group leans from upright, in radians.
 const ACROSS_ANGLE: float = 1.05
+## From one row of strokes to the next.
 const ROW_HEIGHT: float = 0.034
+## D2: a row wraps after this many groups of five.
 const GROUPS_PER_ROW: int = 5
 ## Room for the sign at the start of a row, and the sign's size.
 const SIGN_ROOM: float = 0.03

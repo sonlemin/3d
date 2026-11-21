@@ -106,8 +106,8 @@ static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick:
 ## - back at a: a re-lay; at b: all 8 of b's planks stripped from where the warden stands, the last
 ##   one underfoot, then walking off it toward the town (D3);
 ## - from a's edge, looking back at bare b: the hammer (NO_PLANKS_LEFT), then a re-lay onto it;
-## - at mid town: stripped down to its floor of 4, once more (LAST_SECTION_MINIMUM), then its left
-##   rail stripped at 4 planks;
+## - at mid town: stripped down to its floor of 4, once more (LAST_SECTION_MINIMUM), then its right
+##   rail stripped at 4 planks (right, so the events' side is not the field's default);
 ## - a wander (the bot's own generator, as in walk) with taps of random buttons: each is refused
 ##   or starts a hold the release cancels at once, so the script's work stands.
 static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
@@ -184,8 +184,8 @@ static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick
 	for i: int in def.planks_per_section - SpanConstants.LAST_SECTION_MIN_PLANKS:
 		_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
 	_tap(sim, hammer, each_tick)
-	var rope: Vector3 = g.rail_box(town, NightTypes.Side.LEFT).get_center()
-	_go_to(sim, rope.x + WardenConstants.CLEARANCE, mid_town, each_tick)
+	var rope: Vector3 = g.rail_box(town, NightTypes.Side.RIGHT).get_center()
+	_go_to(sim, rope.x - WardenConstants.CLEARANCE, mid_town, each_tick)
 	_aim(sim, Vector3(rope.x, rope.y, sim.warden.position.z), each_tick)
 	_hold(sim, NightTypes.HandInput.ROPE, LONG_HOLD_TICKS, each_tick)
 	_strip_wander(sim, night_seed, each_tick)

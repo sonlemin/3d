@@ -138,6 +138,33 @@ func _test_strip_a_rail() -> void:
 	_check("ac2: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
+func _test_right_rail_carries_its_side() -> void:
+	# The right rail, from x 2.2 facing +X (yaw -pi/2): every event of a rail action names RIGHT
+	# (LEFT is the field's default, so only the right rail proves the side is set).
+	var start: StartState = StartState.new()
+	start.warden_along = 17.5
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	for i: int in 60:
+		sim.set_move(Vector2(1.0, 0.0))
+		sim.advance()
+	sim.set_move(Vector2.ZERO)
+	sim.set_view(-PI / 2.0, AT_RAIL)
+	sim.advance()
+	_press(sim, ROPE)
+	var events: Array[NightEvent] = _advance(sim, 10)
+	_release(sim, ROPE)
+	events.append_array(sim.advance())
+	var right: NightTypes.Side = NightTypes.Side.RIGHT
+	var started: Array[NightEvent] = _of_kind(events, NightEvent.Kind.HOLD_STARTED)
+	var cancelled: Array[NightEvent] = _of_kind(events, NightEvent.Kind.HOLD_CANCELLED)
+	_check("side: HOLD_STARTED and HOLD_CANCELLED of the right rail say RIGHT", started.size() == 1
+			and started[0].side == right and cancelled.size() == 1 and cancelled[0].side == right, _names(events))
+	events = _hold(sim, ROPE, STRIP_RAIL_TICKS)
+	var done: Array[NightEvent] = _of_kind(events, NightEvent.Kind.RAIL_STRIPPED)
+	_check("side: RAIL_STRIPPED of the right rail says RIGHT", done.size() == 1 and done[0].side == right
+			and not sim.span.rail_standing(4, right) and sim.span.rail_standing(4, LEFT), _names(events))
+
+
 func _test_relay_a_plank() -> void:
 	var sim: NightSim = _ready_at(17.5, {4: 5})
 	var begun: int = sim.tick
@@ -298,6 +325,24 @@ func _test_moving_cancels() -> void:
 	_check("ac5: 0.5 m and one step more cancels, on that tick (T+10)", cancel.size() == 1
 			and _tick_of(cancel[0]) == _tick_of(events[0]) + 10
 			and _of_kind(events, NightEvent.Kind.PLANK_STRIPPED).is_empty(), _names(events))
+	# A walk of exactly 0.5 m whose float steps add up a hair past it (10 sideways ticks from along
+	# 15.0 land 0.50000006 m away) is still 0.5 m: kept (HoldRules.MOVE_SLACK).
+	var start: StartState = StartState.new()
+	start.warden_along = 15.0
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(0.0, DOWN)
+	sim.advance()
+	var from: Vector3 = sim.warden.position
+	_press(sim, HAMMER)
+	events = sim.advance()
+	for i: int in 10:
+		sim.set_move(Vector2(0.5 / (10.0 * STEP), 0.0))
+		events.append_array(sim.advance())
+	sim.set_move(Vector2.ZERO)
+	var walked: float = Vector2(sim.warden.position.x - from.x, sim.warden.position.z - from.z).length()
+	events.append_array(_advance(sim, STRIP_PLANK_TICKS))
+	_check("ac5: a 0.5 m walk summed a rounding error past 0.5 keeps the hold", walked > 0.5 and walked < 0.5001
+			and _of_kind(events, NightEvent.Kind.PLANK_STRIPPED).size() == 1, "%.9f %s" % [walked, _names(events)])
 	# Sideways counts the same (x and z).
 	wishes = []
 	for i: int in 10:
