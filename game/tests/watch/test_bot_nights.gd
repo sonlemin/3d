@@ -151,8 +151,11 @@ func _test_walk_reaches_the_edges() -> void:
 
 
 func _test_strip_reaches_its_cases() -> void:
-	# Story 1.4 T7: the strip path really produces each case it is written for, on both nights and
-	# three seeds. Each case is told from events and state here, not taken on trust.
+	# Story 1.4 T7: the strip path's script really produces each case it is written for, on both
+	# nights and three seeds. Each case is told from events, commands and state here, not taken on
+	# trust. The script alone is run (strip_script): the wander's random taps would reach some of
+	# these by luck. What cancelled a hold is read from the commands of that tick, never guessed
+	# from the mode.
 	var wanted: PackedStringArray = [
 		"NO_ACTION_HERE", "NO_PLANK_IN_HAND", "DECK_FULL", "LAST_SECTION_MINIMUM", "NO_PLANKS_LEFT",
 		"strip", "rail strip", "town rail at 4", "re-lay", "re-lay onto a bare deck",
@@ -169,9 +172,16 @@ func _test_strip_reaches_its_cases() -> void:
 			var last_at: Array[Vector3] = [Vector3.ZERO]
 			var was_raised: Array[bool] = [false]
 			var def: NightDef = NightDefs.one_night() if sections == 6 else _def_with(StartState.new(), 4)
-			NightBot.strip(def, night_seed, WatchFaults.new(),
+			var script_faults: WatchFaults = WatchFaults.new()
+			NightBot.strip_script(def, night_seed, script_faults,
 					func(events: Array[NightEvent], sim: NightSim) -> void:
 						var along: float = sim.warden.position.z + length
+						var pressed: bool = false
+						var let_go: bool = false
+						for cmd: NightCommand in sim.commands:
+							if cmd.input == NightTypes.HandInput.HAMMER:
+								pressed = pressed or cmd.kind == NightCommand.Kind.PRESS
+								let_go = let_go or cmd.kind == NightCommand.Kind.RELEASE
 						for event: NightEvent in events:
 							match event.kind:
 								NightEvent.Kind.REFUSED:
@@ -181,11 +191,11 @@ func _test_strip_reaches_its_cases() -> void:
 								NightEvent.Kind.HOLD_CANCELLED:
 									var moved: float = Vector2(sim.warden.position.x - hold_from[0].x,
 											sim.warden.position.z - hold_from[0].z).length()
-									if sim.holds == NightTypes.Holds.PRESS_ONCE:
+									if sim.holds == NightTypes.Holds.PRESS_ONCE and pressed and not let_go and moved <= 0.5:
 										reached["cancel by a second press"] = true
-									elif moved > 0.5:
+									elif sim.holds == NightTypes.Holds.HOLD and moved > 0.5 and not pressed and not let_go:
 										reached["cancel by walking"] = true
-									else:
+									elif sim.holds == NightTypes.Holds.HOLD and let_go and not pressed and moved <= 0.5:
 										reached["cancel by letting go"] = true
 								NightEvent.Kind.PLANK_STRIPPED:
 									reached["strip"] = true
@@ -220,5 +230,39 @@ func _test_strip_reaches_its_cases() -> void:
 			for case: String in wanted:
 				if not reached.has(case):
 					missing.append(case)
-			_check("bot: strip, %d sections, seed %d, reaches every case" % [sections, night_seed], missing.is_empty(),
-					str(missing))
+			_check("bot: strip's script, %d sections, seed %d, reaches every case" % [sections, night_seed],
+					missing.is_empty(), str(missing))
+			_check("bot: strip's script, %d sections, seed %d: no fault" % [sections, night_seed],
+					script_faults.total() == 0, str(script_faults.codes()))
+
+
+func _test_a_walk_that_cannot_arrive_is_a_fault() -> void:
+	# The bot's own walk: section 2 has no planks, so a walk from the landing to along 2.5 (section
+	# 1) stops at along 10.3 (story 1.3 D1) and never arrives: bot.walk_lost, once the guard runs out.
+	var start: StartState = StartState.new()
+	start.planks = {2: 0}
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	var no_check: Callable = func(_events: Array[NightEvent], _sim: NightSim) -> void: pass
+	_expect_begin()
+	NightBot._go_to(sim, 0.0, 2.5, no_check)
+	_expect_end("bot: a walk that cannot arrive is bot.walk_lost", [["ERROR", "bot.walk_lost", 1]])
+	_check("bot: counted once, the warden left at the bare section's edge (along 10.3)",
+			_faults.count(&"bot.walk_lost") == 1 and absf(sim.warden.position.z + 30.0 - 10.3) < 0.001,
+			str(sim.warden.position))
+	NightBot._go_to(sim, 0.0, 12.5, no_check)
+	_check("bot: a walk that arrives reports nothing more", _faults.count(&"bot.walk_lost") == 1
+			and absf(sim.warden.position.z + 30.0 - 12.5) < 0.001, str(sim.warden.position))
+
+
+func _test_strip_needs_four_sections() -> void:
+	# The strip path's sections (the town, two before it, three before it) fold into one another on
+	# a shorter span: a fault, and nothing is run.
+	var ticks: Array[int] = [0]
+	var faults: WatchFaults = WatchFaults.new()
+	_expect_begin()
+	var sim: NightSim = NightBot.strip(_def_with(StartState.new(), 3), 1, faults,
+			func(_events: Array[NightEvent], _sim: NightSim) -> void:
+				ticks[0] += 1)
+	_expect_end("bot: strip on 3 sections is bot.bad_def", [["ERROR", "bot.bad_def", 1]])
+	_check("bot: and it runs nothing", faults.count(&"bot.bad_def") == 1 and ticks[0] == 0 and sim.tick == 0,
+			"%d ticks" % ticks[0])

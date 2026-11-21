@@ -57,7 +57,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 **Rules, time and randomness inside the sim**
 
-- Rule scripts are `*_rules.gd`: static functions only. A **pure query** takes the pieces it reads and returns a value. A function that **changes state** takes `sim: NightSim` last, returns nothing, and reports with `sim.emit(event)` or `sim.refuse(reason)` (AD-67).
+- Rule scripts are `*_rules.gd`: static functions only. A **pure query** takes the pieces it reads and returns a value. A function that **changes state** takes `sim: NightSim` last, returns nothing, and reports with `sim.emit(event)` or `sim.refuse(reason, target, action)` (AD-67).
 - **Store base facts only** (planks, rails, hooks, positions, oil). Strength, "open", load, "lit" and "locked" are computed when needed, never stored (AD-35).
 - `advance()` runs the current tick, then adds 1: the first call is tick 0, and its events carry `t = 0.0`.
 - **Time is whole ticks** (AD-33). Constants are in seconds with `_S`; they are converted once into `sim.ticks` (`NightTicks`). Rules count ticks down; nothing adds up float seconds. Begun on tick T and lasting N ticks means done on tick T + N.
@@ -76,7 +76,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **No literal 6 or 30** outside `night_defs.gd` and tests: ask the `NightDef` (AD-42).
 - The warden's position is `sim.warden.position` (the feet; `WardenState`). What can be walked on is `WardenRules.can_stand()` (pure forms on given floor rectangles: `stands_on()`, `reach()`); the eye is `WardenConstants.EYE_HEIGHT` above the feet. Until story 1.6, a section that went bare under the warden (or within 0.3 m) still holds them until they step off it (story 1.4 D3, in `WardenRules.walk()`).
 - What the warden looks at is `sim.look` (`LookRules.target()`: the view line from the eye for 2 m against `SpanGeometry` boxes; derived each tick). A rail is hit through `SpanGeometry.rail_grab_box()`, wider than the drawn rope.
-- A hold is `sim.hands` (`HandsState`). `HoldRules` alone starts, runs, cancels and completes it; `HandRules.check()` says whether an action can start on a target, and `HoldRules` asks it every tick about the hold's own target. Durations are `sim.ticks` (`NightTicks` fields). The Holds option (Press once) is `sim.holds`, set by `NightCommand.set_option()`.
+- A hold is `sim.hands` (`HandsState`). `HoldRules` alone starts, runs, cancels and completes it; `HandRules.check()` says whether an action can start on a target, and `HoldRules` asks it every tick about the hold's own target. Durations are `sim.ticks` (`NightTicks` fields). The Holds option (Press once) is `sim.holds`, set by `NightCommand.set_option()`; a change of it cancels the running hold and lowers the forearm, so a mode always starts from idle hands. In Press once, a hold's own button is ignored for `HandConstants.PRESS_ONCE_GRACE_S` after it completes (a press meant to stop it that lands late must not start another).
 - A designed "no" is `REFUSED` with a `NightTypes.Reason`, from `sim.refuse(reason, target, action)`. A re-lay reads the hand before the deck (`NO_PLANK_IN_HAND` before `DECK_FULL`).
 - A view that moves holds a `TickBlend` and blends the last two ticks; a teleport calls `snap()`. Project-wide physics interpolation stays off.
 - In a hand-written scene, reference resources by `res://` path only and never invent a `uid://` value. Commit the `.uid` and `.import` files the import writes.
@@ -90,7 +90,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 **Errors and logs (AD-28, AD-29)**
 
-- A designed "no" (a second strike on a shaken hook) is `sim.refuse(reason)`: an event, never an error.
+- A designed "no" (a second strike on a shaken hook) is `sim.refuse(reason, target, action)`: an event, never an error.
 - A setup problem (a missing clip, bus or table entry) is collected at start, reported with `push_warning` or `push_error`, and shown on the title. No `assert`, no crash.
 - A fault (a bug) is `faults.report(&"system.what", detail)` on the night's `WatchFaults`, the only code that calls `push_error` for one. Put the value back in range and carry on.
 - **No `print` in runtime code** outside `watch/debug/`. A clean run prints nothing.

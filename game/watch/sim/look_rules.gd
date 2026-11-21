@@ -12,6 +12,8 @@ static func target(eye: Vector3, yaw: float, pitch: float, geometry: SpanGeometr
 	var to: Vector3 = eye + view_direction(yaw, pitch) * HandConstants.REACH
 	var best: LookTarget = LookTarget.none()
 	var nearest: float = INF
+	# The far pier hides nothing from anywhere the warden can stand today (every target lies on
+	# the town side of it); it blocks for a view line that crosses it, as test_look.gd builds one.
 	for blocker: AABB in [geometry.landing_box(), geometry.far_pier_box()]:
 		nearest = minf(nearest, _hit(blocker, eye, to))
 	for n: int in range(1, span.section_count() + 1):

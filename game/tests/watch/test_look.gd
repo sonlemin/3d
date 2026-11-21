@@ -124,6 +124,24 @@ func _test_a_blocker_hit_first_gives_nothing() -> void:
 			_describe(sim.look))
 
 
+func _test_the_far_pier_blocks() -> void:
+	# The far pier (7 m wide, along -4 to 0, rising 3 m) is wider than the 5 m deck. No warden can
+	# stand where it hides a target, so the eye is placed by hand (LookRules.target is pure): at
+	# x 3.6, 1.0 m up (the rope's height), along -0.5, just outside the pier's side face (x 3.5),
+	# aimed level at section 1's right rope at x 2.5, along 0.3. The line goes 1.1 m toward -X and
+	# 0.8 m toward the town: it enters the pier's side 0.124 m on, and would reach the rope's grab
+	# box (x 2.65) 1.175 m on. The pier is hit first: nothing.
+	var sim: NightSim = _sim_with(_def_with(StartState.new()), 1)
+	var g: SpanGeometry = sim.geometry
+	var yaw: float = atan2(1.1, -0.8)
+	var hidden: LookTarget = LookRules.target(Vector3(3.6, 1.0, g.world_z(-0.5)), yaw, 0.0, g, sim.span)
+	_check("look: the far pier hit first hides the rail behind it", _is(hidden, LookTarget.Kind.NONE), _describe(hidden))
+	# The same line 1 m further toward the town clears the pier and meets that rope, 1.175 m on.
+	var seen: LookTarget = LookRules.target(Vector3(3.6, 1.0, g.world_z(0.5)), yaw, 0.0, g, sim.span)
+	_check("look: the same line clear of the pier meets section 1's right rail", _is(seen, LookTarget.Kind.RAIL, 1)
+			and seen.side == NightTypes.Side.RIGHT and absf(seen.distance - 1.1746) < TOL, _describe(seen))
+
+
 func _test_a_bare_deck_is_still_a_target() -> void:
 	# A deck with no planks can take a re-lay (GD-69), so it is looked at like any other. From
 	# along 20.4 on section 5 facing the far pier, pitch -1.2 lands at along 19.778, section 4.

@@ -13,12 +13,16 @@ var strip_plank: int = 0
 var strip_rail: int = 0
 ## GD-19: a re-lay's hold, in ticks.
 var relay_plank: int = 0
+## Press once: how long after a hold completes its own button is ignored
+## (HandConstants.PRESS_ONCE_GRACE_S), in ticks.
+var press_once_grace: int = 0
 
 
 func _init() -> void:
 	strip_plank = of(SpanConstants.STRIP_PLANK_S)
 	strip_rail = of(SpanConstants.STRIP_RAIL_S)
 	relay_plank = of(SpanConstants.RELAY_PLANK_S)
+	press_once_grace = of(HandConstants.PRESS_ONCE_GRACE_S)
 
 
 ## Whole ticks for a time in seconds, rounded to the nearest tick.

@@ -347,7 +347,9 @@ func _test_a_night_without_setup_sends_nothing() -> void:
 	root.push_input(_left_click(true))
 	root.push_input(_key(KEY_E, true))
 	_expect_end("no setup: only its night.no_setup warning", [["WARNING", "night.no_setup", 1]])
-	_check("no setup: no sim, nothing sent and nothing broke", night._sim == null)
+	# With no sim there is nowhere to send a command; that the two events above broke nothing is
+	# the expect window's check (only the one warning).
+	_check("no setup: the night has no sim to send to", night._sim == null)
 	night.free()
 
 
@@ -358,6 +360,9 @@ func _test_the_forearm_is_drawn_from_the_camera() -> void:
 	var hands: HandsView = night.get_node_or_null("Warden/Camera3D/Hands") as HandsView
 	_check("forearm: a HandsView under the warden's camera", hands != null)
 	if hands != null:
+		var order: Array[Callable] = night._consumers
+		_check("forearm: it reads the tick after the warden's node", order.find(hands.on_tick) > order.find(_warden_of(night).on_tick)
+				and order.find(_warden_of(night).on_tick) >= 0, str(order))
 		_check("forearm: down at the start", not hands.visible)
 		var sim: NightSim = night._sim
 		sim.command(NightCommand.press(NightTypes.HandInput.FOREARM))

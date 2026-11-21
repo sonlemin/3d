@@ -30,10 +30,9 @@ const ARRIVED: float = 0.0005
 ## The most ticks one walk of the script may take before the bot gives up on it (a guard: the
 ## script never needs more than a span's length at walking speed).
 const WALK_GUARD: int = 1200
-## Story 1.4, GD-19: a plank strip is 2 s, a rail strip and a re-lay 3 s (ticks, AD-33). The bot
-## holds a button this long and one tick more, so the completion lands while it still holds.
-const STRIP_PLANK_TICKS: int = 120
-const LONG_HOLD_TICKS: int = 180
+## Story 1.4's strip path needs this many sections: the town, `a` two before it and `b` three
+## before it are three different sections.
+const STRIP_MIN_SECTIONS: int = 4
 
 
 ## Every path, each `(def, seed, faults, each_tick) -> NightSim`: it builds its night on `def`
@@ -110,13 +109,29 @@ static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick:
 ##   rail stripped at 4 planks (right, so the events' side is not the field's default);
 ## - a wander (the bot's own generator, as in walk) with taps of random buttons: each is refused
 ##   or starts a hold the release cancels at once, so the script's work stands.
+## Each hold lasts what sim.ticks says and one tick more, so its completion lands while the button
+## is still down. A def with fewer than STRIP_MIN_SECTIONS sections is `bot.bad_def`: the night is
+## built and returned, and nothing is run on it.
 static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var sim: NightSim = strip_script(def, night_seed, faults, each_tick)
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		_strip_wander(sim, night_seed, each_tick)
+	return sim
+
+
+## strip's scripted part alone, with no wander after it: for the test that checks the script
+## really reaches each case it is written for (the wander's random taps could reach some by luck).
+static func strip_script(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
 	def.start = StartState.new()
 	var sim: NightSim = NightSim.new(def, night_seed, faults)
+	if def.section_count < STRIP_MIN_SECTIONS:
+		faults.report(&"bot.bad_def", "strip needs %d sections, the def has %d" % [STRIP_MIN_SECTIONS,
+				def.section_count])
+		return sim
 	var g: SpanGeometry = sim.geometry
 	var town: int = def.section_count
-	var a: int = maxi(town - 2, 1)
-	var b: int = maxi(town - 3, 1)
+	var a: int = town - 2
+	var b: int = town - 3
 	var mid_a: float = g.section_start(a) + SpanConstants.SECTION_LENGTH / 2.0
 	var mid_b: float = g.section_start(b) + SpanConstants.SECTION_LENGTH / 2.0
 	var mid_town: float = g.section_start(town) + SpanConstants.SECTION_LENGTH / 2.0
@@ -140,7 +155,7 @@ static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick
 	_ticks(sim, 1, each_tick)
 	_go_to(sim, 0.0, mid_a, each_tick)
 	_aim_at_deck(sim, mid_a - 0.6, each_tick)
-	_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
 	# At mid b.
 	_go_to(sim, 0.0, mid_b, each_tick)
 	_aim_at_deck(sim, mid_b - 0.6, each_tick)
@@ -166,29 +181,28 @@ static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick
 	# A re-lay at a, then b stripped bare from where the warden stands, and off it toward the town.
 	_go_to(sim, 0.0, mid_a, each_tick)
 	_aim_at_deck(sim, mid_a - 0.6, each_tick)
-	_hold(sim, use, LONG_HOLD_TICKS, each_tick)
+	_hold(sim, use, sim.ticks.relay_plank, each_tick)
 	_go_to(sim, 0.0, mid_b, each_tick)
 	_aim_at_deck(sim, mid_b - 0.6, each_tick)
 	for i: int in def.planks_per_section:
-		_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+		_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
 	_go_to(sim, 0.0, mid_a, each_tick)
 	# From a's edge, looking back at bare b.
 	var edge: float = g.section_start(a) + 0.4
 	_go_to(sim, 0.0, edge, each_tick)
 	_aim_at_deck(sim, g.section_end(b) - 0.4, each_tick)
 	_tap(sim, hammer, each_tick)
-	_hold(sim, use, LONG_HOLD_TICKS, each_tick)
-	# The town section down to its floor, once more, then its left rail.
+	_hold(sim, use, sim.ticks.relay_plank, each_tick)
+	# The town section down to its floor, once more, then its right rail.
 	_go_to(sim, 0.0, mid_town, each_tick)
 	_aim_at_deck(sim, mid_town - 0.6, each_tick)
 	for i: int in def.planks_per_section - SpanConstants.LAST_SECTION_MIN_PLANKS:
-		_hold(sim, hammer, STRIP_PLANK_TICKS, each_tick)
+		_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
 	_tap(sim, hammer, each_tick)
 	var rope: Vector3 = g.rail_box(town, NightTypes.Side.RIGHT).get_center()
 	_go_to(sim, rope.x - WardenConstants.CLEARANCE, mid_town, each_tick)
 	_aim(sim, Vector3(rope.x, rope.y, sim.warden.position.z), each_tick)
-	_hold(sim, NightTypes.HandInput.ROPE, LONG_HOLD_TICKS, each_tick)
-	_strip_wander(sim, night_seed, each_tick)
+	_hold(sim, NightTypes.HandInput.ROPE, sim.ticks.strip_rail, each_tick)
 	return sim
 
 
@@ -230,15 +244,22 @@ static func _hold(sim: NightSim, input: NightTypes.HandInput, ticks: int, each_t
 
 
 ## Walks the feet to (x, along) at up to full speed, the last step shortened to land on it.
+## Not there after WALK_GUARD ticks (something is in the way) is `bot.walk_lost`: the script goes
+## on from where the warden stands, and the fault says its later steps are not where it thinks.
 static func _go_to(sim: NightSim, x: float, along: float, each_tick: Callable) -> void:
 	var goal: Vector2 = Vector2(x, sim.geometry.world_z(along))
+	var arrived: bool = false
 	for i: int in WALK_GUARD:
 		var delta: Vector2 = goal - Vector2(sim.warden.position.x, sim.warden.position.z)
 		if delta.length() < ARRIVED:
+			arrived = true
 			break
 		sim.set_move((delta / sim.walk_step).limit_length(1.0))
 		_ticks(sim, 1, each_tick)
 	sim.set_move(Vector2.ZERO)
+	if not arrived:
+		sim.faults.report(&"bot.walk_lost", "no way to x %.3f, along %.3f from %s" % [x, along,
+				sim.warden.position])
 
 
 ## Looks at `yaw`, `pitch` for one tick.

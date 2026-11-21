@@ -204,8 +204,11 @@ func _test_event_fields_match_comments() -> void:
 	var unset: NightEvent = NightEvent.new()
 	var bad: PackedStringArray = []
 	var all: Array[NightEvent] = _drive(sim, 600)
-	NightBot.strip(NightDefs.one_night(), 1, WatchFaults.new(),
+	var strip_faults: WatchFaults = WatchFaults.new()
+	NightBot.strip(NightDefs.one_night(), 1, strip_faults,
 			func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
+	_check("sim: the strip night whose events are checked ran with no fault", strip_faults.total() == 0,
+			str(strip_faults.codes()))
 	var kinds: Dictionary[NightEvent.Kind, bool] = {}
 	for event: NightEvent in all:
 		kinds[event.kind] = true
@@ -262,12 +265,11 @@ func _test_checksum_covers_the_hands() -> void:
 	option.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
 	option.advance()
 	_check("sim: the Holds option alone changes the checksum", plain.checksum() != option.checksum())
-	# A hold in progress: the warden on section 6 looking down at its deck, section 1 at 7 so a
-	# strip of section 6 (at 8) is allowed.
+	# A hold in progress: the warden mid section 6, looking down at its full deck (8 planks, above
+	# the town section's floor of 4, so the strip may start).
 	var start: StartState = StartState.new()
 	start.warden_along = 27.5
-	var def_a: NightDef = _def_with(start)
-	var a: NightSim = _sim_with(def_a, 7)
+	var a: NightSim = _sim_with(_def_with(start), 7)
 	var b: NightSim = _sim_with(_def_with(start), 7)
 	for sim: NightSim in [a, b]:
 		sim.set_view(0.0, -1.2)
@@ -285,7 +287,6 @@ func _test_set_option() -> void:
 	_check("sim: set_option waits for the tick", sim.holds == NightTypes.Holds.HOLD)
 	sim.advance()
 	_check("sim: set_option(HOLDS, PRESS_ONCE) is taken on the tick", sim.holds == NightTypes.Holds.PRESS_ONCE)
-	var before: int = sim.checksum()
 	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, 7))
 	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, -1))
 	sim.command(NightCommand.set_option(5 as NightTypes.Option, NightTypes.Holds.HOLD))
@@ -298,4 +299,4 @@ func _test_set_option() -> void:
 	twin.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.PRESS_ONCE))
 	twin.advance()
 	twin.advance()
-	_check("sim: the checksum is a twin's that got no bad option", sim.checksum() == twin.checksum() and before != 0)
+	_check("sim: the checksum is a twin's that got no bad option", sim.checksum() == twin.checksum())

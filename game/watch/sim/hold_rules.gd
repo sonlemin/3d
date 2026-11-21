@@ -6,6 +6,10 @@
 ## Hold mode: a release of the hold's button cancels it. Press once (UX-39): a press starts it and
 ## it runs its full time; a second press of the same button stops it; releases do nothing; Tab
 ## toggles the forearm. The mode in force when a command is taken decides what that command does.
+## A change of mode cancels the running hold and lowers the forearm, so a mode always starts from
+## idle hands (story 1.4 code review, Sonlm, 2026-11-21): otherwise a hold or a raised forearm
+## would be left with no button behind it. In Press once, a press of the button whose hold has
+## just completed is ignored for a short grace (HandConstants.PRESS_ONCE_GRACE_S).
 class_name HoldRules
 extends RefCounted
 
@@ -16,7 +20,8 @@ const MOVE_SLACK: float = 0.0001
 
 
 ## Step 1 of the tick (AD-34): one queued command, in arrival order, after the look target.
-## A press while a hold runs, or while the forearm is up, is ignored: no event (AD-50, UX-11).
+## A press while a hold runs, while the forearm is up, or (Press once) of the button whose hold
+## has just completed, is ignored: no event (AD-50, UX-11).
 static func take(command: NightCommand, sim: NightSim) -> void:
 	match command.kind:
 		NightCommand.Kind.SET_OPTION:
@@ -57,6 +62,12 @@ static func progress(hands: HandsState) -> float:
 
 static func _set_option(command: NightCommand, sim: NightSim) -> void:
 	if command.option == NightTypes.Option.HOLDS and NightTypes.Holds.values().has(command.value):
+		if command.value == sim.holds:
+			return
+		if sim.hands.holding():
+			_cancel(sim)
+		sim.hands.forearm_raised = false
+		sim.hands.done_tick = -1
 		sim.holds = command.value as NightTypes.Holds
 		return
 	sim.faults.report(&"sim.bad_input", "set_option(%d, %d)" % [command.option, command.value])
@@ -79,6 +90,9 @@ static func _press_hand(input: NightTypes.HandInput, sim: NightSim) -> void:
 	if hands.holding():
 		if sim.holds == NightTypes.Holds.PRESS_ONCE and input == hands.input:
 			_cancel(sim)
+		return
+	if sim.holds == NightTypes.Holds.PRESS_ONCE and hands.done_tick >= 0 and input == hands.done_input \
+			and sim.tick - hands.done_tick <= sim.ticks.press_once_grace:
 		return
 	var action: NightTypes.HandAction = HandRules.action_for(input, sim.look)
 	var reason: NightTypes.Reason = HandRules.check(action, sim.look, sim.def, sim.span)
@@ -126,6 +140,8 @@ static func _complete(sim: NightSim) -> void:
 			SpanRules.move_parts(NightTypes.Part.PLANK, 1, PartPlace.hand(), PartPlace.deck(n), sim)
 			done = NightEvent.make(NightEvent.Kind.PLANK_RELAID)
 	done.section = n
+	hands.done_input = hands.input
+	hands.done_tick = sim.tick
 	_clear(hands)
 	sim.emit(done)
 

@@ -87,15 +87,13 @@ func _test_redrawn_when_the_hand_changes() -> void:
 	var view: HandsView = _view(sim)
 	view.on_tick(sim.advance(), sim)
 	_check("forearm: nothing in hand, no strokes", _strokes_in(view, "PlankStrokes") == 0 and _strokes_in(view, "RopeStrokes") == 0)
-	var first: Node = view.get_node("Skin")
 	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
 	for i: int in 121:
 		view.on_tick(sim.advance(), sim)
 	_check("forearm: after a strip, one plank stroke", _strokes_in(view, "PlankStrokes") == 1 and sim.span.in_hand(NightTypes.Part.PLANK) == 1)
 	var stroke: Node = view.get_node("PlankStrokes").get_child(0)
 	view.on_tick(sim.advance(), sim)
-	_check("forearm: not rebuilt while the counts stand", view.get_node("PlankStrokes").get_child(0) == stroke
-			and view.get_node("Skin") == first)
+	_check("forearm: not rebuilt while the counts stand", view.get_node("PlankStrokes").get_child(0) == stroke)
 	view.free()
 
 

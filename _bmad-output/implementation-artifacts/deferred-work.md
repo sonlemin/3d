@@ -329,7 +329,7 @@ origin: dev-story of story 1.4, 2026-11-21 (Known gap, story 1.4 T1.2 AC 5)
 location: game/watch/sim/hold_rules.gd, `tick()` (the `HandRules.check()` cancel branch); game/tests/watch/test_hands.gd
 owner: story 1.5, the first rule that can change the span under a running hold (a section falling)
 severity: medium
-reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls. Also unreached: the side branch of `NightSim.refuse()` (a refused rail action names its side). A rail is only a target while it stands, so no rail action is refused at the press yet; the first refusal of a rail action (a locked rail, epic 3) should check it.
+reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls. (The unreached side branch of `NightSim.refuse()`, first noted here, is DW-37: it has another owner.)
 status: open
 
 ### DW-35: D3 can hand the warden on to a neighbouring section that was already bare
@@ -339,4 +339,33 @@ location: game/watch/sim/warden_rules.gd, `walk()` and `held_by_bare()`
 owner: story 1.6, which replaces D3 with edging toward the town (GD-68)
 severity: low
 reason: D3 (Sonlm, 2026-11-21) lets every bare section under the feet or a clearance probe count as floor while the warden cannot stand. If the section next to the one that just went bare was already bare, a warden held near their shared edge may step onto that older bare section too. The rule does what D3 says; whether it should is left to story 1.6, which replaces D3. The bot paths never reach the case (no two neighbouring sections are bare in them), and test_bot_nights.gd's own arithmetic would flag it.
+status: open
+
+## Deferred from: code review of 1-4-the-warden-strips-re-lays-carries-and-reads-the-forearm.md (2026-11-21)
+
+### DW-36: A release that never arrives leaves a hold or the forearm with no button behind it
+
+origin: gds-code-review of story 1.4, 2026-11-21 (Edge Case Hunter, Blind Hunter)
+location: game/watch/night/night.gd, `_unhandled_input`; game/watch/night/warden.gd, `_unhandled_input` (`_swallow_release`)
+owner: epic 5, the focus-loss pause (with DW-33)
+severity: low
+reason: The hands get press and release only as events. If a release is never delivered (the window loses focus while a button is held), a Hold-mode hold runs on and completes with nothing held, and a raised forearm stays up and blocks both hands until Tab is pressed and released. The same lost release leaves the warden's `_swallow_release` set after a "take the mouse back" click, so the next hammer release is swallowed and that strip completes after the player let go. Also: with the mouse freed by Esc (story 1.3 D2) only the left click is kept from the hands; right mouse, E and Tab still act. Whether the engine sends a release on focus loss was not checked. Movement is polled each tick, so it corrects itself; the hands do not. Epic 5's pause on focus loss should release every night button (or cancel the hold and lower the forearm) and clear `_swallow_release`.
+status: open
+
+### DW-37: The side branch of `NightSim.refuse()` is reached by nothing
+
+origin: dev-story of story 1.4 (noted on DW-34); split off by gds-code-review of story 1.4, 2026-11-21 (Acceptance Auditor, Blind Hunter)
+location: game/watch/sim/night_sim.gd, `refuse()` (a refused rail action names its side)
+owner: epic 3, the first refusal of a rail action (a locked rail)
+severity: low
+reason: A rail is only a look target while it stands, so no rail action is refused at the press yet, and the branch that puts the side on a `REFUSED` event has no test: deleting it fails nothing. `refuse()` also fills section, id and side from the action, while its comment and `NightEvent` describe them by reason (`NO_ACTION_HERE` leaves them empty); the two agree for every refusal that can happen today. The story that adds a refusable rail action checks the side on its `REFUSED` event and settles which of the two decides the fields.
+status: open
+
+### DW-38: The view test no longer checks a rail coming back
+
+origin: gds-code-review of story 1.4, 2026-11-21 (all three reviewers); the check was dropped when DW-27 closed
+location: game/tests/watch/test_span_view.gd, `_test_reconcile_follows_state`; game/watch/night/section_view.gd (the branch that re-adds a rail)
+owner: epic 4, the story that lets a rope be hung again
+severity: low
+reason: DW-27 made the view test move parts only through commands and ticks. No rule puts a rope back yet, so the check "the rail is back" was dropped, and `SectionView`'s re-add of a rail after it was taken off is run by no test. When a rule can re-hang a rope, add the check back, driven by that rule's command.
 status: open

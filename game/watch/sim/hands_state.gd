@@ -18,6 +18,10 @@ var began_tick: int = 0
 ## Ticks still to run, counted down from ticks_total; it completes on the tick this reaches 0.
 var ticks_left: int = 0
 var ticks_total: int = 0
+## The button of the last hold that completed and the tick it completed on (-1: none yet). In
+## Press once, that button is ignored for sim.ticks.press_once_grace ticks after it (HoldRules).
+var done_input: NightTypes.HandInput = NightTypes.HandInput.HAMMER
+var done_tick: int = -1
 ## UX-11: Tab raised to read the tallies. While up, neither hand can start an action.
 var forearm_raised: bool = false
 
@@ -28,4 +32,5 @@ func holding() -> bool:
 
 ## For NightSim.checksum(): every base fact, in a fixed order.
 func values() -> Array:
-	return [action, input, target.values(), began_at, began_tick, ticks_left, ticks_total, forearm_raised]
+	return [action, input, target.values(), began_at, began_tick, ticks_left, ticks_total, done_input, done_tick,
+			forearm_raised]

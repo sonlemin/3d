@@ -3,6 +3,8 @@
 ## under the warden still holds them). Spec values written literally with their sources:
 ## GD-19: strip a plank 2 s = 120 ticks, strip a rail 3 s = 180, re-lay 3 s = 180; the town
 ## section keeps 4 planks. GDD Controls: reach 2 m, a hold cancels past 0.5 m.
+## Story 1.4 code review (Sonlm, 2026-11-21): Press once ignores a hold's own button for 0.25 s =
+## 15 ticks after it completes; a change of the Holds option cancels the hold and lowers the forearm.
 ## Ticks are compared exactly; positions within 0.001 m.
 extends WatchTest
 
@@ -12,6 +14,8 @@ const STRIP_PLANK_TICKS: int = 120
 const STRIP_RAIL_TICKS: int = 180
 ## GD-19: 3 s.
 const RELAY_TICKS: int = 180
+## Story 1.4 code review: 0.25 s.
+const GRACE_TICKS: int = 15
 ## GD-19: 3.5 m/s at 60 ticks a second (AD-33).
 const STEP: float = 3.5 / 60.0
 const TOL: float = 0.001
@@ -410,6 +414,8 @@ func _test_one_action_at_a_time() -> void:
 	var begun: int = sim.tick
 	_press(sim, HAMMER)
 	var events: Array[NightEvent] = _advance(sim, 31)
+	_check("ac6: the hold began, and nothing else in its first 30 ticks", _only(events, NightEvent.Kind.HOLD_STARTED),
+			_names(events))
 	_press(sim, ROPE)
 	_press(sim, USE)
 	_press(sim, HAMMER)
@@ -436,7 +442,8 @@ func _test_press_once() -> void:
 	var done: Array[NightEvent] = _of_kind(events, NightEvent.Kind.PLANK_STRIPPED)
 	_check("ac7: Press once: the hold runs its full time, the release ignored", done.size() == 1
 			and _tick_of(done[0]) == begun + STRIP_PLANK_TICKS and events.size() == 1, _names(events))
-	# A second press of the same input stops it.
+	# A second press of the same input stops it (begun after the grace that follows a completion).
+	_advance(sim, GRACE_TICKS)
 	_press(sim, HAMMER)
 	sim.advance()
 	_advance(sim, 30)
@@ -459,15 +466,147 @@ func _test_press_once() -> void:
 	_check("ac7: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
+## Story 1.4 code review: the press meant to stop a hold may land just after it completed. For
+## 15 ticks after the completion that button is ignored; another button is not; Hold mode has no
+## such grace.
+func _test_press_once_grace() -> void:
+	# One tick after the completion, and on the last tick of the grace: ignored.
+	for late: int in [1, GRACE_TICKS]:
+		var sim: NightSim = _ready_at(17.5)
+		_set_holds(sim, NightTypes.Holds.PRESS_ONCE)
+		var begun: int = sim.tick
+		_press(sim, HAMMER)
+		var events: Array[NightEvent] = _advance(sim, STRIP_PLANK_TICKS + 1)
+		_check("grace: the strip completed on T + 120", sim.tick == begun + STRIP_PLANK_TICKS + 1
+				and _of_kind(events, NightEvent.Kind.PLANK_STRIPPED).size() == 1, _names(events))
+		_advance(sim, late - 1)
+		_press(sim, HAMMER)
+		events = _advance(sim, STRIP_PLANK_TICKS + 5)
+		_check("grace: the same button %d ticks after the completion is ignored, no event" % late,
+				events.is_empty() and not sim.hands.holding() and sim.span.planks(4) == 7, _names(events))
+		_check("grace: no fault", _faults.total() == 0, str(_faults.codes()))
+	# The tick after the grace: a new hold.
+	var after: NightSim = _ready_at(17.5)
+	_set_holds(after, NightTypes.Holds.PRESS_ONCE)
+	_press(after, HAMMER)
+	_advance(after, STRIP_PLANK_TICKS + 1 + GRACE_TICKS)
+	_press(after, HAMMER)
+	var started: Array[NightEvent] = after.advance()
+	_check("grace: 16 ticks after the completion the same button starts a hold",
+			_only(started, NightEvent.Kind.HOLD_STARTED), _names(started))
+	# Another button inside the grace acts at once: E re-lays the plank just stripped.
+	var other: NightSim = _ready_at(17.5)
+	_set_holds(other, NightTypes.Holds.PRESS_ONCE)
+	_press(other, HAMMER)
+	_advance(other, STRIP_PLANK_TICKS + 1)
+	_press(other, USE)
+	started = other.advance()
+	_check("grace: another button is not held back", _only(started, NightEvent.Kind.HOLD_STARTED)
+			and started[0].id == &"relay_plank", _names(started))
+	# Hold mode: no grace. The button has to come up and go down again, and that press counts.
+	var hold: NightSim = _ready_at(17.5)
+	_press(hold, HAMMER)
+	_advance(hold, STRIP_PLANK_TICKS + 1)
+	_release(hold, HAMMER)
+	_press(hold, HAMMER)
+	started = hold.advance()
+	_check("grace: Hold mode has none: a press one tick after the completion starts a hold",
+			_only(started, NightEvent.Kind.HOLD_STARTED), _names(started))
+
+
+## Story 1.4 code review: a change of the Holds option cancels the running hold and lowers the
+## forearm, so no hold and no raised forearm is left with no button behind it.
+func _test_mode_change_starts_from_idle_hands() -> void:
+	# Hold to Press once with a hold running.
+	var sim: NightSim = _ready_at(17.5)
+	_press(sim, HAMMER)
+	_advance(sim, 30)
+	_set_holds(sim, NightTypes.Holds.PRESS_ONCE)
+	var events: Array[NightEvent] = sim.advance()
+	_check("mode: Hold to Press once cancels the running hold", _only(events, NightEvent.Kind.HOLD_CANCELLED)
+			and not sim.hands.holding() and sim.holds == NightTypes.Holds.PRESS_ONCE, _names(events))
+	events = _advance(sim, STRIP_PLANK_TICKS + 5)
+	_check("mode: and no part moves afterwards", events.is_empty() and sim.span.planks(4) == 8, _names(events))
+	# Press once to Hold with a hold running (no button is down).
+	_press(sim, HAMMER)
+	_advance(sim, 30)
+	_check("mode: a Press once hold is running", sim.hands.holding())
+	_set_holds(sim, NightTypes.Holds.HOLD)
+	events = sim.advance()
+	_check("mode: Press once to Hold cancels it too", _only(events, NightEvent.Kind.HOLD_CANCELLED)
+			and not sim.hands.holding(), _names(events))
+	events = _advance(sim, STRIP_PLANK_TICKS + 5)
+	_check("mode: and it does not complete with nothing held", events.is_empty() and sim.span.planks(4) == 8,
+			_names(events))
+	# Press once to Hold with the forearm toggled up.
+	_set_holds(sim, NightTypes.Holds.PRESS_ONCE)
+	_press(sim, FOREARM)
+	sim.advance()
+	_check("mode: the forearm is toggled up", sim.hands.forearm_raised)
+	_set_holds(sim, NightTypes.Holds.HOLD)
+	sim.advance()
+	_check("mode: a change of mode lowers the forearm", not sim.hands.forearm_raised)
+	_press(sim, HAMMER)
+	events = sim.advance()
+	_check("mode: and the hands work at once", _only(events, NightEvent.Kind.HOLD_STARTED), _names(events))
+	# The same mode again changes nothing: the hold runs on, and so does a raised forearm.
+	_set_holds(sim, NightTypes.Holds.HOLD)
+	events = sim.advance()
+	_check("mode: setting the mode it already has leaves the hold alone", events.is_empty() and sim.hands.holding(),
+			_names(events))
+	_release(sim, HAMMER)
+	_press(sim, FOREARM)
+	sim.advance()
+	_set_holds(sim, NightTypes.Holds.HOLD)
+	sim.advance()
+	_check("mode: and leaves a raised forearm up", sim.hands.forearm_raised)
+	# A change of mode also ends the grace: the button acts at once in the new mode and back.
+	var grace: NightSim = _ready_at(17.5)
+	_set_holds(grace, NightTypes.Holds.PRESS_ONCE)
+	_press(grace, HAMMER)
+	_advance(grace, STRIP_PLANK_TICKS + 1)
+	_set_holds(grace, NightTypes.Holds.HOLD)
+	_set_holds(grace, NightTypes.Holds.PRESS_ONCE)
+	_press(grace, HAMMER)
+	events = grace.advance()
+	_check("mode: a change of mode ends the grace", _only(events, NightEvent.Kind.HOLD_STARTED), _names(events))
+	_check("mode: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+## A press and a release of one button taken in the same tick (Hold mode): the hold begins and is
+## cancelled on that tick, in that order, and nothing moves.
+func _test_press_and_release_in_one_tick() -> void:
+	var sim: NightSim = _ready_at(17.5)
+	_press(sim, HAMMER)
+	_release(sim, HAMMER)
+	var events: Array[NightEvent] = sim.advance()
+	_check("one tick: press then release is a hold begun and cancelled on that tick", events.size() == 2
+			and events[0].kind == NightEvent.Kind.HOLD_STARTED and events[1].kind == NightEvent.Kind.HOLD_CANCELLED
+			and not sim.hands.holding(), _names(events))
+	events = _advance(sim, STRIP_PLANK_TICKS + 5)
+	_check("one tick: and no part moves", events.is_empty() and sim.span.planks(4) == 8, _names(events))
+	# Release then press (the button was down from before): the release finds no hold, the press begins one.
+	_release(sim, HAMMER)
+	_press(sim, HAMMER)
+	events = sim.advance()
+	_check("one tick: release then press begins a hold", _only(events, NightEvent.Kind.HOLD_STARTED)
+			and sim.hands.holding(), _names(events))
+
+
 func _test_press_once_forearm() -> void:
 	var sim: NightSim = _ready_at(17.5)
 	_set_holds(sim, NightTypes.Holds.PRESS_ONCE)
 	_press(sim, FOREARM)
-	sim.advance()
-	_check("ac7: Tab press raises", sim.hands.forearm_raised)
+	var raise: Array[NightEvent] = sim.advance()
+	_check("ac7: Tab press raises, and emits nothing", sim.hands.forearm_raised and raise.is_empty(), _names(raise))
 	_release(sim, FOREARM)
 	sim.advance()
 	_check("ac7: Tab release does nothing", sim.hands.forearm_raised)
+	_press(sim, HAMMER)
+	_press(sim, USE)
+	var blocked: Array[NightEvent] = _advance(sim, 5)
+	_check("ac7: toggled up, a hand press does nothing, not even a refusal", blocked.is_empty()
+			and not sim.hands.holding(), _names(blocked))
 	_press(sim, FOREARM)
 	sim.advance()
 	_check("ac7: Tab press again lowers", not sim.hands.forearm_raised)
@@ -488,8 +627,9 @@ func _test_press_once_forearm() -> void:
 func _test_forearm() -> void:
 	var sim: NightSim = _ready_at(17.5)
 	_press(sim, FOREARM)
-	sim.advance()
+	var raise: Array[NightEvent] = sim.advance()
 	_check("ac8: Tab press raises the forearm", sim.hands.forearm_raised)
+	_check("ac8: raising emits nothing", raise.is_empty(), _names(raise))
 	var events: Array[NightEvent] = []
 	for i: int in 60:
 		sim.set_move(Vector2(0.0, -1.0))
@@ -501,10 +641,10 @@ func _test_forearm() -> void:
 	_press(sim, USE)
 	events.append_array(_advance(sim, 5))
 	_check("ac8: a hand press does nothing, not even a refusal", events.is_empty(), _names(events))
-	_check("ac8: raising emits nothing", events.is_empty())
 	_release(sim, FOREARM)
-	sim.advance()
+	var lower: Array[NightEvent] = sim.advance()
 	_check("ac8: Tab release lowers it", not sim.hands.forearm_raised)
+	_check("ac8: lowering emits nothing", lower.is_empty(), _names(lower))
 	_press(sim, HAMMER)
 	events = sim.advance()
 	_check("ac8: lowered, the hammer works again", _only(events, NightEvent.Kind.HOLD_STARTED), _names(events))
@@ -582,7 +722,7 @@ func _test_last_plank_from_the_next_section() -> void:
 	for i: int in 30:
 		sim.set_move(Vector2(0.0, 1.0))
 		sim.advance()
-	_check("d3: and off it toward the town (14.517 + 30 steps = 16.267)", absf(_along(sim) - (15.1 + 20 * STEP)) < TOL,
+	_check("d3: and off it toward the town (15.1 + 20 steps = 16.267)", absf(_along(sim) - (15.1 + 20 * STEP)) < TOL,
 			str(_along(sim)))
 	for i: int in 30:
 		sim.set_move(Vector2(0.0, -1.0))
