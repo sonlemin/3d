@@ -76,11 +76,12 @@ func shown_progress() -> float:
 
 
 ## Pure: whether a press of `input`, taken on the next tick with the view unchanged, would start
-## a hold. HoldRules' own gates in its own order (`_press_hand`): the forearm up, a hold running,
-## the Press once grace, then HandRules' action and check on what is looked at.
+## a hold. HoldRules' own gates in its own order (`_press_hand`): the warden not walking (story
+## 1.5's climb back), the forearm up, a hold running, the Press once grace, then HandRules' action
+## and check on what is looked at.
 static func would_start(input: NightTypes.HandInput, sim: NightSim) -> bool:
 	var hands: HandsState = sim.hands
-	if hands.forearm_raised or hands.holding():
+	if not WardenRules.walking(sim) or hands.forearm_raised or hands.holding():
 		return false
 	if sim.holds == NightTypes.Holds.PRESS_ONCE and hands.done_tick >= 0 and input == hands.done_input \
 			and sim.tick - hands.done_tick <= sim.ticks.press_once_grace:

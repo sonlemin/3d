@@ -16,6 +16,10 @@ var relay_plank: int = 0
 ## Press once: how long after a hold completes its own button is ignored
 ## (HandConstants.PRESS_ONCE_GRACE_S), in ticks.
 var press_once_grace: int = 0
+## GD-19: a groan's length before the section falls (SpanConstants.GROAN_S), in ticks.
+var groan: int = 0
+## GDD Game Mechanics 2: the climb back after a fall (WardenConstants.CLIMB_BACK_S), in ticks.
+var climb_back: int = 0
 
 
 func _init() -> void:
@@ -23,6 +27,8 @@ func _init() -> void:
 	strip_rail = of(SpanConstants.STRIP_RAIL_S)
 	relay_plank = of(SpanConstants.RELAY_PLANK_S)
 	press_once_grace = of(HandConstants.PRESS_ONCE_GRACE_S)
+	groan = of(SpanConstants.GROAN_S)
+	climb_back = of(WardenConstants.CLIMB_BACK_S)
 
 
 ## Whole ticks for a time in seconds, rounded to the nearest tick.

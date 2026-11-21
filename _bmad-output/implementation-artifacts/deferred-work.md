@@ -329,8 +329,9 @@ origin: dev-story of story 1.4, 2026-11-21 (Known gap, story 1.4 T1.2 AC 5)
 location: game/watch/sim/hold_rules.gd, `tick()` (the `HandRules.check()` cancel branch); game/tests/watch/test_hands.gd
 owner: story 1.5, the first rule that can change the span under a running hold (a section falling)
 severity: medium
-reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick it falls. (The unreached side branch of `NightSim.refuse()`, first noted here, is DW-37: it has another owner.)
-status: open
+reason: `HoldRules.tick()` cancels a hold whose action `HandRules.check()` no longer allows on its own target (AD-67). Nothing in story 1.4 can change the span under a hold (one action at a time; nothing else moves parts), so that branch is reached only by its pure `check()` test, and deleting it fails no test. Story 1.5 adds a strip hold on a section that falls and checks the `HOLD_CANCELLED` on the tick after it falls (corrected at closing: the fall is step 7 of tick F and `HoldRules` is step 2, so the cancel is on F + 1, as the architecture says). (The unreached side branch of `NightSim.refuse()`, first noted here, is DW-37: it has another owner.)
+status: done 2026-11-22
+resolution: Story 1.5. A strip, a rail-strip and a re-lay hold on a section that falls on tick F are cancelled on F + 1 with no part moved, also a strip that would have completed on F + 1 (test_hands.gd, `_test_dw34_*`; the overload bot path reaches it too). With the `check()` cancel removed from `HoldRules.tick()`, those tests fail.
 
 ### DW-35: D3 can hand the warden on to a neighbouring section that was already bare
 
@@ -339,6 +340,7 @@ location: game/watch/sim/warden_rules.gd, `walk()` and `held_by_bare()`
 owner: story 1.6, which replaces D3 with edging toward the town (GD-68)
 severity: low
 reason: D3 (Sonlm, 2026-11-21) lets every bare section under the feet or a clearance probe count as floor while the warden cannot stand. If the section next to the one that just went bare was already bare, a warden held near their shared edge may step onto that older bare section too. The rule does what D3 says; whether it should is left to story 1.6, which replaces D3. The bot paths never reach the case (no two neighbouring sections are bare in them), and test_bot_nights.gd's own arithmetic would flag it.
+note (story 1.5, 2026-11-22): `held_by_bare()` now skips fallen sections (a fallen section has 0 planks too but is no floor), so D3 can never hand the warden on to a gap; a test in test_warden.gd checks it. The case above, an older bare section that has not fallen, is unchanged.
 status: open
 
 ## Deferred from: code review of 1-4-the-warden-strips-re-lays-carries-and-reads-the-forearm.md (2026-11-21)
@@ -397,4 +399,24 @@ location: game/watch/debug/aim_aid.gd; game/watch/debug/debug_tools.gd, `make_ai
 owner: epic 4 story 1 (the hands: ready pose, hold feedback, cancel, can't), and in any case before the first gate 2 build
 severity: medium
 reason: Until the hands show what a click will do (UX-5), a debug aid draws a centre dot over the night view: dim with nothing in reach, the word `deck` or `rail` for what is in reach, bright when a button would start a hold, and a ring for a hold's progress. It is on in every run that has the debug tools (the editor and playtest builds), so a playtest build would show it. EXPERIENCE.md allows nothing over the night view but the caption and the optional plain centre dot, and no bars or rings: the aid breaks that on purpose and must not reach a player. Remove the files and the call in `_show_night()` when epic 4 story 1 lands. The settings' plain centre dot (UX-5, epic 8) is a separate thing and is not built by this.
+status: open
+
+## Deferred from: dev-story of 1-5-sections-carry-weight-creak-groan-and-fall.md (2026-11-22)
+
+### DW-42: Test weights are a count in SpanState; the architecture sketches them as the dead
+
+origin: dev-story of story 1.5, 2026-11-22 (Dev Notes, decisions settled without a question)
+location: game/watch/sim/span_state.gd (`_weights`, `_lifts`), start_state.gd (`weights`, `lifts`), span_rules.gd (`load_on()`, `take_lifts()`), consequence_rules.gd (`weights_fall()`); game-architecture.md, the test example (`start.weights[3] = 4`) and "a weight is a kind of `DeadState`"
+owner: epic 3, when `DeadState` is whole (epic 2 brings the warnings' part, epic 3 the rest)
+severity: low
+reason: Story 1.5 stores test weights as a count per section, as the architecture's test example writes them, because `DeadState` does not exist yet. The architecture's other sketch makes a weight a kind of `DeadState`. When the dead arrive, decide whether test weights become dead of a "weight" kind (then `load_on()` sums one list, and `weights_fall()` folds into the dead's footing step) or stay a separate count for tests and show-me setups. Story 1.5's decision D1 lifts (`StartState.lifts`, `WEIGHT_LIFTED`) stand in for one of the dead walking off a section: fold them into the dead walking off then, and check that the bot path's `GROAN_STOPPED` coverage still has a path.
+status: open
+
+### DW-43: A plankless section with a weight on it falls by the general rule until story 1.6
+
+origin: dev-story of story 1.5, 2026-11-22
+location: game/watch/sim/span_rules.gd, `strength()` and `tick_loads()`; game/watch/sim/warden_rules.gd, `step_back()`
+owner: story 1.6 (open sections and gaps)
+severity: low
+reason: In story 1.5 a section's strength is its planks only, so a section with no planks and a load of 1 groans and falls after 2 s (a test checks it). GDD Game Mechanics 2 gives an open section's side beams a load of 2: story 1.6 replaces this by adding the beams to `strength()` for an open section, and that test changes with it. Story 1.5's decision D2 (a warden beside a fallen section within 0.3 m steps straight back to 0.3 m from the gap, in the same tick) is the precedent for a warden beside a section that goes open, if 1.6 needs one; 1.6's edging replaces story 1.4's D3, which `step_back()` deliberately leaves alone (it moves the feet only when a probe is over a fallen section).
 status: open

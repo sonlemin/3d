@@ -67,6 +67,25 @@ func _test_hand_lines() -> void:
 	_check("trace: every kind fits the 17 column", widest <= 17, str(widest))
 
 
+func _test_load_and_climb_lines() -> void:
+	# Story 1.5 Dev Notes, "Trace": the section's kinds have no who; the weight's who is `weight`;
+	# the catch and the climb are the warden's, and a climb onto the landing says `landing`.
+	var cases: Array[Array] = [
+		[_event(NightEvent.Kind.CREAK_STARTED, 1.0, 4), "  1.000 CREAK_STARTED     s4"],
+		[_event(NightEvent.Kind.CREAK_STOPPED, 1.5, 4), "  1.500 CREAK_STOPPED     s4"],
+		[_event(NightEvent.Kind.GROAN_STARTED, 0.0, 3), "  0.000 GROAN_STARTED     s3"],
+		[_event(NightEvent.Kind.GROAN_STOPPED, 1.0, 3), "  1.000 GROAN_STOPPED     s3"],
+		[_event(NightEvent.Kind.SECTION_FELL, 2.0, 4), "  2.000 SECTION_FELL      s4"],
+		[_event(NightEvent.Kind.WEIGHT_LIFTED, 1.0, 3), "  1.000 WEIGHT_LIFTED     weight s3"],
+		[_event(NightEvent.Kind.WARDEN_CAUGHT, 2.0, 4), "  2.000 WARDEN_CAUGHT     warden s4"],
+		[_event(NightEvent.Kind.WARDEN_CLIMBED, 7.0, 5), "  7.000 WARDEN_CLIMBED    warden s5"],
+		[_event(NightEvent.Kind.WARDEN_CLIMBED, 7.0, 0), "  7.000 WARDEN_CLIMBED    warden landing"],
+	]
+	for case: Array in cases:
+		var got: String = NightTrace.line(case[0])
+		_check("trace: '%s'" % case[1], got == case[1], "'%s'" % got)
+
+
 func _test_traced_strip() -> void:
 	# A real strip through the sim, traced: section 4 from along 17.5 (GD-19: 2 s = 120 ticks).
 	var start: StartState = StartState.new()

@@ -15,6 +15,10 @@ static func _table() -> Dictionary[StringName, Array]:
 		&"walk_close": ["the span from mid-span: sections ahead at 5, 4 and 1 planks (M2, DW-31)", ShowSetups.walk_close],
 		&"strip": ["strip planks and a rail, re-lay one, read the forearm (M1 of story 1.4)", ShowSetups.strip],
 		&"forearm": ["12 planks and 3 ropes in hand; hold Tab on the landing (M2 of story 1.4)", ShowSetups.forearm],
+		&"overload": ["section 4 at 4 planks with 3 weights; strip it from section 5 until it falls (M1 of story 1.5)",
+				ShowSetups.overload],
+		&"fall_under": ["stand on section 4 (4 planks, 3 weights) and strip it under you (M2 of story 1.5)",
+				ShowSetups.fall_under],
 	}
 
 
@@ -97,4 +101,25 @@ static func forearm() -> NightDef:
 	def.start.planks = {1: 0, 2: 4}
 	def.start.stripped_rails = [Vector2i(1, NightTypes.Side.LEFT), Vector2i(1, NightTypes.Side.RIGHT),
 			Vector2i(2, NightTypes.Side.LEFT)]
+	return def
+
+
+## M1 of story 1.5: section 4 at 4 planks under 3 test weights (3 < 4: nothing happens until a
+## strip), the warden on section 5 at along 20.4, 0.4 m from section 4, facing the far pier. The 4
+## planks taken off start in hand.
+static func overload() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = StartState.new()
+	def.start.planks = {4: 4}
+	def.start.weights = {4: 3}
+	def.start.warden_along = 20.4
+	return def
+
+
+## M2 of story 1.5: the same section 4, the warden on it at along 19.2, 0.8 m from section 5: inside
+## the 1.25 m end strip that weight_box() keeps clear, so they do not stand in a weight; the deck
+## 0.6 m ahead (along 18.6) is clear and in reach.
+static func fall_under() -> NightDef:
+	var def: NightDef = overload()
+	def.start.warden_along = 19.2
 	return def

@@ -43,8 +43,14 @@ func start_at(sim: NightSim) -> void:
 	_swallow_release = false
 
 
-## A consumer of the night (`on_tick(events, sim)`): the sim's new position joins the blend.
-func on_tick(_events: Array[NightEvent], sim: NightSim) -> void:
+## A consumer of the night (`on_tick(events, sim)`): the sim's new position joins the blend. The
+## catch at a fall and the end of the climb back (story 1.5 D3) are cuts: the blend snaps, so the
+## view jumps rather than sliding through the gap. Every other move, D2's step back too, blends.
+func on_tick(events: Array[NightEvent], sim: NightSim) -> void:
+	for event: NightEvent in events:
+		if event.kind == NightEvent.Kind.WARDEN_CAUGHT or event.kind == NightEvent.Kind.WARDEN_CLIMBED:
+			_blend.snap(sim.warden.position)
+			return
 	_blend.push(sim.warden.position)
 
 

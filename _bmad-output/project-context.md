@@ -58,14 +58,17 @@ _This file contains critical rules and patterns that AI agents must follow when 
 **Rules, time and randomness inside the sim**
 
 - Rule scripts are `*_rules.gd`: static functions only. A **pure query** takes the pieces it reads and returns a value. A function that **changes state** takes `sim: NightSim` last, returns nothing, and reports with `sim.emit(event)` or `sim.refuse(reason, target, action)` (AD-67).
-- **Store base facts only** (planks, rails, hooks, positions, oil). Strength, "open", load, "lit" and "locked" are computed when needed, never stored (AD-35).
+- **Store base facts only** (planks, rails, hooks, positions, oil). Strength, "open", load, "lit" and "locked" are computed when needed, never stored (AD-35). Since story 1.5, `SpanState` also stores whether a section has fallen (a section with no planks may be open or fallen, so it cannot be worked out), the test weights, the lifts still to come, and each section's creak and groan ticks left (a phase and a countdown, needed to emit an event on the tick one starts or stops). All of them go into the checksum.
+- **Load against strength** (story 1.5, `SpanRules.tick_loads()`, step 7): load equal to strength and above 0 creaks; above it groans for `SpanConstants.GROAN_S` (2 s) and then falls for good, unless the load drops back first. The groan is counted from its first tick and is not restarted by more load. The constant is `GROAN_S`, where the architecture's Data Patterns example writes `CREAK_GROAN_S` (a creak has no length). Load is a `float` (multiples of 0.5, exact), compared with an `int` strength by `==`.
+- **A fallen section has no deck and no floor:** `LookRules` neither targets it nor is blocked by it, `WardenRules` never walks on it (nor does story 1.4's D3 count it), `HandRules.check()` refuses a re-lay onto it with `NO_ACTION_HERE`, and the ledger has no room on it.
 - `advance()` runs the current tick, then adds 1: the first call is tick 0, and its events carry `t = 0.0`.
 - **Time is whole ticks** (AD-33). Constants are in seconds with `_S`; they are converted once into `sim.ticks` (`NightTicks`). Rules count ticks down; nothing adds up float seconds. Begun on tick T and lasting N ticks means done on tick T + N.
 - **Every rule has a numbered step in the tick order** (AD-34, 13 steps). Add the step before writing the rule. Nothing ticks outside it. Dawn wins a tie with a loss on the same tick.
 - **Randomness:** the sim's one seeded generator is `sim.rng`, used only inside the sim. A consumer that needs variety owns its own generator seeded from the night's seed. Never `randi()`, `randf()`, `randomize()`, `Array.shuffle()` or `pick_random()`.
 - **Parts move only through `SpanRules.move_parts()`** (the parts ledger). No other code changes a plank or rope count. It never loses a part: a wrong place or a negative count moves nothing, too few at `from` moves what there is, too little room at `to` (a deck holds the def's planks per section, a rail one rope) moves what fits, and each is a fault.
 - **The seed is on `NIGHT_STARTED`** (`event.seed`, AD-3), and `sim.night_seed` holds it. A night started without `--seed` gets one that `--seed=N` accepts.
-- **When the span changes, change only the span.** `ConsequenceRules.settle()` decides what follows for the dead, rigs, lanterns, parts, hooks and the warden, as an ordered list of small named steps (AD-48, AD-64). `HoldRules` alone cancels a hold that became impossible.
+- **When the span changes, change only the span.** `ConsequenceRules.settle()` decides what follows for the dead, rigs, lanterns, parts, hooks and the warden, as an ordered list of small named steps (AD-48, AD-64). `HoldRules` alone cancels a hold that became impossible. Since story 1.5 it runs at steps 4 and 8 with three steps (`weights_fall`, `parts_lost`, `warden_footing`): a fallen section's weights fall, its parts go to lost through the ledger, a warden on it catches the edge and climbs back, and a warden beside it within 0.3 m steps back to 0.3 m from the gap in the same tick (story 1.5 D2). A new consequence is a new step, never a branch in an old one; a second `settle()` in a tick changes nothing. A hold on a section that fell on tick F is cancelled by `HoldRules` on F + 1.
+- **Timed moves are `WardenRules`'** (AD-52): `WardenState.move` (`WALKING`, `CLIMBING`; story 1.6 adds edging and crossing). The climb back after a fall lasts 300 ticks, counted down in step 1 before the walk; meanwhile the move wish is ignored and `HoldRules` ignores every press (Tab too), cancels a running hold and lowers the forearm. Ask `WardenRules.walking(sim)`.
 - A phase change always emits exactly one event, from the function that makes the change. Event kinds are past tense, upper snake, and name who (`DEAD_FELL`, `SECTION_FELL`).
 - No `await`, scene-tree timers or tweens for anything timed by a rule.
 
@@ -196,4 +199,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Update when the architecture, the engine version, CI or the folder layout changes.
 - Remove a rule once the code makes it obvious.
 
-Last Updated: 2026-11-21
+Last Updated: 2026-11-22

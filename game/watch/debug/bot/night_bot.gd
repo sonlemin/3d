@@ -33,12 +33,18 @@ const WALK_GUARD: int = 1200
 ## Story 1.4's strip path needs this many sections: the town, `a` two before it and `b` three
 ## before it are three different sections.
 const STRIP_MIN_SECTIONS: int = 4
+## Story 1.5's overload path: the wander after its script, in ticks.
+const OVERLOAD_WANDER_TICKS: int = 300
+## Story 1.5's overload path: section b's two lifts (decision D1), on these ticks. Its 4 weights
+## on 3 planks groan from tick 0; the first lift (3 on 3) holds it and it creaks, the second
+## (2 on 3) ends the creak. Both well before the 120 ticks of the groan run out.
+const OVERLOAD_LIFTS: Array[int] = [60, 90]
 
 
 ## Every path, each `(def, seed, faults, each_tick) -> NightSim`: it builds its night on `def`
 ## (the one night or a shorter test def), runs it and returns the sim.
 static func paths() -> Array[Callable]:
-	return [NightBot.span_counts, NightBot.walk, NightBot.strip]
+	return [NightBot.span_counts, NightBot.walk, NightBot.strip, NightBot.overload]
 
 
 ## Story 1.2: the span_counts show's StartState, then 600 ticks with a changing move wish,
@@ -115,7 +121,7 @@ static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick:
 static func strip(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
 	var sim: NightSim = strip_script(def, night_seed, faults, each_tick)
 	if def.section_count >= STRIP_MIN_SECTIONS:
-		_strip_wander(sim, night_seed, each_tick)
+		_wander(sim, night_seed, STRIP_WANDER_TICKS, each_tick)
 	return sim
 
 
@@ -206,12 +212,12 @@ static func strip_script(def: NightDef, night_seed: int, faults: WatchFaults, ea
 	return sim
 
 
-## The end of strip: a wander like walk's, with a tap (press, then release on the next tick) of a
-## random night button every WANDER_EVERY ticks.
-static func _strip_wander(sim: NightSim, night_seed: int, each_tick: Callable) -> void:
+## The end of strip and overload: a wander like walk's, with a tap (press, then release on the next
+## tick) of a random night button every WANDER_EVERY ticks, for `ticks` ticks.
+static func _wander(sim: NightSim, night_seed: int, ticks: int, each_tick: Callable) -> void:
 	var wander: RandomNumberGenerator = RandomNumberGenerator.new()
 	wander.seed = night_seed
-	for i: int in STRIP_WANDER_TICKS:
+	for i: int in ticks:
 		if i % WANDER_EVERY == 0:
 			sim.set_move(Vector2.from_angle(wander.randf_range(-PI, PI)) * wander.randf_range(0.0, 1.0))
 			sim.set_view(wander.randf_range(-PI, PI), wander.randf_range(-1.3, 1.3))
@@ -221,6 +227,112 @@ static func _strip_wander(sim: NightSim, night_seed: int, each_tick: Callable) -
 				sim.command(NightCommand.release(input as NightTypes.HandInput))
 		each_tick.call(sim.advance(), sim)
 	sim.set_move(Vector2.ZERO)
+
+
+## Story 1.5 (AD-63): sections carry weight, creak, groan and fall; a hold on a section that falls
+## is cancelled on the next tick; the warden steps back from a gap, falls with a section, climbs
+## back, and is refused at a gap. Every section number comes from the def: the town, `c` one before
+## it, `a` two before, `b` three before (6, 5, 4, 3 of 6; 4, 3, 2, 1 of 4). Its StartState: `b` at
+## 3 planks with 4 weights and two lifts (OVERLOAD_LIFTS); `a` and `c` at 4 planks with 3 weights;
+## the town full with 5 weights. From the landing:
+## - at section_start(c) + 0.1 (0.1 m from a, D2's band): a stripped twice (creak, then groan); a
+##   third strip begun the tick after, so it would complete the tick after a falls: cancelled
+##   then; a falls with nobody on it, and the warden steps back to 0.3 m from the gap;
+## - at mid c: its own deck stripped twice (creak, then groan), Tab pressed and held, so the forearm
+##   is up when c falls under the warden; caught, lowered the next tick; during the climb every
+##   button and Tab tapped and a move wish pushed, all ignored; climbed onto the town section;
+## - at mid town: stripped to 4 (5 weights: creak at 5, groan at 4), and stayed on: it falls, and
+##   the warden climbs onto the landing;
+## - from the landing, aimed into the town section's gap: the hammer and E, NO_ACTION_HERE;
+## - a short wander, as strip's, on the landing.
+## A def with fewer than STRIP_MIN_SECTIONS sections is `bot.bad_def`: built, returned, not run.
+static func overload(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var sim: NightSim = overload_script(def, night_seed, faults, each_tick)
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		_wander(sim, night_seed, OVERLOAD_WANDER_TICKS, each_tick)
+	return sim
+
+
+## overload's scripted part alone, with no wander after it (for the test that checks the script
+## reaches each case it is written for).
+static func overload_script(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var town: int = def.section_count
+	var c: int = town - 1
+	var a: int = town - 2
+	var b: int = town - 3
+	var start: StartState = StartState.new()
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		start.planks = {b: 3, a: 4, c: 4}
+		start.weights = {b: 4, a: 3, c: 3, town: 5}
+		for tick: int in OVERLOAD_LIFTS:
+			start.lifts.append(Vector2i(b, tick))
+	def.start = start
+	var sim: NightSim = NightSim.new(def, night_seed, faults)
+	if def.section_count < STRIP_MIN_SECTIONS:
+		faults.report(&"bot.bad_def", "overload needs %d sections, the def has %d" % [STRIP_MIN_SECTIONS,
+				def.section_count])
+		return sim
+	var g: SpanGeometry = sim.geometry
+	var hammer: NightTypes.HandInput = NightTypes.HandInput.HAMMER
+	var forearm: NightTypes.HandInput = NightTypes.HandInput.FOREARM
+	var c_edge: float = g.section_start(c) + 0.1
+	var mid_c: float = g.section_start(c) + SpanConstants.SECTION_LENGTH / 2.0
+	var mid_town: float = g.section_start(town) + SpanConstants.SECTION_LENGTH / 2.0
+	# a, from just inside c: creak, groan, then a third strip that the fall cancels.
+	_go_to(sim, 0.0, c_edge, each_tick)
+	_aim_at_deck(sim, c_edge - 0.6, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	sim.command(NightCommand.press(hammer))
+	_ticks(sim, sim.ticks.groan + 2, each_tick)
+	sim.command(NightCommand.release(hammer))
+	_ticks(sim, 1, each_tick)
+	# c, under the warden, with the forearm up.
+	_go_to(sim, 0.0, mid_c, each_tick)
+	_aim_at_deck(sim, mid_c - 0.6, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	sim.command(NightCommand.press(forearm))
+	_until_climbing(sim, each_tick)
+	_ticks(sim, 1, each_tick)
+	for input: int in NightTypes.HandInput.size():
+		_tap(sim, input as NightTypes.HandInput, each_tick)
+	sim.command(NightCommand.release(forearm))
+	sim.set_move(Vector2(0.0, -1.0))
+	_ticks(sim, 30, each_tick)
+	sim.set_move(Vector2.ZERO)
+	_until_walking(sim, each_tick)
+	# The town section, under the warden, down to 4.
+	_go_to(sim, 0.0, mid_town, each_tick)
+	_aim_at_deck(sim, mid_town - 0.6, each_tick)
+	for i: int in def.planks_per_section - SpanConstants.LAST_SECTION_MIN_PLANKS:
+		_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	_until_climbing(sim, each_tick)
+	_until_walking(sim, each_tick)
+	# From the landing, into the gap where the town section was.
+	_aim_at_deck(sim, g.length() - 0.6 + WardenConstants.CLEARANCE, each_tick)
+	_tap(sim, hammer, each_tick)
+	_tap(sim, NightTypes.HandInput.USE, each_tick)
+	return sim
+
+
+## Ticks until the warden is climbing (caught by a fall), at most WALK_GUARD; not caught by then
+## is `bot.walk_lost`: the script's later steps are not where it thinks.
+static func _until_climbing(sim: NightSim, each_tick: Callable) -> void:
+	for i: int in WALK_GUARD:
+		if not WardenRules.walking(sim):
+			return
+		_ticks(sim, 1, each_tick)
+	sim.faults.report(&"bot.walk_lost", "no fall under the warden at %s" % sim.warden.position)
+
+
+## Ticks until the warden walks again (the climb ended), at most WALK_GUARD.
+static func _until_walking(sim: NightSim, each_tick: Callable) -> void:
+	for i: int in WALK_GUARD:
+		if WardenRules.walking(sim):
+			return
+		_ticks(sim, 1, each_tick)
+	sim.faults.report(&"bot.walk_lost", "the climb never ended at %s" % sim.warden.position)
 
 
 static func _ticks(sim: NightSim, count: int, each_tick: Callable) -> void:

@@ -113,6 +113,47 @@ func _test_follows_the_sim() -> void:
 	night.free()
 
 
+func _test_the_climb_cuts_and_the_step_back_blends() -> void:
+	# Story 1.5 D3: WARDEN_CAUGHT and WARDEN_CLIMBED snap the blend (the view cuts); D2's step back is
+	# blended. Section 4 (3 planks under 4 test weights, GD-19) falls on tick 120.
+	var night: NightScreen = _night()
+	var warden: Warden = _warden_of(night)
+	var start: StartState = StartState.new()
+	start.planks = {4: 3}
+	start.weights = {4: 4}
+	start.warden_along = 17.5
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	warden.start_at(sim)
+	for i: int in 120:
+		warden.on_tick(sim.advance(), sim)
+	var caught: Array[NightEvent] = sim.advance()
+	warden.on_tick(caught, sim)
+	_check("node: on WARDEN_CAUGHT the blend snaps to the hang point (no slide through the gap)",
+			_has(caught, NightEvent.Kind.WARDEN_CAUGHT) and warden.blend().value(0.0).is_equal_approx(sim.warden.position)
+			and warden.blend().value(1.0).is_equal_approx(sim.warden.position), str(warden.blend().value(0.0)))
+	for i: int in 299:
+		warden.on_tick(sim.advance(), sim)
+	var up: Array[NightEvent] = sim.advance()
+	warden.on_tick(up, sim)
+	_check("node: on WARDEN_CLIMBED it snaps to the deck",
+			_has(up, NightEvent.Kind.WARDEN_CLIMBED) and warden.blend().value(0.0).is_equal_approx(sim.warden.position),
+			str(warden.blend().value(0.0)))
+	# D2: on section 5 at along 20.1 when section 4 falls: stepped back 0.2 m, blended.
+	start = StartState.new()
+	start.planks = {4: 3}
+	start.weights = {4: 4}
+	start.warden_along = 20.1
+	sim = _sim_with(_def_with(start), 1)
+	warden.start_at(sim)
+	for i: int in 120:
+		warden.on_tick(sim.advance(), sim)
+	warden.on_tick(sim.advance(), sim)
+	_check("node: D2's step back blends from where they stood (along 20.1) to 20.3",
+			warden.blend().value(0.0).is_equal_approx(Vector3(0.0, 0.0, -9.9))
+			and warden.blend().value(1.0).is_equal_approx(Vector3(0.0, 0.0, -9.7)), str(warden.blend().value(0.0)))
+	night.free()
+
+
 func _test_placed_start_is_drawn() -> void:
 	# D3: a show-me setup that places the warden mid-span is drawn there from the first frame.
 	var start: StartState = StartState.new()

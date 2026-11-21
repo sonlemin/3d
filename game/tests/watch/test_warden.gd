@@ -243,3 +243,69 @@ func _test_stops_exactly_where_floors_differ_in_width() -> void:
 	for stopped: Vector3 in [a, b, c, d, e]:
 		var floors: Array[Rect2] = wide if stopped in [a, b, c] else narrow
 		_check("warden: where it stopped (%s) can be stood on" % stopped, WardenRules.stands_on(stopped, floors))
+
+
+# --- Story 1.5: the climb, a fallen section is no floor, the warden adds no load ---------------
+# GD-19 / GDD Game Mechanics 2: 3 planks under 4 weights falls on tick 120; the climb back is 5 s
+# (300 ticks).
+
+func _loaded(along: float, planks: Dictionary[int, int], weights: Dictionary[int, int]) -> NightSim:
+	var start: StartState = StartState.new()
+	start.warden_along = along
+	start.planks = planks
+	start.weights = weights
+	return _sim_with(_def_with(start), 1)
+
+
+func _test_the_move_wish_does_nothing_while_climbing() -> void:
+	var sim: NightSim = _loaded(17.5, {4: 3}, {4: 4})
+	_push(sim, Vector2.ZERO, 121)
+	var hang: Vector3 = sim.warden.position
+	_check("warden: climbing after the fall", not WardenRules.walking(sim) and sim.warden.move == WardenState.Move.CLIMBING)
+	var still: bool = true
+	for wish: Vector2 in [Vector2(0.0, 1.0), Vector2(0.0, -1.0), Vector2(1.0, 0.0), Vector2(-0.70710678, 0.70710678)]:
+		_push(sim, wish, 20)
+		still = still and sim.warden.position == hang
+	_check("warden: no wish moves a climbing warden", still, str(sim.warden.position))
+	_check("warden: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_fallen_section_is_no_floor() -> void:
+	# Section 4 falls with the warden on the landing; section 2 is bare and stands.
+	var sim: NightSim = _loaded(-1.0, {2: 0, 4: 3}, {4: 4})
+	_push(sim, Vector2.ZERO, 121)
+	_check("warden: section 4 has fallen", sim.span.fallen(4))
+	var floors: Array[Rect2] = WardenRules.walkable(sim)
+	_check("warden: walkable is sections 1, 3, 5, 6 and the landing", floors.size() == 5, str(floors))
+	_check("warden: D3 never counts a fallen section (feet mid section 4)",
+			WardenRules.held_by_bare(Vector3(0.0, 0.0, 17.5 - 30.0), sim).is_empty())
+	_check("warden: D3 still counts a bare one that stands (feet mid section 2)",
+			WardenRules.held_by_bare(Vector3(0.0, 0.0, 7.5 - 30.0), sim).size() == 1)
+
+
+func _test_the_warden_adds_no_load() -> void:
+	# AC 9: 3 planks, 3 weights, the warden standing mid section 4: it creaks, never groans.
+	var sim: NightSim = _loaded(17.5, {4: 3}, {4: 3})
+	var kinds: Array[NightEvent.Kind] = []
+	for i: int in 300:
+		sim.set_move(Vector2(0.0, 0.0))
+		for event: NightEvent in sim.advance():
+			kinds.append(event.kind)
+	_check("warden: on a section at its limit it only creaks", kinds == [NightEvent.Kind.NIGHT_STARTED,
+			NightEvent.Kind.CREAK_STARTED], str(kinds))
+	var away: NightSim = _loaded(-1.0, {4: 3}, {4: 3})
+	_check("warden: the load is 3 with the warden on it and 3 without", SpanRules.load_on(4, sim.span) == 3.0
+			and SpanRules.load_on(4, away.span) == 3.0)
+
+
+func _test_warden_state_values() -> void:
+	# The checksum's warden facts: each changes values().
+	var base: Array = WardenState.new().values()
+	var moved: WardenState = WardenState.new()
+	moved.move = WardenState.Move.CLIMBING
+	var ticking: WardenState = WardenState.new()
+	ticking.move_ticks_left = 5
+	var from: WardenState = WardenState.new()
+	from.fell_from = 4
+	_check("warden: move, ticks left and fell_from each change values()", moved.values() != base
+			and ticking.values() != base and from.values() != base)

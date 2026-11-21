@@ -47,6 +47,14 @@ const FAR_PIER_RISE: float = 3.0
 const LANDING_WIDTH: float = 5.0
 ## Gray-box size, D2; not a rule.
 const LANDING_LENGTH: float = 4.0
+## Gray-box size, story 1.5; not a rule. A test weight's cube.
+const WEIGHT_SIZE: float = 0.5
+## Story 1.5: the weights' grid, a layer of 3 across by 3 along, filled from the middle out (so a
+## single weight sits mid-section); then the next layer up. Across, in metres from the centre line.
+const WEIGHT_ACROSS: Array[float] = [0.0, -1.5, 1.5]
+## Along, in metres from the section's far-pier end: the middle 2.5 m, so no weight stands within
+## 1.25 m of either end, where the deck is aimed at from the next section.
+const WEIGHT_ALONG: Array[float] = [2.5, 1.75, 3.25]
 
 var _sections: int
 var _places: int
@@ -173,6 +181,42 @@ func landing_box() -> AABB:
 ## Where the warden's feet start: the landing's centre, facing the far pier.
 func warden_start() -> Vector3:
 	return Vector3(0.0, 0.0, world_z(length() + LANDING_LENGTH / 2.0))
+
+
+## Story 1.5: test weight `i` (from 0) on `section`: a cube standing on the deck top, in a fixed
+## grid (WEIGHT_ACROSS by WEIGHT_ALONG), stacking up a layer when one is full, so any count is
+## drawn. Not a shape for LookRules or WardenRules: the warden walks through weights.
+func weight_box(section: int, i: int) -> AABB:
+	var per_layer: int = WEIGHT_ACROSS.size() * WEIGHT_ALONG.size()
+	var in_layer: int = i % per_layer
+	var x: float = WEIGHT_ACROSS[in_layer % WEIGHT_ACROSS.size()]
+	var along: float = section_start(section) + WEIGHT_ALONG[in_layer / WEIGHT_ACROSS.size()]
+	var half: float = WEIGHT_SIZE / 2.0
+	return AABB(Vector3(x - half, (i / per_layer) * WEIGHT_SIZE, world_z(along) - half),
+			Vector3(WEIGHT_SIZE, WEIGHT_SIZE, WEIGHT_SIZE))
+
+
+## Story 1.5 decision D3: the along of the edge a falling warden catches and climbs onto: the
+## far-pier end of section `onto`, or the landing's edge for `onto` 0.
+func climb_edge(onto: int) -> float:
+	return length() if onto == 0 else section_start(onto)
+
+
+## D3: where the feet hang while climbing onto `onto` (0: the landing), from the warden's `x`:
+## at its edge, x kept CLEARANCE inside its sides, WardenConstants.HANG_DROP below its deck top.
+func hang_point(onto: int, x: float) -> Vector3:
+	return Vector3(_climb_x(onto, x), -WardenConstants.HANG_DROP, world_z(climb_edge(onto)))
+
+
+## D3: where the feet are once the climb ends: on `onto`'s deck, CLEARANCE in from its edge.
+func climb_end(onto: int, x: float) -> Vector3:
+	return Vector3(_climb_x(onto, x), 0.0, world_z(climb_edge(onto) + WardenConstants.CLEARANCE))
+
+
+## `x` kept CLEARANCE inside the sides of section `onto`, or of the landing for 0.
+func _climb_x(onto: int, x: float) -> float:
+	var half: float = (LANDING_WIDTH if onto == 0 else SpanConstants.SECTION_WIDTH) / 2.0 - WardenConstants.CLEARANCE
+	return clampf(x, -half, half)
 
 
 ## The x of a section's side edge.

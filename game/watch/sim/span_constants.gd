@@ -1,5 +1,4 @@
 ## The span's rule numbers (AD-9, AD-21). GDD values are starting values; tuning is a commit.
-## Load times arrive with their rule (story 1.5).
 class_name SpanConstants
 extends RefCounted
 
@@ -17,3 +16,11 @@ const RELAY_PLANK_S: float = 3.0
 ## GD-19: the town section (section 6, the def's last) keeps at least 4 planks; a strip that
 ## would take it below is refused (LAST_SECTION_MINIMUM). Its rail ropes can still be stripped.
 const LAST_SECTION_MIN_PLANKS: int = 4
+## GD-19, GDD Game Mechanics 2: a section whose load is above its strength groans for 2 s, then
+## falls for good. Counted from the first tick of overload; more load does not restart it (story
+## 1.5). The architecture's Data Patterns example names it CREAK_GROAN_S; a creak has no length.
+const GROAN_S: float = 2.0
+## Story 1.5 (the epic's AC, "each a load of 1"; a Grappler's load, GD-19): one test weight's load.
+## Loads are multiples of 0.5 (a hatchling, epic 3), exact in binary, so a load compares with an
+## int strength by ==.
+const TEST_WEIGHT_LOAD: float = 1.0

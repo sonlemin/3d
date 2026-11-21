@@ -750,3 +750,183 @@ func _test_last_plank_town_section() -> void:
 	var events: Array[NightEvent] = sim.advance()
 	_check("ac10: the town section never reaches its last plank", _only(events, NightEvent.Kind.REFUSED)
 			and sim.span.planks(6) == 4, _names(events))
+
+
+# --- Story 1.5 AC 10 / DW-34: a hold on a section that falls; the hands during the climb -------
+# GD-19 / GDD Game Mechanics 2: 3 planks under 4 weights groans from tick 0 and falls on tick 120
+# (2 s). The fall is step 7 of tick F; HoldRules is step 2, so it cancels on F + 1. The climb back
+# is 5 s = 300 ticks, during which every press is ignored (story 1.5, "The climb").
+
+## GDD Game Mechanics 2: the fall tick of a section overloaded from tick 0.
+const FALL_TICK: int = 120
+
+
+## As _ready_at(), with test weights placed too.
+func _loaded_at(along: float, planks: Dictionary[int, int], weights: Dictionary[int, int], yaw: float = 0.0,
+		pitch: float = DOWN, sideways: int = 0) -> NightSim:
+	var start: StartState = StartState.new()
+	start.warden_along = along
+	start.planks = planks
+	start.weights = weights
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	for i: int in sideways:
+		sim.set_move(Vector2(-1.0, 0.0))
+		sim.advance()
+	sim.set_move(Vector2.ZERO)
+	sim.set_view(yaw, pitch)
+	sim.advance()
+	return sim
+
+
+## Runs to the tick after the fall (F + 1) and returns that tick's events.
+func _after_the_fall(sim: NightSim) -> Array[NightEvent]:
+	_advance(sim, FALL_TICK + 1 - sim.tick)
+	return sim.advance()
+
+
+func _test_dw34_a_strip_hold_on_a_falling_section() -> void:
+	# On section 5 at along 20.4, a strip of section 4's deck begun on tick 1: it would complete on
+	# tick 121 = F + 1, and is cancelled on that tick instead (the check runs before progress).
+	var sim: NightSim = _loaded_at(20.4, {4: 3}, {4: 4})
+	_press(sim, HAMMER)
+	var began: Array[NightEvent] = sim.advance()
+	_check("dw34: the strip began on tick 1", _only(began, NightEvent.Kind.HOLD_STARTED) and _tick_of(began[0]) == 1,
+			_names(began))
+	_check("dw34: it is set to complete on tick 121", sim.hands.ticks_left == STRIP_PLANK_TICKS)
+	var cancelled: Array[NightEvent] = _after_the_fall(sim)
+	_check("dw34: HOLD_CANCELLED on F + 1 = 121, section 4 strip_plank", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
+			and _tick_of(cancelled[0]) == FALL_TICK + 1 and cancelled[0].section == 4 and cancelled[0].id == &"strip_plank",
+			_names(cancelled))
+	_check("dw34: no plank moved to the hand (5 from the start)", sim.span.in_hand(PLANK) == 5 and not sim.hands.holding())
+	# One begun later (tick 30) is cancelled on 121 too.
+	sim = _loaded_at(20.4, {4: 3}, {4: 4})
+	_advance(sim, 29 - sim.tick)
+	_press(sim, HAMMER)
+	cancelled = _after_the_fall(sim)
+	_check("dw34: a strip begun on tick 30 is cancelled on 121", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
+			and _tick_of(cancelled[0]) == FALL_TICK + 1, _names(cancelled))
+	_check("dw34: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_dw34_a_rail_strip_hold_on_a_falling_section() -> void:
+	# At the left rail (x -2.2) on section 5 at along 20.1, aimed back at section 4's left rope (at
+	# along 19.6, 1.0 high): a 3 s strip begun on tick 61 would end on 241. The fall on 120 loses the
+	# rope; the warden steps back 0.2 m (D2, under 0.5 m); the hold is cancelled on 121.
+	var start: StartState = StartState.new()
+	start.warden_along = 20.1
+	start.planks = {4: 3}
+	start.weights = {4: 4}
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	for i: int in 60:
+		sim.set_move(Vector2(-1.0, 0.0))
+		sim.advance()
+	sim.set_move(Vector2.ZERO)
+	var to: Vector3 = Vector3(-2.5, 1.0, 19.6 - 30.0) - (sim.warden.position + Vector3(0.0, 1.6, 0.0))
+	sim.set_view(atan2(-to.x, -to.z), atan2(to.y, Vector2(to.x, to.z).length()))
+	sim.advance()
+	_check("dw34: aimed at section 4's left rail", sim.look.kind == LookTarget.Kind.RAIL and sim.look.section == 4
+			and sim.look.side == LEFT, "%s s%d" % [LookTarget.Kind.find_key(sim.look.kind), sim.look.section])
+	_press(sim, ROPE)
+	sim.advance()
+	_check("dw34: the rail strip is running", sim.hands.holding() and sim.hands.action == NightTypes.HandAction.STRIP_RAIL)
+	var cancelled: Array[NightEvent] = _after_the_fall(sim)
+	_check("dw34: HOLD_CANCELLED on F + 1, section 4 strip_rail L", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
+			and _tick_of(cancelled[0]) == FALL_TICK + 1 and cancelled[0].section == 4 and cancelled[0].id == &"strip_rail"
+			and cancelled[0].side == LEFT, _names(cancelled))
+	_check("dw34: no rope in hand", sim.span.in_hand(NightTypes.Part.ROPE) == 0)
+	_check("dw34: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_dw34_a_relay_hold_on_a_falling_section() -> void:
+	# Section 4 at 2 planks under 4 weights; on section 5 at along 20.4 with 6 planks in hand, a 3 s
+	# re-lay onto it begun on tick 1 would end on 181: cancelled on 121 (hand first, then the fall).
+	var sim: NightSim = _loaded_at(20.4, {4: 2}, {4: 4})
+	_press(sim, USE)
+	sim.advance()
+	_check("dw34: the re-lay is running", sim.hands.holding() and sim.hands.action == NightTypes.HandAction.RELAY_PLANK)
+	var cancelled: Array[NightEvent] = _after_the_fall(sim)
+	_check("dw34: HOLD_CANCELLED on F + 1, section 4 relay_plank", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
+			and _tick_of(cancelled[0]) == FALL_TICK + 1 and cancelled[0].id == &"relay_plank", _names(cancelled))
+	_check("dw34: the 6 planks stay in hand", sim.span.in_hand(PLANK) == 6, str(sim.span.in_hand(PLANK)))
+
+
+func _test_a_hold_running_when_the_warden_falls() -> void:
+	# On section 4 at along 15.5 (it falls under them on 120), stripping section 3's deck (pitch -1.2
+	# lands at along 14.878): the hold is not on the fallen section, and is cancelled on 121.
+	var sim: NightSim = _loaded_at(15.5, {4: 3}, {4: 4})
+	_check("climb: aimed at section 3's deck", sim.look.kind == LookTarget.Kind.DECK and sim.look.section == 3)
+	_press(sim, HAMMER)
+	sim.advance()
+	var at_fall: Array[NightEvent] = _advance(sim, FALL_TICK + 1 - sim.tick)
+	_check("climb: caught on 120 with the hold still running", _has(at_fall, NightEvent.Kind.WARDEN_CAUGHT)
+			and sim.hands.holding())
+	var next: Array[NightEvent] = sim.advance()
+	_check("climb: HOLD_CANCELLED on 121, section 3", _only(next, NightEvent.Kind.HOLD_CANCELLED) and next[0].section == 3,
+			_names(next))
+	_check("climb: section 3 kept its 8 planks", sim.span.planks(3) == 8)
+	# Where the fall alone cancels it: on section 4 at along 19.6, 0.4 m from section 5, stripping
+	# section 5's deck (yaw pi, pitch -1.2 lands at along 20.222). The catch moves the feet 0.4 m
+	# along (to section 5's edge, under the 0.5 m limit) and section 5's deck is still there, so
+	# only "the warden is not walking" cancels it. Begun on tick 30, it would complete on 150.
+	sim = _loaded_at(19.6, {4: 3}, {4: 4}, PI, DOWN)
+	_check("climb: aimed at section 5's deck", sim.look.kind == LookTarget.Kind.DECK and sim.look.section == 5)
+	_advance(sim, 30 - sim.tick)
+	_press(sim, HAMMER)
+	at_fall = _advance(sim, FALL_TICK + 1 - sim.tick)
+	_check("climb: caught 0.4 m from where the hold began, the hold still running",
+			_has(at_fall, NightEvent.Kind.WARDEN_CAUGHT) and sim.hands.holding()
+			and absf(sim.warden.position.z - sim.hands.began_at.z - 0.4) < TOL, str(sim.warden.position))
+	next = sim.advance()
+	_check("climb: HOLD_CANCELLED on 121, section 5", _only(next, NightEvent.Kind.HOLD_CANCELLED) and next[0].section == 5,
+			_names(next))
+	var rest: Array[NightEvent] = _advance(sim, 60)
+	_check("climb: and no plank of section 5 moves on 150", not _has(rest, NightEvent.Kind.PLANK_STRIPPED)
+			and sim.span.planks(5) == 8, _names(rest))
+
+
+func _test_the_forearm_is_lowered_by_the_fall() -> void:
+	# On section 4 at along 17.5, Tab held (Hold mode) when it falls: lowered on 121, with no event.
+	var sim: NightSim = _loaded_at(17.5, {4: 3}, {4: 4})
+	_press(sim, FOREARM)
+	_advance(sim, FALL_TICK + 1 - sim.tick)
+	_check("climb: the forearm is still up on the fall's tick", sim.hands.forearm_raised and not WardenRules.walking(sim))
+	var next: Array[NightEvent] = sim.advance()
+	_check("climb: lowered on 121, with no event", not sim.hands.forearm_raised and next.is_empty(), _names(next))
+	# Press once: a Tab press during the climb does not raise it again.
+	sim = _loaded_at(17.5, {4: 3}, {4: 4})
+	_set_holds(sim, NightTypes.Holds.PRESS_ONCE)
+	_press(sim, FOREARM)
+	_advance(sim, FALL_TICK + 2 - sim.tick)
+	_check("climb: Press once: lowered too", not sim.hands.forearm_raised)
+	_press(sim, FOREARM)
+	sim.advance()
+	_check("climb: Press once: Tab during the climb does not raise it", not sim.hands.forearm_raised)
+
+
+func _test_presses_during_the_climb_are_ignored() -> void:
+	# On section 4 at along 17.5, it falls under them on 120. During the climb (121 to 419) every
+	# button, Tab too, is pressed and released while looking toward the town and down (yaw pi, pitch
+	# -1.2): from the eye 0.2 m above section 5's deck that is its deck, so a press would start a
+	# strip if it were taken. No event, no hold. On 420 the climb ends (along 20.3; the same aim lands
+	# at along 20.922, section 5) and a press is taken that tick.
+	var sim: NightSim = _loaded_at(17.5, {4: 3}, {4: 4})
+	_advance(sim, FALL_TICK + 1 - sim.tick)
+	_check("climb: hanging", not WardenRules.walking(sim))
+	sim.set_view(PI, DOWN)
+	sim.advance()
+	_check("climb: from the hang, that aim is section 5's deck", sim.look.kind == LookTarget.Kind.DECK
+			and sim.look.section == 5, "%s s%d" % [LookTarget.Kind.find_key(sim.look.kind), sim.look.section])
+	var quiet: bool = true
+	for input: int in NightTypes.HandInput.size():
+		_press(sim, input as NightTypes.HandInput)
+		quiet = quiet and sim.advance().is_empty() and not sim.hands.holding() and not sim.hands.forearm_raised
+		_release(sim, input as NightTypes.HandInput)
+		quiet = quiet and sim.advance().is_empty()
+	_check("climb: every press and release during the climb: no event, no hold, no forearm", quiet)
+	_advance(sim, FALL_TICK + 300 - sim.tick)
+	_press(sim, HAMMER)
+	var up: Array[NightEvent] = sim.advance()
+	_check("climb: on 420 the climb ends and a press is taken that tick: a strip of section 5",
+			_kinds(up) == [NightEvent.Kind.WARDEN_CLIMBED, NightEvent.Kind.HOLD_STARTED] and up[1].section == 5,
+			_names(up))
+	_check("climb: no fault", _faults.total() == 0, str(_faults.codes()))

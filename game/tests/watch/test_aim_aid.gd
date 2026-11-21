@@ -88,6 +88,18 @@ func _cases() -> Dictionary[String, Callable]:
 			_press(sim, HAMMER)
 			_advance(sim, 121)
 			return sim,
+		# Story 1.5: section 4 (3 planks under 4 test weights, GD-19: falls on tick 120) falls under
+		# the warden; on tick 200 they hang from section 5's edge, the eye 0.2 m above its deck,
+		# looking toward the town and down (lands on section 5's deck), 5 planks in hand.
+		"climbing back after a fall, looking at a deck": func() -> NightSim:
+			var start: StartState = StartState.new()
+			start.warden_along = 17.5
+			start.planks = {4: 3}
+			start.weights = {4: 4}
+			var sim: NightSim = _sim_with(_def_with(start), 1)
+			sim.set_view(PI, DOWN)
+			_advance(sim, 200)
+			return sim,
 	}
 
 

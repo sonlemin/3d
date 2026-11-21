@@ -145,3 +145,134 @@ func _test_four_sections_drawn() -> void:
 			and _is_box(view.get_node("TownPier"), sim.geometry.town_pier_box()))
 	_check("view: no fault drawing 4 sections", _faults.total() == 0, str(_faults.codes()))
 	view.free()
+
+
+# --- Story 1.5: weights, the bow and the fall (decision D4) ------------------------------------
+# GD-19 / GDD Game Mechanics 2: 3 planks under 4 weights groans from tick 0 and falls on tick 120.
+# D4 (gray box): creaking bows 5 cm at mid-section; groaning grows to 25 cm as the groan runs out;
+# at the fall every piece drops out of sight over 1.5 s and the section then draws nothing.
+
+func _weights_of(section: SectionView) -> Array[Node]:
+	var out: Array[Node] = []
+	for child: Node in section.get_children():
+		if String(child.name).begins_with("Weight"):
+			out.append(child)
+	return out
+
+
+func _loaded_sim(planks: Dictionary[int, int], weights: Dictionary[int, int]) -> NightSim:
+	var start: StartState = StartState.new()
+	start.planks = planks
+	start.weights = weights
+	return _sim_with(_def_with(start), 1)
+
+
+func _test_weights_are_drawn_from_geometry() -> void:
+	var sim: NightSim = _loaded_sim({}, {3: 4})
+	var view: SpanView = _view_of(sim)
+	var section3: SectionView = view.get_node("Section3")
+	var weights: Array[Node] = _weights_of(section3)
+	_check("view: section 3 shows 4 weights", weights.size() == 4, str(weights.size()))
+	var ok: bool = true
+	for i: int in 4:
+		ok = ok and _is_box(section3.get_node_or_null("Weight%d" % (i + 1)), sim.geometry.weight_box(3, i))
+	_check("view: each where SpanGeometry puts it (no bow: 4 on 8 planks)", ok)
+	_check("view: no other section shows a weight", _weights_of(view.get_node("Section2")).is_empty())
+	view.free()
+
+
+func _test_weight_boxes() -> void:
+	# Story 1.5 Dev Notes, "Geometry": 0.5 m cubes on the deck top, inside the section, never within
+	# 1.25 m of either end, none overlapping, a layer up when one is full (here 20: three layers).
+	var g: SpanGeometry = _sim_with(_def_with(StartState.new()), 1).geometry
+	var boxes: Array[AABB] = []
+	var ok: bool = true
+	for i: int in 20:
+		var box: AABB = g.weight_box(4, i)
+		ok = ok and box.size.is_equal_approx(Vector3(0.5, 0.5, 0.5)) and box.position.y >= -0.0001
+		ok = ok and box.position.x >= -2.5 and box.end.x <= 2.5
+		# Section 4 runs along 15 to 20 (z -15 to -10); 1.25 m in from each end is z -13.75 to -11.25.
+		ok = ok and box.position.z >= -13.75 - 0.0001 and box.end.z <= -11.25 + 0.0001
+		for other: AABB in boxes:
+			ok = ok and not other.intersects(box)
+		boxes.append(box)
+	_check("view: 20 weight boxes inside section 4's middle, on or above the deck, none overlapping", ok)
+	_check("view: the first sits mid-section on the deck (x 0, along 17.5)",
+			g.weight_box(4, 0).get_center().is_equal_approx(Vector3(0.0, 0.25, -12.5)), str(g.weight_box(4, 0)))
+	_check("view: the tenth starts the second layer", is_equal_approx(g.weight_box(4, 9).position.y, 0.5))
+
+
+func _test_bow_depth_and_sag() -> void:
+	_check("view: no bow when neither creaking nor groaning", SectionView.bow_depth(false, 0, 120) == 0.0)
+	_check("view: creaking bows 0.05 m", is_equal_approx(SectionView.bow_depth(true, 0, 120), 0.05))
+	_check("view: a groan just begun bows 0.05 m", is_equal_approx(SectionView.bow_depth(false, 120, 120), 0.05))
+	_check("view: half run out, 0.15 m", is_equal_approx(SectionView.bow_depth(false, 60, 120), 0.15))
+	_check("view: its last tick, nearly 0.25 m", is_equal_approx(SectionView.bow_depth(false, 1, 120), 0.05 + 0.2 * 119.0 / 120.0))
+	_check("view: the sag is deepest at mid-section and 0 at the ends",
+			is_equal_approx(SectionView.plank_sag(0.2, 0.5), 0.2) and SectionView.plank_sag(0.2, 0.0) == 0.0
+			and SectionView.plank_sag(0.2, 1.0) == 0.0 and is_equal_approx(SectionView.plank_sag(0.2, 0.25), 0.15))
+
+
+func _test_the_deck_bows_from_state() -> void:
+	# Section 4 creaking (3 on 3): place 4 (u = 3.5 / 8) sits 0.05 x 4u(1 - u) lower than flat.
+	var sim: NightSim = _loaded_sim({4: 3}, {4: 3})
+	var view: SpanView = _view_of(sim)
+	view.on_tick(sim.advance(), sim)
+	var plank: Node3D = view.get_node("Section4/Plank4") as Node3D
+	var flat: float = sim.geometry.plank_place(4, 4).y
+	var u: float = 3.5 / 8.0
+	_check("view: a creaking deck bows (place 4 down 0.05 x 4u(1 - u))",
+			plank != null and is_equal_approx(plank.position.y, flat - 0.05 * 4.0 * u * (1.0 - u)), str(plank.position.y))
+	_check("view: a section with nothing on it is flat", is_equal_approx((view.get_node("Section3/Plank4") as Node3D).position.y, flat))
+	# Groaning (3 under 4): after tick 60, 60 of 120 ticks left: bow 0.15.
+	sim = _loaded_sim({4: 3}, {4: 4})
+	view.free()
+	view = _view_of(sim)
+	for i: int in 61:
+		view.on_tick(sim.advance(), sim)
+	plank = view.get_node("Section4/Plank4") as Node3D
+	_check("view: a groan half run out bows 0.15 m (from state: groan_left %d)" % sim.span.groan_left(4),
+			sim.span.groan_left(4) == 60 and is_equal_approx(plank.position.y, flat - 0.15 * 4.0 * u * (1.0 - u)),
+			str(plank.position.y))
+	var weight: Node3D = view.get_node("Section4/Weight1") as Node3D
+	_check("view: the weights ride the bowed deck (the first, mid-section, down 0.15)",
+			is_equal_approx(weight.position.y, sim.geometry.weight_box(4, 0).get_center().y - 0.15), str(weight.position.y))
+	view.free()
+
+
+func _test_the_section_drops_and_is_gone() -> void:
+	var sim: NightSim = _loaded_sim({4: 3}, {4: 4})
+	var view: SpanView = _view_of(sim)
+	for i: int in 120:
+		view.on_tick(sim.advance(), sim)
+	var section4: SectionView = view.get_node("Section4")
+	var pieces: int = section4.get_child_count()
+	_check("view: before the fall: 3 planks, 2 rails, 2 beams, 4 posts, 4 weights", pieces == 15, str(pieces))
+	var fell: Array[NightEvent] = sim.advance()
+	view.on_tick(fell, sim)
+	var falling: Node3D = section4.falling()
+	_check("view: on SECTION_FELL every piece moves into one dropping group, nothing else is left",
+			falling != null and falling.get_child_count() == 15 and section4.get_child_count() == 1, str(section4.get_children()))
+	section4.fall_step(0.5)
+	_check("view: half a second on, it has dropped (y = -1/2 g t^2)", is_equal_approx(falling.position.y, -0.5 * 9.8 * 0.25),
+			str(falling.position.y))
+	for i: int in 30:
+		view.on_tick(sim.advance(), sim)
+	_check("view: reconciling meanwhile draws nothing new for it", section4.get_child_count() == 1)
+	section4.fall_step(1.0)
+	_check("view: after 1.5 s the group is freed: the section draws nothing", section4.falling() == null
+			and section4.get_child_count() == 0)
+	_check("view: its neighbours keep their beams and posts", view.get_node_or_null("Section3/BeamL") != null
+			and view.get_node_or_null("Section5/PostR1") != null)
+	view.free()
+
+
+func _test_a_fall_not_seen_still_clears() -> void:
+	# AD-49: a view that missed SECTION_FELL (made after it) still draws nothing for a fallen section.
+	var sim: NightSim = _loaded_sim({4: 3}, {4: 4})
+	_advance(sim, 130)
+	var view: SpanView = _view_of(sim)
+	var section4: SectionView = view.get_node("Section4")
+	_check("view: a section that fell before the view was made shows nothing",
+			section4.get_child_count() == 0 and section4.falling() == null, str(section4.get_children()))
+	view.free()

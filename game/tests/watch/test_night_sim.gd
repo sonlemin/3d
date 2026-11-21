@@ -199,7 +199,7 @@ func _test_event_fields_match_comments() -> void:
 	# The other direction (a named field left unset) cannot be told from a value: a set field
 	# may hold its default (side LEFT, seed 0). Each kind's own test checks the fields it sets.
 	# The strip bot's night emits every kind of story 1.4, with a right rail (a side that is not
-	# the default) among them.
+	# the default) among them; the overload bot's every kind of story 1.5.
 	var sim: NightSim = _sim_with(NightDefs.one_night(), 1)
 	var unset: NightEvent = NightEvent.new()
 	var bad: PackedStringArray = []
@@ -209,6 +209,12 @@ func _test_event_fields_match_comments() -> void:
 			func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
 	_check("sim: the strip night whose events are checked ran with no fault", strip_faults.total() == 0,
 			str(strip_faults.codes()))
+	# Story 1.5: the overload bot's night emits the load and climb kinds.
+	var overload_faults: WatchFaults = WatchFaults.new()
+	NightBot.overload(NightDefs.one_night(), 1, overload_faults,
+			func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
+	_check("sim: the overload night whose events are checked ran with no fault", overload_faults.total() == 0,
+			str(overload_faults.codes()))
 	var kinds: Dictionary[NightEvent.Kind, bool] = {}
 	for event: NightEvent in all:
 		kinds[event.kind] = true
@@ -300,3 +306,49 @@ func _test_set_option() -> void:
 	twin.advance()
 	twin.advance()
 	_check("sim: the checksum is a twin's that got no bad option", sim.checksum() == twin.checksum())
+
+
+
+func _test_checksum_covers_the_load_facts() -> void:
+	# Story 1.5: weights, the lifts still to come and fallen are state. Creak and groan follow from
+	# the counts at every tick's end and the warden's timed move from where the feet are, so no two
+	# nights reachable through ticks differ in those alone: they are checked on SpanState.values()
+	# (test_span.gd) and WardenState.values() (test_warden.gd), which checksum() takes whole.
+	var one: StartState = StartState.new()
+	one.weights = {2: 1}
+	var two: StartState = StartState.new()
+	two.weights = {2: 2}
+	var a: NightSim = _sim_with(_def_with(one), 7)
+	var b: NightSim = _sim_with(_def_with(two), 7)
+	a.advance()
+	b.advance()
+	_check("sim: the weights change the checksum", a.checksum() != b.checksum())
+	var soon: StartState = StartState.new()
+	soon.weights = {2: 1}
+	soon.lifts = [Vector2i(2, 50)]
+	var later: StartState = StartState.new()
+	later.weights = {2: 1}
+	later.lifts = [Vector2i(2, 60)]
+	a = _sim_with(_def_with(soon), 7)
+	b = _sim_with(_def_with(later), 7)
+	a.advance()
+	b.advance()
+	_check("sim: a lift still to come changes the checksum", a.checksum() != b.checksum())
+	# Section 4 bare with both ropes in hand from the start: with a weight it falls on tick 120
+	# (nothing left to lose; the weight goes with it), without one it stands. After tick 120 the two
+	# differ only in "fallen".
+	var rails: Array[Vector2i] = [Vector2i(4, NightTypes.Side.LEFT), Vector2i(4, NightTypes.Side.RIGHT)]
+	var weighted: StartState = StartState.new()
+	weighted.planks = {4: 0}
+	weighted.stripped_rails = rails
+	weighted.weights = {4: 1}
+	var bare: StartState = StartState.new()
+	bare.planks = {4: 0}
+	bare.stripped_rails = rails
+	a = _sim_with(_def_with(weighted), 7)
+	b = _sim_with(_def_with(bare), 7)
+	_advance(a, 121)
+	_advance(b, 121)
+	_check("sim: the two nights differ only in section 4 having fallen", a.span.fallen(4) and not b.span.fallen(4)
+			and a.span.weights(4) == 0 and a.span.counts() == b.span.counts())
+	_check("sim: fallen changes the checksum", a.checksum() != b.checksum())

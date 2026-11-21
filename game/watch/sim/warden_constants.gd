@@ -12,3 +12,10 @@ const EYE_HEIGHT: float = 1.6
 ## not shared with another walkable part (rails, the far pier, the landing's limits, a section
 ## with no planks). Not a GDD value: a gray-box size, tuned by eye in M1.
 const CLEARANCE: float = 0.3
+## GDD Game Mechanics 2: a warden whose section falls catches the edge and climbs back onto the
+## nearest standing section toward the town (or the landing) in 5 s. A timed move (AD-52).
+const CLIMB_BACK_S: float = 5.0
+## Story 1.5 decision D3: while climbing back, the feet hang this far below the deck top of what
+## is being climbed onto, so the eye (EYE_HEIGHT above them) is 0.2 m above that deck. Not a GDD
+## value: a gray-box size, tuned in M2 of story 1.5.
+const HANG_DROP: float = 1.4

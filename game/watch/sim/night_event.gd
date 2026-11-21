@@ -13,6 +13,14 @@ enum Kind {
 	RAIL_STRIPPED,  ## A rail strip completed: that rail's rope to the hand. Fields: t, section, side.
 	PLANK_RELAID,  ## A re-lay completed: one plank from the hand to that deck. Fields: t, section.
 	REFUSED,  ## A designed "no" (AD-28), from sim.refuse(); NO_ACTION_HERE leaves section 0 and id empty. Fields: t, reason, section, side, id.
+	CREAK_STARTED,  ## Step 7: the section's load came to equal its strength, above 0. Fields: t, section.
+	CREAK_STOPPED,  ## Step 7: its load no longer equals its strength (or it began to groan). Fields: t, section.
+	GROAN_STARTED,  ## Step 7: its load went above its strength; it falls in 2 s unless the load drops. Fields: t, section.
+	GROAN_STOPPED,  ## Step 7: its load came back to or under its strength before the fall. Fields: t, section.
+	SECTION_FELL,  ## Step 7: 2 s of groan; a gap for the rest of the night (ConsequenceRules settles the rest). Fields: t, section.
+	WEIGHT_LIFTED,  ## Step 6: a lift of story 1.5's D1 took one test weight off the section. Fields: t, section.
+	WARDEN_CAUGHT,  ## Step 8: the section under the warden fell; they hang from the edge and the climb begins. Fields: t, section.
+	WARDEN_CLIMBED,  ## Step 1: the climb ended; `section` is where they stand now, 0 for the landing. Fields: t, section.
 }
 
 var kind: Kind = Kind.NIGHT_STARTED

@@ -199,3 +199,226 @@ func _gd_files(dir: String) -> PackedStringArray:
 	for sub: String in DirAccess.get_directories_at(dir):
 		out.append_array(_gd_files(dir.path_join(sub)))
 	return out
+
+
+# --- Story 1.5: strength, load, creak, groan, fall ---------------------------------------------
+# GD-19 and GDD Game Mechanics 2, written out: a section's strength is its planks (0 to 8); a test
+# weight is a load of 1 (the epic's AC); load equal to strength (above 0) creaks; above it groans
+# for 2 s = 120 ticks, then the section falls for good. GD-19: a strip is 2 s = 120 ticks.
+
+## GD-19, GDD Game Mechanics 2: 2 s at 60 ticks a second.
+const GROAN_TICKS: int = 120
+## Looking down at the deck ahead (test_hands.gd): lands 0.622 m ahead of the feet.
+const DOWN: float = -1.2
+
+
+## A night of `sections` with `planks` taken off, `weights` and `lifts` placed, the warden at
+## `along` (-1: the landing). Nothing is ticked.
+func _loaded(planks: Dictionary[int, int], weights: Dictionary[int, int], lifts: Array[Vector2i] = [],
+		sections: int = 6, along: float = -1.0) -> NightSim:
+	var start: StartState = StartState.new()
+	start.planks = planks
+	start.weights = weights
+	start.lifts = lifts
+	start.warden_along = along
+	return _sim_with(_def_with(start, sections), 1)
+
+
+## The events of the next `ticks` ticks but NIGHT_STARTED, each as "tick KIND sN".
+func _story(sim: NightSim, ticks: int) -> PackedStringArray:
+	var out: PackedStringArray = []
+	for i: int in ticks:
+		for event: NightEvent in sim.advance():
+			if event.kind != NightEvent.Kind.NIGHT_STARTED:
+				out.append("%d %s s%d" % [roundi(event.t * 60.0), NightEvent.Kind.find_key(event.kind), event.section])
+	return out
+
+
+func _test_strength_and_load() -> void:
+	# AC 1: strength is the planks, load the weights (1 each); both worked out when asked.
+	var sim: NightSim = _loaded({3: 5}, {3: 2}, [], 6, 12.5)
+	_check("load: strength of a section at 5 planks is 5", SpanRules.strength(3, sim.span) == 5,
+			str(SpanRules.strength(3, sim.span)))
+	_check("load: strength of a full section is 8", SpanRules.strength(1, sim.span) == 8)
+	_check("load: 2 test weights are a load of 2", SpanRules.load_on(3, sim.span) == 2.0, str(SpanRules.load_on(3, sim.span)))
+	_check("load: no weight is a load of 0, the warden standing there (along 12.5) is not one",
+			SpanRules.load_on(1, sim.span) == 0.0 and SpanRules.load_on(3, sim.span) == 2.0)
+	_check("load: a creak is load == strength above 0; overload is load above strength",
+			SpanRules.creaks(3.0, 3) and not SpanRules.creaks(0.0, 0) and not SpanRules.creaks(2.0, 3)
+			and not SpanRules.creaks(4.0, 3) and SpanRules.overloaded(4.0, 3) and SpanRules.overloaded(1.0, 0)
+			and not SpanRules.overloaded(3.0, 3) and not SpanRules.overloaded(0.0, 0))
+	_check("load: building it reports no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_creak_starts_and_stops() -> void:
+	# AC 2: 3 planks, 3 weights: it creaks from tick 0; a lift on tick 30 (D1) ends it.
+	var sim: NightSim = _loaded({4: 3}, {4: 3}, [Vector2i(4, 30)])
+	var story: PackedStringArray = _story(sim, 200)
+	_check("creak: CREAK_STARTED on tick 0, then on tick 30 the lift and CREAK_STOPPED, nothing else",
+			story == PackedStringArray(["0 CREAK_STARTED s4", "30 WEIGHT_LIFTED s4", "30 CREAK_STOPPED s4"]), str(story))
+	_check("creak: the weight is gone, the section stands", sim.span.weights(4) == 2 and not sim.span.fallen(4)
+			and not sim.span.creaking(4))
+	_check("creak: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_groan_then_fall() -> void:
+	# AC 3: 3 planks and 4 weights from the start: a groan on tick 0, the fall on tick 120 (t 2.0).
+	var sim: NightSim = _loaded({4: 3}, {4: 4})
+	var first: Array[NightEvent] = sim.advance()
+	_check("groan: tick 0 has NIGHT_STARTED then GROAN_STARTED s4 at t 0.0",
+			_kinds(first) == [NightEvent.Kind.NIGHT_STARTED, NightEvent.Kind.GROAN_STARTED]
+			and first[1].t == 0.0 and first[1].section == 4, str(_kinds(first)))
+	var early: Array[NightEvent] = _advance(sim, GROAN_TICKS - 1)
+	_check("groan: nothing on ticks 1 to 119, no fall", early.is_empty() and not sim.span.fallen(4), str(_kinds(early)))
+	var fell: Array[NightEvent] = sim.advance()
+	_check("groan: SECTION_FELL s4 on tick 120 at t 2.0", _kinds(fell) == [NightEvent.Kind.SECTION_FELL]
+			and fell[0].t == 2.0 and fell[0].section == 4, str(_kinds(fell)))
+	_check("groan: it has fallen, neither creaking nor groaning", sim.span.fallen(4) and not sim.span.creaking(4)
+			and sim.span.groan_left(4) == 0)
+	var later: Array[NightEvent] = _advance(sim, 600)
+	_check("groan: it stays fallen and nothing more happens", sim.span.fallen(4) and later.is_empty(), str(_kinds(later)))
+	_check("groan: no other section fell", not sim.span.fallen(3) and not sim.span.fallen(5))
+	_check("groan: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_lift_saves_it() -> void:
+	# AC 4 and D1: back to equal (3 on 3) on tick 60: the groan stops and the creak starts that tick.
+	var sim: NightSim = _loaded({4: 3}, {4: 4}, [Vector2i(4, 60)])
+	var story: PackedStringArray = _story(sim, 400)
+	_check("hold: at equal: GROAN_STOPPED and CREAK_STARTED on the lift's tick, no fall",
+			story == PackedStringArray(["0 GROAN_STARTED s4", "60 WEIGHT_LIFTED s4", "60 GROAN_STOPPED s4",
+			"60 CREAK_STARTED s4"]), str(story))
+	_check("hold: it stands, creaking", not sim.span.fallen(4) and sim.span.creaking(4) and sim.span.groan_left(4) == 0)
+	# Under (2 on 3): two lifts on tick 60, the groan stops and nothing creaks.
+	sim = _loaded({4: 3}, {4: 4}, [Vector2i(4, 60), Vector2i(4, 60)])
+	story = _story(sim, 400)
+	_check("hold: under: GROAN_STOPPED, no creak, no fall", story == PackedStringArray(["0 GROAN_STARTED s4",
+			"60 WEIGHT_LIFTED s4", "60 WEIGHT_LIFTED s4", "60 GROAN_STOPPED s4"]), str(story))
+	_check("hold: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_lift_on_the_fall_tick_saves_it() -> void:
+	# The fall is decided at step 7 of tick 120; a lift is step 6 of that tick.
+	var sim: NightSim = _loaded({4: 3}, {4: 4}, [Vector2i(4, 120)])
+	var story: PackedStringArray = _story(sim, 300)
+	_check("hold: a lift on tick 120 saves it", story == PackedStringArray(["0 GROAN_STARTED s4",
+			"120 WEIGHT_LIFTED s4", "120 GROAN_STOPPED s4", "120 CREAK_STARTED s4"]), str(story))
+	# A lift on tick 121 is too late: the weights fell with the section, and the lift does nothing.
+	sim = _loaded({4: 3}, {4: 4}, [Vector2i(4, 121)])
+	story = _story(sim, 300)
+	_check("hold: a lift on tick 121 is too late and lifts nothing",
+			story == PackedStringArray(["0 GROAN_STARTED s4", "120 SECTION_FELL s4"]), str(story))
+	_check("hold: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_deeper_overload_does_not_restart_the_groan() -> void:
+	# 3 planks, 4 weights: the groan from tick 0. The warden on section 5 (along 20.4) begins a strip
+	# of section 4 on tick 0 (pressed before the first tick); it completes in step 2 of tick 120
+	# (2 on 4), before step 7: the fall is still tick 120.
+	var sim: NightSim = _loaded({4: 3}, {4: 4}, [], 6, 20.4)
+	sim.set_view(0.0, DOWN)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	var story: PackedStringArray = _story(sim, 200)
+	_check("groan: deeper on tick 120 (a strip), and it still falls on tick 120",
+			story == PackedStringArray(["0 HOLD_STARTED s4", "0 GROAN_STARTED s4", "120 PLANK_STRIPPED s4",
+			"120 SECTION_FELL s4"]), str(story))
+	_check("groan: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_an_overload_after_holding_starts_a_fresh_groan() -> void:
+	# 3 planks, 4 weights; a lift on tick 60 holds it (3 on 3). A strip begun on tick 61 completes
+	# on tick 181 (2 planks under 3): a fresh groan, the fall 120 ticks later, on 301.
+	var sim: NightSim = _loaded({4: 3}, {4: 4}, [Vector2i(4, 60)], 6, 20.4)
+	sim.set_view(0.0, DOWN)
+	var story: PackedStringArray = _story(sim, 61)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	story.append_array(_story(sim, 400))
+	_check("groan: a fresh 120 ticks after holding", story == PackedStringArray(["0 GROAN_STARTED s4",
+			"60 WEIGHT_LIFTED s4", "60 GROAN_STOPPED s4", "60 CREAK_STARTED s4", "61 HOLD_STARTED s4",
+			"181 PLANK_STRIPPED s4", "181 CREAK_STOPPED s4", "181 GROAN_STARTED s4", "301 SECTION_FELL s4"]), str(story))
+	_check("groan: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_overload_by_stripping() -> void:
+	# AC 7: 4 planks, 3 weights, the warden on section 5 at along 20.4 looking down at section 4.
+	# Strip 1 pressed on tick 1 completes on 121 (3 on 3: creak); strip 2 pressed on 122 completes
+	# on 242 (3 on 2: the creak stops, the groan starts); the fall on 362.
+	var sim: NightSim = _loaded({4: 4}, {4: 3}, [], 6, 20.4)
+	sim.set_view(0.0, DOWN)
+	var story: PackedStringArray = _story(sim, 1)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	story.append_array(_story(sim, 121))
+	sim.command(NightCommand.release(NightTypes.HandInput.HAMMER))
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	story.append_array(_story(sim, 300))
+	_check("strip: creak after the first, groan after the second, fall 120 ticks later",
+			story == PackedStringArray(["1 HOLD_STARTED s4", "121 PLANK_STRIPPED s4", "121 CREAK_STARTED s4",
+			"122 HOLD_STARTED s4", "242 PLANK_STRIPPED s4", "242 CREAK_STOPPED s4", "242 GROAN_STARTED s4",
+			"362 SECTION_FELL s4"]), str(story))
+	_check("strip: strength followed the planks (AD-35)", SpanRules.strength(4, sim.span) == 0 and sim.span.fallen(4))
+	_check("strip: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_the_town_section_falls_too() -> void:
+	# AC 8: the def's last section (6 of 6, 4 of 4) overloaded falls like any other.
+	for sections: int in [6, 4]:
+		var sim: NightSim = _loaded({sections: 4}, {sections: 5}, [], sections)
+		var story: PackedStringArray = _story(sim, 200)
+		_check("town: section %d of %d at 4 planks with 5 weights groans and falls on tick 120" % [sections, sections],
+				story == PackedStringArray(["0 GROAN_STARTED s%d" % sections, "120 SECTION_FELL s%d" % sections]),
+				str(story))
+		_check("town: %d sections, no fault" % sections, _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_no_load_no_creak() -> void:
+	# A section with nothing on it is not "at its limit" (decision list): bare or full, no event.
+	var sim: NightSim = _loaded({2: 0, 3: 4}, {})
+	_check("load: a bare section and a full one with no weight never creak", _story(sim, 600).is_empty())
+
+
+func _test_a_bare_section_with_a_weight_falls() -> void:
+	# Until story 1.6's side beams: strength 0, load 1 groans and falls by the general rule.
+	var sim: NightSim = _loaded({2: 0}, {2: 1})
+	var story: PackedStringArray = _story(sim, 200)
+	_check("load: a bare section with one weight groans and falls",
+			story == PackedStringArray(["0 GROAN_STARTED s2", "120 SECTION_FELL s2"]), str(story))
+
+
+func _test_bad_weights_and_lifts() -> void:
+	_expect_begin()
+	var sim: NightSim = _loaded({}, {9: 2})
+	_expect_end("load: weights on a section outside 1 to 6 are span.bad_start", [["ERROR", "span.bad_start", 1]])
+	_check("load: and skipped", sim.span.weights(1) == 0 and _faults.count(&"span.bad_start") == 1)
+	_expect_begin()
+	sim = _loaded({}, {2: -1})
+	_expect_end("load: a negative count of weights is span.bad_start", [["ERROR", "span.bad_start", 1]])
+	_check("load: clamped to 0", sim.span.weights(2) == 0, str(sim.span.weights(2)))
+	_expect_begin()
+	sim = _loaded({}, {2: 1}, [Vector2i(9, 5), Vector2i(2, -1)])
+	_expect_end("load: a lift on a bad section or before tick 0 is span.bad_start", [["ERROR", "span.bad_start", 1]])
+	_check("load: both counted and dropped", _faults.count(&"span.bad_start") == 2 and sim.span.lifts().is_empty(),
+			str(sim.span.lifts()))
+	_expect_begin()
+	sim = _loaded({}, {2: 1}, [Vector2i(2, 10), Vector2i(2, 20)])
+	_expect_end("load: more lifts on a section than its weights is span.bad_start", [["ERROR", "span.bad_start", 1]])
+	var story: PackedStringArray = _story(sim, 30)
+	_check("load: the extra lift is dropped: one lift, on tick 10", _faults.count(&"span.bad_start") == 1
+			and story == PackedStringArray(["10 WEIGHT_LIFTED s2"]) and sim.span.weights(2) == 0, str(story))
+
+
+func _test_span_state_values() -> void:
+	# The checksum's span facts: each one changes values() (a SpanState of its own, not a sim's).
+	var faults: WatchFaults = WatchFaults.new()
+	var base: Array = SpanState.new(6, 8, faults).values()
+	var changes: Dictionary[String, Callable] = {
+		"fallen": func(s: SpanState) -> void: s.set_fallen(3),
+		"creaking": func(s: SpanState) -> void: s.set_creaking(3, true),
+		"groan left": func(s: SpanState) -> void: s.set_groan_left(3, 7),
+		"weights": func(s: SpanState) -> void: s.add_weights(3, 1),
+		"a lift": func(s: SpanState) -> void: s.add_lift(Vector2i(3, 9)),
+	}
+	for what: String in changes:
+		var span: SpanState = SpanState.new(6, 8, faults)
+		changes[what].call(span)
+		_check("load: %s changes the span's values()" % what, span.values() != base)
+	_check("load: no fault", faults.total() == 0, str(faults.codes()))

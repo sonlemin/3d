@@ -1,7 +1,8 @@
 ## What the warden looks at (AD-15, AD-47): maths on SpanGeometry's boxes, no physics and no ray
 ## (AD-52). The view line runs from the eye along the view for HandConstants.REACH; the nearest
 ## shape it meets wins. Decks (planked or not) and standing rails' grab boxes (story 1.4 D1) are
-## targets; the landing and the far pier only block. Pure: it emits nothing.
+## targets; the landing and the far pier only block. A fallen section (story 1.5) has no deck and no
+## rails: it is neither a target nor a blocker. Pure: it emits nothing.
 class_name LookRules
 extends RefCounted
 
@@ -17,6 +18,8 @@ static func target(eye: Vector3, yaw: float, pitch: float, geometry: SpanGeometr
 	for blocker: AABB in [geometry.landing_box(), geometry.far_pier_box()]:
 		nearest = minf(nearest, _hit(blocker, eye, to))
 	for n: int in range(1, span.section_count() + 1):
+		if span.fallen(n):
+			continue
 		var at: float = _hit(geometry.deck_box(n), eye, to)
 		if at < nearest:
 			nearest = at

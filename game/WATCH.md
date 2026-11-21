@@ -24,6 +24,8 @@ godot --path game -- --show=walk                  # walk the span and back from 
 godot --path game -- --show=walk_close            # stand mid-span, facing the far pier
 godot --path game -- --show=strip                 # mid section 5, nothing in hand: strip and re-lay
 godot --path game -- --show=forearm               # 12 planks and 3 ropes in hand, on the landing
+godot --path game -- --show=overload              # strip section 4 from section 5 until it falls
+godot --path game -- --show=fall_under            # stand on section 4 and strip it under you
 godot --path game -- --show=list                  # list the show-me setups, then quit
 godot --path game -- --start=night --trace        # print every event of the night
 ```
@@ -76,10 +78,37 @@ box around it. The aid is not part of the game: it is removed with epic 4's hand
 Strip the last plank of the section you stand on and you stay where you are, and can walk off it;
 once off, it blocks like any bare section (story 1.6 brings edging round an open section).
 
+**Weight, creak, groan and fall (story 1.5).** A section's strength is its planks; its load is
+what stands on it. Until the dead arrive (epics 2 and 3) the only load is gray test weights, 1
+each, placed by the show-me setups and the tests (never in a plain `--start=night`); you add no
+load yourself. When the load equals the strength the section creaks (its planks bow a little);
+when it is more, it groans (the bow deepens) and falls for good 2 s later, unless the load drops
+back first. Strip planks from under weights to overload a section. When it falls, everything on it
+drops out of sight and the gap reads black; it can never be re-laid, and aiming into it reaches
+nothing. If you stand on it, you catch the edge of the next standing section toward the town (or
+the landing) and hang there for 5 s, looking along its deck: you can look but not walk or act;
+then you are up on it, 0.3 m in, with everything you carried. Standing on the next section within
+0.3 m of the gap, you are moved back to 0.3 m from it. Nothing is heard yet (sound is epic 2).
+
 Show-me setups for story 1.3: `walk` (the landing, every section walkable, with sparse sections
 at 1, 4 and 5 planks on the way) and `walk_close` (the same planks, standing mid section 5). For
 story 1.4: `strip` (mid section 5 of a full span, nothing in hand) and `forearm` (12 planks and 3
-ropes in hand, on the landing).
+ropes in hand, on the landing). For story 1.5: `overload` (section 4 at 4 planks under 3 weights,
+standing on section 5 just short of it: look down at section 4 and strip it twice) and
+`fall_under` (the same section 4, standing on it near its town end: strip your own deck twice).
+
+With `--trace`, story 1.5 adds lines like:
+
+```
+  0.000 GROAN_STARTED     s3
+  1.000 WEIGHT_LIFTED     weight s3
+  1.000 GROAN_STOPPED     s3
+  1.000 CREAK_STARTED     s3
+  2.000 SECTION_FELL      s4
+  2.000 WARDEN_CAUGHT     warden s4
+  7.000 WARDEN_CLIMBED    warden s5
+  7.000 WARDEN_CLIMBED    warden landing
+```
 
 ## Running the ear test
 

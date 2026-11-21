@@ -173,3 +173,47 @@ func _test_view_direction() -> void:
 	_check("look: D1 grab box 0.3 x 0.3, the rope's length, centred on it",
 			grab.size.is_equal_approx(Vector3(0.3, 0.3, 5.0)) and grab.get_center().is_equal_approx(rope.get_center()),
 			"%s %s" % [grab, rope])
+
+
+# --- Story 1.5: a fallen section has no deck -------------------------------------------------
+# GD-19 / GDD Game Mechanics 2: 3 planks under 4 weights falls on tick 120 (2 s).
+
+## A 6-section night with section 4 at 3 planks under `weights`, the warden at along 20.4 on
+## section 5 looking down toward the far pier (pitch -1.2 lands at along 19.778, on section 4), run
+## through tick 121: the look is worked out in step 1, so tick 120's is from before its fall
+## (step 7) and tick 121's the first after.
+func _after_fall(weights: int) -> NightSim:
+	var start: StartState = StartState.new()
+	start.planks = {4: 3}
+	start.weights = {4: weights}
+	var sim: NightSim = _aimed(20.4, 0.0, -1.2, start)
+	_advance(sim, 121)
+	return sim
+
+
+func _test_a_fallen_deck_is_not_a_target() -> void:
+	var standing: NightSim = _after_fall(3)
+	_check("look: that aim is section 4's deck while it stands", _is(standing.look, LookTarget.Kind.DECK, 4),
+			_describe(standing.look))
+	var fallen: NightSim = _after_fall(4)
+	_check("look: section 4 has fallen", fallen.span.fallen(4))
+	_check("look: the same aim at a fallen section finds nothing", _is(fallen.look, LookTarget.Kind.NONE),
+			_describe(fallen.look))
+
+
+func _test_a_fallen_deck_does_not_block() -> void:
+	# The eye placed by hand (LookRules.target is pure), as for the far pier: 1.6 m up at along 15.9
+	# on the centre line, aimed at along 14.98, 0.06 m down. The line meets section 4's deck top at
+	# along 15.013 (1.83 m on), then section 3's deck through its end at along 15.0 (1.85 m on).
+	var eye_along: float = 15.9
+	var to: Vector3 = Vector3(0.0, -0.06 - EYE, -(eye_along - 14.98))
+	var yaw: float = atan2(-to.x, -to.z)
+	var pitch: float = atan2(to.y, Vector2(to.x, to.z).length())
+	var standing: NightSim = _after_fall(3)
+	var eye: Vector3 = Vector3(0.0, EYE, standing.geometry.world_z(eye_along))
+	var hit: LookTarget = LookRules.target(eye, yaw, pitch, standing.geometry, standing.span)
+	_check("look: standing, section 4's deck is hit first", _is(hit, LookTarget.Kind.DECK, 4), _describe(hit))
+	var fallen: NightSim = _after_fall(4)
+	hit = LookRules.target(eye, yaw, pitch, fallen.geometry, fallen.span)
+	_check("look: fallen, it blocks nothing: section 3's deck behind it", _is(hit, LookTarget.Kind.DECK, 3)
+			and hit.distance < 2.0, _describe(hit))
