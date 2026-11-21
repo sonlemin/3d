@@ -115,8 +115,22 @@ func _show_night(def: NightDef, night_seed: int) -> void:
 	EngineGlobals.enter_screen(get_tree(), EngineGlobals.ScreenKind.FIRST_PERSON)
 	var night: NightScreen = NightScene.instantiate() as NightScreen
 	night.setup(_session, def, night_seed)
-	if _debug != null and _session.options.trace:
-		var trace: Variant = _debug.call(&"make_trace")
+	add_debug_parts(night, _debug, _session.options)
+	add_child(night)
+
+
+## The debug tools' parts of a night, asked for by call and never by name (boundary 4): the
+## trace with `--trace`, and the temporary aim aid (DW-41, until epic 4's hands) on every night
+## that has the tools. `debug` is the loaded debug tools or null. After the night's own
+## consumers, so each reads the tick the views have already shown.
+static func add_debug_parts(night: NightScreen, debug: Object, options: LaunchOptions) -> void:
+	if debug == null:
+		return
+	if options.trace:
+		var trace: Variant = debug.call(&"make_trace")
 		if trace is Callable:
 			night.add_consumer(trace)
-	add_child(night)
+	var aid: Variant = debug.call(&"make_aim_aid")
+	if aid is Node:
+		night.add_child(aid as Node)
+		night.add_consumer(Callable(aid as Node, &"on_tick"))

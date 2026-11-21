@@ -27,3 +27,9 @@ func print_show_list() -> void:
 ## The trace consumer for the night screen (`--trace`).
 func make_trace() -> Callable:
 	return _trace.on_tick
+
+
+## The temporary aim aid for the night screen (DW-41): a node to add to the night, whose
+## `on_tick` is a consumer of it. A new one per night.
+func make_aim_aid() -> Node:
+	return AimAid.new()

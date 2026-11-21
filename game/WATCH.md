@@ -58,6 +58,21 @@ hands' "can't" gesture is epic 4), but `--trace` prints a `REFUSED` line with th
 no carry limit. Holds have a Press once option (a press starts it, a second press stops it, Tab
 toggles); its setting arrives in epic 8.
 
+**The aim aid (temporary, debug only).** Until the hands show what a click will do (epic 4), a
+small mark sits at the centre of the night view whenever the game runs from the editor or a
+playtest build:
+
+| The mark | Means |
+|---|---|
+| a dim dot | nothing in reach |
+| the word `deck` or `rail` under the dot | that is what the hands reach (left mouse and E act on a deck, right mouse on a rail) |
+| a bright dot | one of those buttons would start a hold now |
+| a ring closing round the dot | a hold is running; a part moves when the ring closes |
+
+The deck is in reach only close to your feet (within about 1.2 m): look well down. The word
+`rail` shows a little before the dot touches the rope, as the rope is grabbed through a 0.3 m
+box around it. The aid is not part of the game: it is removed with epic 4's hands (DW-41).
+
 Strip the last plank of the section you stand on and you stay where you are, and can walk off it;
 once off, it blocks like any bare section (story 1.6 brings edging round an open section).
 
