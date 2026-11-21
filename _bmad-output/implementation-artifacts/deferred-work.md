@@ -369,3 +369,12 @@ owner: epic 4, the story that lets a rope be hung again
 severity: low
 reason: DW-27 made the view test move parts only through commands and ticks. No rule puts a rope back yet, so the check "the rail is back" was dropped, and `SectionView`'s re-add of a rail after it was taken off is run by no test. When a rule can re-hang a rope, add the check back, driven by that rule's command.
 status: open
+
+### DW-39: Changing Holds on the pause screen cancels a hold the pause had frozen
+
+origin: gds-code-review of story 1.4, 2026-11-21 (found when the mode-change rule was checked against the planning documents)
+location: game/watch/sim/hold_rules.gd, `_set_option()`; game-architecture.md, "Pause (AD-67)"; EXPERIENCE.md, Input Schemes ("Pause freezes a hold and does not cancel it")
+owner: epic 5, the pause overlay (the Holds row itself is epic 8)
+severity: low
+reason: Since the code review of story 1.4 (Sonlm, 2026-11-21), a change of the Holds option cancels the running hold and lowers the forearm, so a mode always starts from idle hands. The architecture applies a Holds change made on the pause screen as `set_option()` on the first tick after resume, and EXPERIENCE.md says a pause freezes a hold and does not cancel it. The two meet in one case only: a player pauses during a hold, changes Holds, and resumes; that hold is then cancelled (no part moves, nothing is lost). No planning document states the old reading ("a mode change leaves the running hold as it is"); it was the story's own. When the pause overlay is built, confirm with Sonlm that this cancel is wanted, and say so in EXPERIENCE.md or the architecture.
+status: open
