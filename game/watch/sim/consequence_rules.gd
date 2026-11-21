@@ -6,7 +6,8 @@
 ##
 ## Story 1.5 settles a fall: the test weights on a fallen section fall with it, its planks and
 ## ropes are lost through the ledger, a warden on it catches the edge and climbs back toward the
-## town (decision D3), and a warden beside it steps back from the gap (decision D2).
+## town (decision D3), a warden beside it steps back from the gap (decision D2), and a warden
+## already hanging from it catches the next edge.
 class_name ConsequenceRules
 extends RefCounted
 
@@ -46,14 +47,18 @@ static func parts_lost(sim: NightSim) -> void:
 				SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.rail(n, side), PartPlace.lost(), sim)
 
 
-## The warden, while walking (a climbing warden is already off every floor): feet on a section
-## that fell, and on no standing floor, catch the edge and the climb back begins (decision D3);
-## feet beside a gap, within the clearance of it, step back from it (decision D2).
+## The warden. Walking: feet on a section that fell, and on no standing floor, catch the edge and
+## the climb back begins (decision D3); feet beside a gap, within the clearance of it, step back
+## from it (decision D2), and a running hold is not charged for that step. Climbing: the edge hung
+## from may itself have gone, so the hang point is worked out again (code review 2026-11-22).
 static func warden_footing(sim: NightSim) -> void:
 	if not WardenRules.walking(sim):
+		WardenRules.hang_on(sim)
 		return
 	var under: int = WardenRules.fell_from(sim)
 	if under > 0:
 		WardenRules.start_climb(under, sim)
-	else:
-		WardenRules.step_back(sim)
+		return
+	var before: Vector3 = sim.warden.position
+	WardenRules.step_back(sim)
+	HoldRules.feet_moved(sim.warden.position - before, sim)

@@ -160,6 +160,21 @@ func _weights_of(section: SectionView) -> Array[Node]:
 	return out
 
 
+## The children of `parent` whose names begin with `prefix`.
+func _named(parent: Node, prefix: String) -> Array[Node]:
+	var out: Array[Node] = []
+	for child: Node in parent.get_children():
+		if String(child.name).begins_with(prefix):
+			out.append(child)
+	return out
+
+
+func _event(kind: NightEvent.Kind, section: int) -> NightEvent:
+	var event: NightEvent = NightEvent.make(kind)
+	event.section = section
+	return event
+
+
 func _loaded_sim(planks: Dictionary[int, int], weights: Dictionary[int, int]) -> NightSim:
 	var start: StartState = StartState.new()
 	start.planks = planks
@@ -264,6 +279,92 @@ func _test_the_section_drops_and_is_gone() -> void:
 			and section4.get_child_count() == 0)
 	_check("view: its neighbours keep their beams and posts", view.get_node_or_null("Section3/BeamL") != null
 			and view.get_node_or_null("Section5/PostR1") != null)
+	view.free()
+
+
+func _test_a_piece_taken_on_the_fall_tick_does_not_fall() -> void:
+	# Code review of 2026-11-22: the view handles SECTION_FELL before it reconciles (AD-49), so what
+	# left the section earlier in that same tick must leave the picture first. Section 4 (3 planks,
+	# 4 weights) groans from tick 0; the warden on section 5 (along 20.4, looking down) strips it
+	# from tick 0, and the strip completes in step 2 of tick 120, the tick it falls (step 7): the
+	# stripped plank is in the hand and does not drop with the section.
+	var start: StartState = StartState.new()
+	start.planks = {4: 3}
+	start.weights = {4: 4}
+	start.warden_along = 20.4
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(0.0, -1.2)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	var view: SpanView = _view_of(sim)
+	for i: int in 120:
+		view.on_tick(sim.advance(), sim)
+	var section4: SectionView = view.get_node("Section4")
+	_check("view: before the fall's tick: 3 planks, 2 rails, 2 beams, 4 posts, 4 weights", section4.get_child_count() == 15,
+			str(section4.get_child_count()))
+	var fell: Array[NightEvent] = sim.advance()
+	view.on_tick(fell, sim)
+	_check("view: tick 120 is the strip, then the fall", _kinds(fell) == [NightEvent.Kind.PLANK_STRIPPED,
+			NightEvent.Kind.SECTION_FELL] and sim.span.in_hand(NightTypes.Part.PLANK) == 6, str(_kinds(fell)))
+	var falling: Node3D = section4.falling()
+	_check("view: 14 pieces drop: the plank stripped that tick is not one of them", falling != null
+			and falling.get_child_count() == 14 and _named(falling, "Plank").size() == 2, str(falling.get_children()))
+	view.free()
+	# A weight lifted (step 6) on the tick the section falls: 3 planks under 5 weights, one lifted on
+	# tick 120 leaves 4 on 3, so it still falls. Four weights drop, not five.
+	start = StartState.new()
+	start.planks = {4: 3}
+	start.weights = {4: 5}
+	start.lifts = [Vector2i(4, 120)]
+	sim = _sim_with(_def_with(start), 1)
+	view = _view_of(sim)
+	for i: int in 120:
+		view.on_tick(sim.advance(), sim)
+	fell = sim.advance()
+	view.on_tick(fell, sim)
+	section4 = view.get_node("Section4")
+	_check("view: tick 120 is the lift, then the fall", _kinds(fell) == [NightEvent.Kind.WEIGHT_LIFTED,
+			NightEvent.Kind.SECTION_FELL], str(_kinds(fell)))
+	_check("view: 4 weights drop, the lifted one is not one of them", section4.falling() != null
+			and _named(section4.falling(), "Weight").size() == 4 and section4.falling().get_child_count() == 15,
+			str(section4.falling().get_children()))
+	view.free()
+
+
+func _test_fall_counts_only_what_came_before_it() -> void:
+	# SectionView.fall(events) on its own, with event lists no tick of this story can produce (a rail
+	# strip or a re-lay cannot complete on a fall's tick yet; the dead of epic 3 make it possible):
+	# only this section's events before its own SECTION_FELL change what drops.
+	var sim: NightSim = _loaded_sim({4: 3}, {4: 4})
+	var view: SpanView = _view_of(sim)
+	var section4: SectionView = view.get_node("Section4")
+	var rail: NightEvent = _event(NightEvent.Kind.RAIL_STRIPPED, 4)
+	rail.side = LEFT
+	section4.fall([_event(NightEvent.Kind.PLANK_STRIPPED, 5), rail, _event(NightEvent.Kind.PLANK_RELAID, 4),
+			_event(NightEvent.Kind.SECTION_FELL, 4), _event(NightEvent.Kind.PLANK_STRIPPED, 4)])
+	var falling: Node3D = section4.falling()
+	_check("view: a rail stripped and a plank re-laid before the fall: 4 planks and the right rail drop",
+			_named(falling, "Plank").size() == 4 and _named(falling, "Rail").size() == 1
+			and falling.get_node_or_null("RailR") != null, str(falling.get_children()))
+	_check("view: section 5's strip, and section 4's after its fall, change nothing: 4 weights, 15 pieces",
+			_named(falling, "Weight").size() == 4 and falling.get_child_count() == 15, str(falling.get_child_count()))
+	view.free()
+
+
+func _test_a_section_processes_only_while_it_falls() -> void:
+	# The drop is the view's only per-frame work: a section in the tree is idle until SECTION_FELL
+	# and again once its pieces are freed.
+	var sim: NightSim = _loaded_sim({4: 3}, {4: 4})
+	var view: SpanView = _view_of(sim)
+	var section4: SectionView = view.get_node("Section4")
+	var section3: SectionView = view.get_node("Section3")
+	_check("view: in the tree and standing, a section does not process", section4.is_inside_tree()
+			and not section4.is_processing() and not section3.is_processing())
+	for i: int in 121:
+		view.on_tick(sim.advance(), sim)
+	_check("view: it processes while it drops; its neighbour does not", section4.falling() != null
+			and section4.is_processing() and not section3.is_processing())
+	section4.fall_step(1.5)
+	_check("view: and stops when the pieces are freed", section4.falling() == null and not section4.is_processing())
 	view.free()
 
 

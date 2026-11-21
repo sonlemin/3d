@@ -33,7 +33,7 @@ func on_tick(events: Array[NightEvent], sim: NightSim) -> void:
 		_build(sim.geometry, sim.def.section_count)
 	for event: NightEvent in events:
 		if event.kind == NightEvent.Kind.SECTION_FELL and event.section >= 1 and event.section <= _sections.size():
-			_sections[event.section - 1].fall()
+			_sections[event.section - 1].fall(events)
 	for i: int in _sections.size():
 		_sections[i].show_state(sim, i + 1)
 

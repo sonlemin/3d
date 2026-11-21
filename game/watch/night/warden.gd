@@ -6,7 +6,8 @@
 ## Mouse look is not a rule (AD-52): the view turns at once on mouse motion, between ticks. The
 ## position follows the sim through a TickBlend. No bob and no roll (EXPERIENCE.md, Accessibility
 ## Floor): the camera's local position is only ever (0, EYE_HEIGHT, 0) and its roll only ever 0;
-## both are written by start_at() alone, and look() turns nothing but yaw and pitch.
+## both are written by start_at() alone, and look() turns nothing but yaw and pitch. The view is
+## the player's: the one time the game turns it is the catch at a fall (on_tick()).
 class_name Warden
 extends Node3D
 
@@ -15,6 +16,8 @@ extends Node3D
 const LOOK_RADIANS_PER_PIXEL: float = 0.0025
 ## How far up or down the view can tilt, in degrees: the ear test's value (listener.gd).
 const MAX_PITCH_DEGREES: float = 80.0
+## AD-67: yaw 0 faces the far pier (-Z); this faces the town (+Z), the way a climb back goes.
+const TOWN_YAW: float = PI
 # Field of view: the camera's default 75 degrees, also the ear test's. A setting in epic 5 (UX-39).
 
 var _blend: TickBlend = TickBlend.new()
@@ -44,14 +47,24 @@ func start_at(sim: NightSim) -> void:
 
 
 ## A consumer of the night (`on_tick(events, sim)`): the sim's new position joins the blend. The
-## catch at a fall and the end of the climb back (story 1.5 D3) are cuts: the blend snaps, so the
-## view jumps rather than sliding through the gap. Every other move, D2's step back too, blends.
+## catch at a fall and the end of the climb back (story 1.5 D3) are cuts, and so is every move
+## while climbing (the edge hung from fell, and the feet went to the next one): the blend snaps, so
+## the view jumps rather than sliding through the gap. Every other move, D2's step back too, blends.
+## At the catch the view also cuts to face the edge caught (code review 2026-11-22, Sonlm): toward
+## the town, level, so the deck is at eye height and not the gap. Once only: the player looks
+## freely after it, and nothing else ever turns the view for them.
 func on_tick(events: Array[NightEvent], sim: NightSim) -> void:
+	var cut: bool = not WardenRules.walking(sim)
 	for event: NightEvent in events:
-		if event.kind == NightEvent.Kind.WARDEN_CAUGHT or event.kind == NightEvent.Kind.WARDEN_CLIMBED:
-			_blend.snap(sim.warden.position)
-			return
-	_blend.push(sim.warden.position)
+		if event.kind == NightEvent.Kind.WARDEN_CAUGHT:
+			_face(TOWN_YAW, 0.0)
+			cut = true
+		elif event.kind == NightEvent.Kind.WARDEN_CLIMBED:
+			cut = true
+	if cut:
+		_blend.snap(sim.warden.position)
+	else:
+		_blend.push(sim.warden.position)
 
 
 func _process(_delta: float) -> void:
@@ -63,6 +76,14 @@ func look(delta: Vector2) -> void:
 	var limit: float = deg_to_rad(MAX_PITCH_DEGREES)
 	_yaw = wrapf(_yaw - delta.x * LOOK_RADIANS_PER_PIXEL, -PI, PI)
 	_pitch = clampf(_pitch - delta.y * LOOK_RADIANS_PER_PIXEL, -limit, limit)
+	rotation.y = _yaw
+	_camera().rotation.x = _pitch
+
+
+## Sets the view outright: yaw on the node, pitch on its camera.
+func _face(to_yaw: float, to_pitch: float) -> void:
+	_yaw = to_yaw
+	_pitch = to_pitch
 	rotation.y = _yaw
 	_camera().rotation.x = _pitch
 

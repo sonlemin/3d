@@ -152,8 +152,10 @@ static func fell_from(sim: NightSim) -> int:
 
 
 ## Pure: where a climb from the fallen section `from_section` ends: the first section after it
-## toward the town that has planks and has not fallen, else the landing (0). Worked out when the
-## climb begins and again when it ends, so a section that falls or goes bare meanwhile is passed.
+## toward the town that has planks and has not fallen, else the landing (0). A bare section that
+## still stands is passed: there is no deck to climb onto. Worked out when the climb begins, at
+## every settle while it runs (hang_on()) and again when it ends, so a section that falls or goes
+## bare meanwhile is passed.
 static func climb_target(from_section: int, sim: NightSim) -> int:
 	for n: int in range(from_section + 1, sim.def.section_count + 1):
 		if sim.span.planks(n) > 0 and not sim.span.fallen(n):
@@ -173,6 +175,15 @@ static func start_climb(section: int, sim: NightSim) -> void:
 	var event: NightEvent = NightEvent.make(NightEvent.Kind.WARDEN_CAUGHT)
 	event.section = section
 	sim.emit(event)
+
+
+## Step 8 (ConsequenceRules.warden_footing), while climbing: the feet hang from the edge of what
+## the climb would end on now. When that section fell (or went bare) since the catch, they cut to
+## the next edge toward the town in the same tick (code review 2026-11-22, Sonlm). It is the same
+## catch: no event, and the climb's ticks keep running. With nothing changed it moves nothing.
+static func hang_on(sim: NightSim) -> void:
+	var warden: WardenState = sim.warden
+	warden.position = sim.geometry.hang_point(climb_target(warden.fell_from, sim), warden.position.x)
 
 
 ## Step 1, before the walk: the running timed move counts down. Begun on tick F (WARDEN_CAUGHT),

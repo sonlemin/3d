@@ -154,6 +154,59 @@ func _test_the_climb_cuts_and_the_step_back_blends() -> void:
 	night.free()
 
 
+func _test_the_catch_turns_the_view_to_the_edge() -> void:
+	# Code review of 2026-11-22 (Sonlm): at the catch the view cuts to face the edge caught: toward
+	# the town (yaw pi; yaw 0 faces the far pier), level, so the deck is at eye height (D3). The
+	# player looks freely after it. Section 4 (3 planks, 4 weights, GD-19) falls on tick 120; section
+	# 5 (4 planks, 4 weights, one stripped by tick 120) falls on tick 240, during the climb.
+	var night: NightScreen = _night()
+	var warden: Warden = _warden_of(night)
+	var start: StartState = StartState.new()
+	start.planks = {4: 3, 5: 4}
+	start.weights = {4: 4, 5: 4}
+	start.warden_along = 19.6
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	warden.start_at(sim)
+	sim.set_view(PI, -1.2)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	for i: int in 120:
+		warden.on_tick(sim.advance(), sim)
+	warden.look(Vector2(200.0, 300.0))
+	_check("node: before the catch the player looks right and down (yaw -0.5, pitch -0.75)",
+			is_equal_approx(warden.yaw(), -0.5) and is_equal_approx(warden.pitch(), -0.75), "%f %f" % [warden.yaw(), warden.pitch()])
+	var caught: Array[NightEvent] = sim.advance()
+	warden.on_tick(caught, sim)
+	_check("node: on WARDEN_CAUGHT the view faces the town, level (yaw pi, pitch 0)", _has(caught, NightEvent.Kind.WARDEN_CAUGHT)
+			and is_equal_approx(absf(warden.yaw()), PI) and warden.pitch() == 0.0, "%f %f" % [warden.yaw(), warden.pitch()])
+	_check("node: the node and its camera are turned with it, no roll", is_equal_approx(absf(warden.rotation.y), PI)
+			and warden.get_node("Camera3D").rotation.is_equal_approx(Vector3.ZERO), str(warden.rotation))
+	# The player looks away during the climb; the edge hung from falls on tick 240.
+	warden.look(Vector2(-40.0, 80.0))
+	var yaw: float = warden.yaw()
+	var pitch: float = warden.pitch()
+	_check("node: the player can look away while hanging", not is_equal_approx(absf(yaw), PI) and is_equal_approx(pitch, -0.2),
+			"%f %f" % [yaw, pitch])
+	for i: int in 119:
+		warden.on_tick(sim.advance(), sim)
+	var before: Vector3 = sim.warden.position
+	var gone: Array[NightEvent] = sim.advance()
+	warden.on_tick(gone, sim)
+	_check("node: tick 240: the edge hung from fell and the feet cut 5 m to the next one",
+			_kinds(gone) == [NightEvent.Kind.SECTION_FELL] and sim.warden.position.is_equal_approx(before + Vector3(0.0, 0.0, 5.0)),
+			str(sim.warden.position))
+	_check("node: the blend snaps there (a cut, no slide)", warden.blend().value(0.0).is_equal_approx(sim.warden.position)
+			and warden.blend().value(1.0).is_equal_approx(sim.warden.position), str(warden.blend().value(0.0)))
+	_check("node: and the player's view is left alone", warden.yaw() == yaw and warden.pitch() == pitch,
+			"%f %f" % [warden.yaw(), warden.pitch()])
+	for i: int in 179:
+		warden.on_tick(sim.advance(), sim)
+	var up: Array[NightEvent] = sim.advance()
+	warden.on_tick(up, sim)
+	_check("node: WARDEN_CLIMBED does not turn the view either", _has(up, NightEvent.Kind.WARDEN_CLIMBED)
+			and warden.yaw() == yaw and warden.pitch() == pitch)
+	night.free()
+
+
 func _test_placed_start_is_drawn() -> void:
 	# D3: a show-me setup that places the warden mid-span is drawn there from the first frame.
 	var start: StartState = StartState.new()

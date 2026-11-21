@@ -800,10 +800,13 @@ func _test_dw34_a_strip_hold_on_a_falling_section() -> void:
 	_check("dw34: no plank moved to the hand (5 from the start)", sim.span.in_hand(PLANK) == 5 and not sim.hands.holding())
 	# One begun later (tick 30) is cancelled on 121 too.
 	sim = _loaded_at(20.4, {4: 3}, {4: 4})
-	_advance(sim, 29 - sim.tick)
+	_advance(sim, 30 - sim.tick)
 	_press(sim, HAMMER)
+	var started: Array[NightEvent] = sim.advance()
+	_check("dw34: a strip begun on tick 30", _only(started, NightEvent.Kind.HOLD_STARTED) and _tick_of(started[0]) == 30,
+			_names(started))
 	cancelled = _after_the_fall(sim)
-	_check("dw34: a strip begun on tick 30 is cancelled on 121", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
+	_check("dw34: is cancelled on 121", _only(cancelled, NightEvent.Kind.HOLD_CANCELLED)
 			and _tick_of(cancelled[0]) == FALL_TICK + 1, _names(cancelled))
 	_check("dw34: no fault", _faults.total() == 0, str(_faults.codes()))
 
@@ -901,6 +904,43 @@ func _test_the_forearm_is_lowered_by_the_fall() -> void:
 	_press(sim, FOREARM)
 	sim.advance()
 	_check("climb: Press once: Tab during the climb does not raise it", not sim.hands.forearm_raised)
+
+
+func _test_buttons_held_through_the_climb() -> void:
+	# Code review of 2026-11-22: a button still down when the climb ends has nothing behind it, as
+	# after a change of Holds mode (idle hands): nothing starts until a fresh press.
+	# Tab (Hold mode), held from before the fall on tick 120 and never let go: lowered on 121; the
+	# climb ends on 420 and the forearm stays down.
+	var sim: NightSim = _loaded_at(17.5, {4: 3}, {4: 4})
+	_press(sim, FOREARM)
+	var events: Array[NightEvent] = _advance(sim, FALL_TICK + 300 + 6 - sim.tick)
+	_check("held Tab: the climb ended on 420 and nothing else happened since the catch", _names(events)
+			== str(["SECTION_FELL", "WARDEN_CAUGHT", "WARDEN_CLIMBED"]) and events[2].section == 5
+			and _tick_of(events[2]) == 420 and WardenRules.walking(sim), _names(events))
+	_check("held Tab: with Tab still down the forearm stays down after the climb (tick 425)", not sim.hands.forearm_raised)
+	_release(sim, FOREARM)
+	_press(sim, FOREARM)
+	events = sim.advance()
+	_check("held Tab: let go and pressed again, it rises, with no event", sim.hands.forearm_raised and events.is_empty(),
+			_names(events))
+	# The hammer (Hold mode), held on a strip of section 5's deck from section 4 (along 19.6, yaw pi)
+	# when section 4 falls: cancelled on 121. Up on section 5 at along 20.3 the same aim is still
+	# section 5's deck (lands at along 20.922), and the button is still down: no hold starts.
+	sim = _loaded_at(19.6, {4: 3}, {4: 4}, PI, DOWN)
+	_press(sim, HAMMER)
+	events = _advance(sim, FALL_TICK + 300 + 6 - sim.tick)
+	_check("held hammer: cancelled on 121, the climb ended on 420, and no hold began after it",
+			_names(events) == str(["HOLD_STARTED", "SECTION_FELL", "WARDEN_CAUGHT", "HOLD_CANCELLED", "WARDEN_CLIMBED"])
+			and _tick_of(events[3]) == 121 and _tick_of(events[4]) == 420 and not sim.hands.holding()
+			and sim.look.kind == LookTarget.Kind.DECK and sim.look.section == 5, _names(events))
+	_release(sim, HAMMER)
+	events = sim.advance()
+	_check("held hammer: letting go then does nothing", events.is_empty(), _names(events))
+	_press(sim, HAMMER)
+	events = sim.advance()
+	_check("held hammer: a fresh press starts a strip of section 5", _only(events, NightEvent.Kind.HOLD_STARTED)
+			and events[0].section == 5, _names(events))
+	_check("held: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
 func _test_presses_during_the_climb_are_ignored() -> void:

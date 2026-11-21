@@ -241,8 +241,7 @@ func _test_strength_and_load() -> void:
 			str(SpanRules.strength(3, sim.span)))
 	_check("load: strength of a full section is 8", SpanRules.strength(1, sim.span) == 8)
 	_check("load: 2 test weights are a load of 2", SpanRules.load_on(3, sim.span) == 2.0, str(SpanRules.load_on(3, sim.span)))
-	_check("load: no weight is a load of 0, the warden standing there (along 12.5) is not one",
-			SpanRules.load_on(1, sim.span) == 0.0 and SpanRules.load_on(3, sim.span) == 2.0)
+	_check("load: no weight is a load of 0", SpanRules.load_on(1, sim.span) == 0.0)
 	_check("load: a creak is load == strength above 0; overload is load above strength",
 			SpanRules.creaks(3.0, 3) and not SpanRules.creaks(0.0, 0) and not SpanRules.creaks(2.0, 3)
 			and not SpanRules.creaks(4.0, 3) and SpanRules.overloaded(4.0, 3) and SpanRules.overloaded(1.0, 0)

@@ -6,7 +6,8 @@
 ## arithmetic: a section that went bare under the warden holds them until they step off it.
 ## Story 1.5 too: a fallen section is no floor and never holds anyone; while the warden climbs back
 ## after a fall (from WARDEN_CAUGHT to WARDEN_CLIMBED, which must be 300 ticks apart: GDD Game
-## Mechanics 2, 5 s) the feet hang 1.4 m below the deck (decision D3) instead of standing.
+## Mechanics 2, 5 s) the feet hang 1.4 m below the deck (decision D3) instead of standing, at the
+## edge of the next section toward the town that has planks and stands (_hang_edge()).
 extends WatchTest
 
 ## Kinds seen over every path and seed.
@@ -27,6 +28,8 @@ var _length: float = 0.0
 ## Story 1.5: the tick of the last WARDEN_CAUGHT while the warden climbs, -1 while walking. Reset
 ## per run.
 var _caught_at: int = -1
+## Story 1.5: the section that fell under the warden at the last WARDEN_CAUGHT. Reset per run.
+var _fell_from: int = 0
 
 
 func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
@@ -38,14 +41,17 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 		if event.kind == NightEvent.Kind.REFUSED:
 			_seen_reasons[event.reason] = true
 		if event.kind == NightEvent.Kind.PLANK_STRIPPED and sim.span.planks(event.section) == 0 \
-				and _in_band(along, event.section) and not sim.span.fallen(event.section):
+				and _in_band(along, event.section):
 			_held[event.section] = true
 		if event.kind == NightEvent.Kind.WARDEN_CAUGHT:
 			_caught_at = tick
+			_fell_from = event.section
 		if event.kind == NightEvent.Kind.WARDEN_CLIMBED:
 			if tick - _caught_at != 300:
 				climb = " (climbed %d ticks after the catch)" % (tick - _caught_at)
 			_caught_at = -1
+	# A fallen section holds nobody. No bot path yet bares a section that later falls, so removing
+	# `fallen` here changes no run: it is a guard, not a proven check (DW-43, story 1.6).
 	for n: int in _held.keys():
 		if not _in_band(along, n) or sim.span.planks(n) > 0 or sim.span.fallen(n):
 			_held.erase(n)
@@ -55,7 +61,8 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 	# while climbing, the feet hang 1.4 m down at an edge instead, and no climb outlasts 300 ticks.
 	var standing: bool
 	if _caught_at >= 0:
-		standing = absf(sim.warden.position.y + 1.4) < 0.001 and tick - _caught_at <= 300
+		standing = absf(sim.warden.position.y + 1.4) < 0.001 and tick - _caught_at <= 300 \
+				and absf(along - _hang_edge(sim)) < 0.001
 	else:
 		standing = (WardenRules.can_stand(sim.warden.position, sim) or not _held.is_empty()) and _inside(sim) \
 				and climb.is_empty()
@@ -63,6 +70,17 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 			and _broken.size() < 5:
 		_broken.append("tick %d: %d planks, %d ropes, faults %s, warden at %s%s%s" % [sim.tick, planks, ropes,
 				sim.faults.codes(), sim.warden.position, "" if standing else " (cannot stand there)", climb])
+
+
+## Story 1.5 D3 and the code review of 2026-11-22, worked out here: where along the span a climbing
+## warden hangs: at the near edge of the first 5 m section after the one that fell under them that
+## has a plank and has not fallen, else at the landing's edge (the span's length). Every tick, so
+## also when the section first caught falls during the climb.
+func _hang_edge(sim: NightSim) -> float:
+	for n: int in range(_fell_from + 1, sim.def.section_count + 1):
+		if sim.span.planks(n) > 0 and not sim.span.fallen(n):
+			return (n - 1) * 5.0
+	return _length
 
 
 ## Story 1.3 D1, worked out here and not asked of WardenRules (the rule may not be its own
@@ -96,6 +114,7 @@ func _run_paths(sections: int, planks: int, ropes: int) -> void:
 		for night_seed: int in range(1, 21):
 			_held = {}
 			_caught_at = -1
+			_fell_from = 0
 			var def: NightDef = NightDefs.one_night() if sections == 6 else _def_with(StartState.new(), sections)
 			path.call(def, night_seed, WatchFaults.new(), _each_tick)
 
@@ -304,7 +323,9 @@ func _test_overload_needs_four_sections() -> void:
 
 func _test_overload_reaches_its_cases() -> void:
 	# Story 1.5 T8: the overload path's script really produces each case it is written for, on both
-	# nights and three seeds, each told from events, commands and state here, not taken on trust.
+	# nights and three seeds, each told from events, commands and state here, not taken on trust:
+	# a load is the test weights (1 each) and a strength the planks, read from the state, never
+	# asked of SpanRules (the rule may not be its own judge).
 	# GDD Game Mechanics 2: a fall comes 120 ticks after GROAN_STARTED; the climb back lasts 300.
 	# Decision D2: a warden beside the gap ends 0.3 m from it; D3: the climb ends 0.3 m in.
 	var wanted: PackedStringArray = [
@@ -325,6 +346,8 @@ func _test_overload_reaches_its_cases() -> void:
 			var hold: Array[int] = [0, 0, 0]
 			var last_at: Array[Vector3] = [Vector3.ZERO]
 			var was_raised: Array[bool] = [false]
+			# Section -> its test weights at the end of the tick before.
+			var weights_were: Dictionary[int, int] = {}
 			var def: NightDef = NightDefs.one_night() if sections == 6 else _def_with(StartState.new(), 4)
 			var script_faults: WatchFaults = WatchFaults.new()
 			NightBot.overload_script(def, night_seed, script_faults,
@@ -337,19 +360,21 @@ func _test_overload_reaches_its_cases() -> void:
 							var n: int = event.section
 							match event.kind:
 								NightEvent.Kind.CREAK_STARTED:
-									if SpanRules.load_on(n, sim.span) == SpanRules.strength(n, sim.span):
+									if sim.span.weights(n) > 0 and sim.span.weights(n) == sim.span.planks(n):
 										reached["creak started"] = true
 								NightEvent.Kind.CREAK_STOPPED:
-									reached["creak stopped"] = true
+									if sim.span.weights(n) != sim.span.planks(n):
+										reached["creak stopped"] = true
 								NightEvent.Kind.GROAN_STARTED:
-									if SpanRules.load_on(n, sim.span) > SpanRules.strength(n, sim.span):
+									if sim.span.weights(n) > sim.span.planks(n):
 										reached["groan started"] = true
 										groaned[n] = tick
 								NightEvent.Kind.GROAN_STOPPED:
-									if SpanRules.load_on(n, sim.span) <= SpanRules.strength(n, sim.span):
+									if sim.span.weights(n) <= sim.span.planks(n) and tick - groaned.get(n, -1000) < 120:
 										reached["groan stopped"] = true
 								NightEvent.Kind.WEIGHT_LIFTED:
-									reached["weight lifted"] = true
+									if sim.span.weights(n) == weights_were.get(n, -1) - 1:
+										reached["weight lifted"] = true
 								NightEvent.Kind.SECTION_FELL:
 									fell_on[n] = tick
 									if groaned.get(n, -1000) == tick - 120 and sim.span.weights(n) == 0 \
@@ -399,7 +424,9 @@ func _test_overload_reaches_its_cases() -> void:
 							if sim.move_wish != Vector2.ZERO and sim.warden.position == last_at[0]:
 								reached["move ignored while climbing"] = true
 						was_raised[0] = sim.hands.forearm_raised
-						last_at[0] = sim.warden.position)
+						last_at[0] = sim.warden.position
+						for n: int in range(1, sections + 1):
+							weights_were[n] = sim.span.weights(n))
 			var missing: PackedStringArray = []
 			for case: String in wanted:
 				if not reached.get(case, false):

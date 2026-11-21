@@ -175,17 +175,19 @@ func count_at(kind: NightTypes.Part, place: PartPlace) -> int:
 
 
 ## How many of `count` more parts `place` has room for: a deck up to the planks per section, a
-## rail one rope, the hand and lost any number. Pure; reports nothing.
+## rail one rope, the hand and lost any number. A fallen section has no room, on its deck or its
+## rails (story 1.5); parts can still be moved off it (to lost). Pure; reports nothing.
 func fits_at(kind: NightTypes.Part, place: PartPlace, count: int) -> int:
 	if not holds(kind, place):
 		return 0
 	match place.kind:
 		PartPlace.Kind.DECK:
-			# Story 1.5: a fallen deck has no room; parts can still be moved off it (to lost).
 			if _fallen[place.section]:
 				return 0
 			return clampi(_planks_per_section - _planks[place.section], 0, count)
 		PartPlace.Kind.RAIL:
+			if _fallen[place.section]:
+				return 0
 			return clampi(1 - _ropes[Vector2i(place.section, place.side)], 0, count)
 	return maxi(count, 0)
 

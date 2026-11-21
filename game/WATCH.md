@@ -85,19 +85,25 @@ load yourself. When the load equals the strength the section creaks (its planks 
 when it is more, it groans (the bow deepens) and falls for good 2 s later, unless the load drops
 back first. Strip planks from under weights to overload a section. When it falls, everything on it
 drops out of sight and the gap reads black; it can never be re-laid, and aiming into it reaches
-nothing. If you stand on it, you catch the edge of the next standing section toward the town (or
-the landing) and hang there for 5 s, looking along its deck: you can look but not walk or act;
-then you are up on it, 0.3 m in, with everything you carried. Standing on the next section within
-0.3 m of the gap, you are moved back to 0.3 m from it. Nothing is heard yet (sound is epic 2).
+nothing. If you stand on it, you catch the edge of the next section toward the town that still
+has planks (or the landing; a bare section is passed) and hang there for 5 s. At the catch your
+view is turned to face that edge, so you look along its deck; after that you can look around but
+not walk or act. Then you are up on it, 0.3 m in, with everything you carried. If the edge you
+hang from falls too, you are cut to the next one, and the 5 s keep running. A button still held
+when you come up does nothing until you press it again. Standing on the next section within
+0.3 m of the gap, you are moved back to 0.3 m from it, and a hold you had running goes on.
+Nothing is heard yet (sound is epic 2). To see the bow, look along the section, not straight down
+at its near end: the sag is deepest at mid-section and close to nothing at the ends.
 
 Show-me setups for story 1.3: `walk` (the landing, every section walkable, with sparse sections
 at 1, 4 and 5 planks on the way) and `walk_close` (the same planks, standing mid section 5). For
 story 1.4: `strip` (mid section 5 of a full span, nothing in hand) and `forearm` (12 planks and 3
 ropes in hand, on the landing). For story 1.5: `overload` (section 4 at 4 planks under 3 weights,
-standing on section 5 just short of it: look down at section 4 and strip it twice) and
+standing on section 5 just short of it: look down at section 4 and strip it twice, looking up
+along it after each strip to see the bow) and
 `fall_under` (the same section 4, standing on it near its town end: strip your own deck twice).
 
-With `--trace`, story 1.5 adds lines like:
+With `--trace`, story 1.5 adds lines like these (one of each kind, not one run):
 
 ```
   0.000 GROAN_STARTED     s3

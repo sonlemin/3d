@@ -85,7 +85,9 @@ static func tick_loads(sim: NightSim) -> void:
 			if sim.span.creaking(n):
 				sim.span.set_creaking(n, false)
 				_emit(NightEvent.Kind.CREAK_STOPPED, n, sim)
-			sim.span.set_groan_left(n, sim.ticks.groan)
+			# At least 1 tick: groan_left above 0 is also what says "groaning", so a GROAN_S tuned
+			# under half a tick would otherwise start a new groan every tick and never fall.
+			sim.span.set_groan_left(n, maxi(sim.ticks.groan, 1))
 			_emit(NightEvent.Kind.GROAN_STARTED, n, sim)
 			continue
 		var creaking: bool = creaks(load, held)

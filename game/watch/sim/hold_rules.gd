@@ -11,7 +11,9 @@
 ## would be left with no button behind it. In Press once, a press of the button whose hold has
 ## just completed is ignored for a short grace (HandConstants.PRESS_ONCE_GRACE_S).
 ## While the warden is not walking (story 1.5's climb back, a timed move of WardenRules), every
-## press is ignored with no event, and tick() cancels a running hold and lowers the forearm.
+## press is ignored with no event, and tick() cancels a running hold and lowers the forearm. A
+## button still down when the climb ends has nothing behind it, as after a change of mode: nothing
+## starts or rises until a fresh press.
 class_name HoldRules
 extends RefCounted
 
@@ -61,6 +63,14 @@ static func tick(sim: NightSim) -> void:
 	hands.ticks_left -= 1
 	if hands.ticks_left <= 0:
 		_complete(sim)
+
+
+## The feet were moved by `delta`, and not by the warden's own walk (story 1.5 D2: the step back
+## from a gap). A running hold's starting point moves with them, so "moved over 0.5 m" (GD-19)
+## counts only what the warden walked: D2, "a hold on another target goes on".
+static func feet_moved(delta: Vector3, sim: NightSim) -> void:
+	if sim.hands.holding():
+		sim.hands.began_at += delta
 
 
 ## Pure: how far along the running hold is, 0 to 1 (for epic 4's hands); 0 when idle.

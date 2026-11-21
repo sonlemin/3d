@@ -293,9 +293,11 @@ func _test_the_warden_adds_no_load() -> void:
 			kinds.append(event.kind)
 	_check("warden: on a section at its limit it only creaks", kinds == [NightEvent.Kind.NIGHT_STARTED,
 			NightEvent.Kind.CREAK_STARTED], str(kinds))
-	var away: NightSim = _loaded(-1.0, {4: 3}, {4: 3})
-	_check("warden: the load is 3 with the warden on it and 3 without", SpanRules.load_on(4, sim.span) == 3.0
-			and SpanRules.load_on(4, away.span) == 3.0)
+	# 300 ticks is 5 s, more than the 2 s of a groan (GD-19): had the warden counted as a load of any
+	# size, 3 planks would have groaned from tick 0 and fallen on tick 120.
+	_check("warden: after 5 s on it the section stands, creaking, the warden still on it (along 17.5)",
+			not sim.span.fallen(4) and sim.span.creaking(4) and sim.span.groan_left(4) == 0 and WardenRules.walking(sim)
+			and sim.warden.position.distance_to(Vector3(0.0, 0.0, -12.5)) < 0.001, str(sim.warden.position))
 
 
 func _test_warden_state_values() -> void:

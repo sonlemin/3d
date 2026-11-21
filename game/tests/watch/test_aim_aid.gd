@@ -1,6 +1,7 @@
 ## The temporary aim aid (DW-41; Sonlm, 2026-11-21): a debug mark at the centre of the night view.
 ## Its reading must never drift from the rules: it says "a button would start a hold" exactly
-## when a press of that button, taken on the next tick, emits HOLD_STARTED. Also: the word for
+## when a press of that button, taken on the next tick, emits HOLD_STARTED (but for the last tick of
+## a climb back, where the cut onto the deck changes what is looked at: AimAid.would_start()). Also: the word for
 ## what is in reach, the ring's progress, that it takes no input, and that Main adds it to a night
 ## only when the debug tools are there. What it looks like, and that the dot sits on the view
 ## line, are checked on screen.
