@@ -61,10 +61,10 @@ func _test_rails_beams_posts() -> void:
 func _test_piers_landing_start() -> void:
 	var g: SpanGeometry = _geometry()
 	# D2: far pier 7 x 4, along -4 to 0, 20 m below to 3 m above the deck.
-	_check("geometry: far pier", _aabb_is(g.far_pier_box(), Vector3(-3.5, -20.0, -34.0), Vector3(3.5, 3.0, -30.0)),
+	_check("geometry: far pier", _aabb_is(g.far_pier_box(), Vector3(-3.5, -2.0, -34.0), Vector3(3.5, 3.0, -30.0)),
 			str(g.far_pier_box()))
 	# D2: town pier 7 x 4, along 30 to 34, 20 m below up to the deck.
-	_check("geometry: town pier", _aabb_is(g.town_pier_box(), Vector3(-3.5, -20.0, 0.0), Vector3(3.5, 0.0, 4.0)),
+	_check("geometry: town pier", _aabb_is(g.town_pier_box(), Vector3(-3.5, -2.0, 0.0), Vector3(3.5, 0.0, 4.0)),
 			str(g.town_pier_box()))
 	# D2: the landing, 5 x 4 at deck level, the town pier's walkable top.
 	_check("geometry: landing", _aabb_is(g.landing_box(), Vector3(-2.5, 0.0, 0.0), Vector3(2.5, 0.0, 4.0)),

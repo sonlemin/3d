@@ -28,7 +28,7 @@ Delivers: GDD Game Mechanics 2 (the span's size and counts; planks as a count). 
 **Closing steps (from "Epic 1: story detail"):** the story is done when `tools/ci.sh` passes and Sonlm has run the show-me setup below. Follow the build order (AD-46): failing test first; constants, state, tick step, rule and events; then the view; then the bot path, the show-me setup and the manual check.
 
 **Manual check for Sonlm** (an agent cannot fully verify this headless; never report it as verified unless judged from frames as the dev-story chores describe):
-- M1 (`--show=span_counts`): sections at 8, 5, 4, 1 and 0 planks can be told apart at a glance from the landing end. This one can be judged from frames on Xvfb (`_bmad/custom/gds-dev-story.toml`, step 1); say it was llvmpipe, not a real GPU.
+- M1 (`--show=span_counts`): sections at 8, 5, 4, 1 and 0 planks can be told apart at a glance from the landing end. **Narrowed on 2026-11-21 (Sonlm):** from the landing, the nearest sections (8 and 5) read apart at a glance and every gap reads black; reading the far sections (4, 1, 0) moved to story 1.3's walk check (DW-31). This one can be judged from frames on Xvfb (`_bmad/custom/gds-dev-story.toml`, step 1); say it was llvmpipe, not a real GPU.
 
 ## Decisions for this story
 
@@ -353,11 +353,12 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-20.
 - **Debug:** a show-me setup's night carries the setup's name; `--show=list` ends with `shows: N`.
 - **Tests:** 402 pass (39 expected faults), up from 368. New: step 1's inputs, bad inputs, a bad def, a negative count, no room, the landing's size, setup names. The bot's twice-run compares every event field.
 - **CI:** the show list is checked against its count; `--show=list` with a bad switch must fail; one traced night must print `NIGHT_STARTED ... one_night seed=1`. `tools/ci.sh` passes in full.
-- M1 is unchanged by the review (no view code changed) and still needs Sonlm.
+- **M1 re-judged after the review (2026-11-21):** M1 as written failed. From the landing, sections 4, 3 and 2 (4, 1 and 0 planks) squash into thin lines at 20 to 25 m. Their gaps also showed gray, because the piers reached 20 m below the deck and the far pier's face filled every gap the eye looks down through. Variants were rendered: lowering the far pier to deck level did not help, and a 2 m deep pier did. Sonlm chose to fix the pier and move far-section reading to story 1.3. `SpanGeometry.PIER_DEPTH` 20 → 2 m (D2's other sizes unchanged); the geometry test's two pier boxes follow.
+- M1 (narrowed): verified on a virtual display (`/tmp/claude-1000/-home-sonlm-project-3d-game/5d796cab-ee29-4209-a290-c8c8166a26b6/scratchpad/M1b/frame00000059.png`; Forward+ on llvmpipe, CPU Vulkan, not a real GPU). Section 6 reads solid, section 5's three gaps read black across the full width, and every far gap is black. The cause was perspective and geometry, not the renderer, so a real screen should show the same.
 
 ### File List
 
-Changed in code review: `game/watch/sim/span_rules.gd`, `span_state.gd`, `night_sim.gd`, `night_event.gd`, `night_ticks.gd`; `game/watch/main.gd`; `game/watch/night/night.gd`; `game/watch/core/launch_options.gd`; `game/watch/debug/debug_tools.gd`, `trace.gd`, `show/show_setups.gd`; `game/tests/watch/watch_test.gd`, `test_night_sim.gd`, `test_bot_nights.gd`, `test_span.gd`, `test_span_view.gd`, `test_trace.gd`, `test_show_setups.gd`; `tools/ci.sh`; `game/WATCH.md`; `_bmad-output/project-context.md`; `_bmad-output/game-architecture.md`; `_bmad-output/implementation-artifacts/deferred-work.md`.
+Changed in code review: `game/watch/sim/span_rules.gd`, `span_state.gd`, `night_sim.gd`, `night_event.gd`, `night_ticks.gd`, `span_geometry.gd` (M1, 2026-11-21); `game/watch/main.gd`; `game/watch/night/night.gd`; `game/watch/core/launch_options.gd`; `game/watch/debug/debug_tools.gd`, `trace.gd`, `show/show_setups.gd`; `game/tests/watch/watch_test.gd`, `test_night_sim.gd`, `test_bot_nights.gd`, `test_span.gd`, `test_span_view.gd`, `test_trace.gd`, `test_show_setups.gd`, `test_span_geometry.gd` (M1); `tools/ci.sh`; `game/WATCH.md`; `_bmad-output/project-context.md`; `_bmad-output/game-architecture.md`; `_bmad-output/implementation-artifacts/deferred-work.md`.
 
 
 New:
@@ -379,3 +380,4 @@ Modified:
 
 - 2026-11-20: Story 1.2 implemented: the first `NightSim` with its 13-step tick, the parts ledger, `SpanGeometry`, the gray-box span drawn to the count, `--start=night`, `--trace`, `--show` with `span_counts`, the first bot path and the event-coverage check, CI smoke runs per start value and show-me setup. 368 tests pass. Status → review.
 - 2026-11-20: Code review (gds-code-review): 2 decisions and 18 patches applied, 5 items deferred (DW-26 to DW-30). 402 tests pass. Status → done.
+- 2026-11-21: M1 failed for the far sections; piers made 2 m deep so gaps read black; M1 narrowed to the near sections and passed on a virtual display; far-section reading moved to story 1.3 (DW-31). Status stays done.

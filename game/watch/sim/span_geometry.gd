@@ -34,8 +34,9 @@ const POST_HEIGHT: float = 1.1
 const PIER_WIDTH: float = 7.0
 ## Gray-box size, D2; not a rule. Both piers, along.
 const PIER_LENGTH: float = 4.0
-## Gray-box size, D2; not a rule. How far below the deck both piers reach.
-const PIER_DEPTH: float = 20.0
+## Gray-box size, D2 (20 m until M1 of story 1.2 showed a deep pier fills the gaps with gray;
+## a 2 m pier lets them read black); not a rule. How far below the deck both piers reach.
+const PIER_DEPTH: float = 2.0
 ## Gray-box size, D2; not a rule. The far pier rises above the deck; the warden never stands on it.
 const FAR_PIER_RISE: float = 3.0
 ## Gray-box size, D2; not a rule. The landing: the town pier's walkable top.

@@ -288,3 +288,12 @@ owner: the next story that changes `Main` (story 1.3 makes the night a first-per
 severity: medium
 reason: The "--show wins over --start", unknown-show and no-debug branches each raise a warning, and a smoke run fails on any warning, so CI runs only the clean paths. Inverting "--show wins", or opening the night on an unknown show, would pass every check. Move the choice of screen into a function a test can call, or add smoke runs that expect one named warning.
 status: open
+
+### DW-31: Far sections cannot be read from the landing
+
+origin: M1 of story 1.2, re-judged 2026-11-21 (Sonlm chose to move it)
+location: game/watch/sim/span_geometry.gd (D2's gray-box sizes); game/watch/night/span_view.gd
+owner: story 1.3, its walk check (where D2's sizes are tuned by eye)
+severity: medium
+reason: From the landing (eye 1.6 m, looking along a 30 m span), sections 20 to 25 m away are seen nearly edge-on: at 4, 1 and 0 planks they are a stack of thin lines that cannot be told apart at a glance. The piers are now 2 m deep, so every gap reads black, but that does not fix the angle. In story 1.3, check whether walking up to a section is enough to read it. If not, levers are plank and gap sizes, more contrast between planks and the void, or a cue other than the gaps. Also check that a 2 m pier still looks like a pier in the fog.
+status: open
