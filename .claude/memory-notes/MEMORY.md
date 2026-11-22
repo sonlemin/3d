@@ -1,0 +1,16 @@
+- [GDS docs access](gds-docs-access.md) — per-page doc URLs 404; use llms-full.txt and map legacy /bmgd-* names to installed gds-* skills
+- [Option lists, user decides](user-prefers-option-lists.md) — in guided sessions, show option lists in the AskUserQuestion choice window; Sonlm picks rather than writing answers
+- [Godot only](engine-godot-only.md) — Sonlm can only build in Godot; engine is a fixed constraint, never compare engines
+- [Write the code, no hand-offs](write-the-code-dont-hand-off.md) — Sonlm wants Claude to implement everything, not leave TODO pieces; ask decisions as options instead
+- [Laptop: own clone, Godot editor](laptop-sync-via-git-clone.md) — Sonlm clones/pulls themselves and runs from the Godot editor; never give git or godot command-line steps, give editor steps
+- [Tests must isolate the real cue](tests-must-isolate-the-real-cue.md) — remove confounds like loudness, but check the brief first: cry kind = level is a designed cue, not a giveaway
+- [Ear test gate closed](ear-test-gate-closed.md) — gate 1 closed 2026-11-19 on Sonlm's own results; one-night game playtests must re-check direction with newcomers
+- [GDD for the one-night game](gdd-one-night-game.md) — draft 0.7 (2026-11-20, GD-1 to GD-69; epics.md is draft 0.8) in 3d_game@ear-test-prototype; read its decision-log.md first; readiness check done (NEEDS WORK), narrative later
+- [Recommended option is the decision](recommended-option-is-the-decision.md) — Sonlm picks "(Recommended)" nearly every time; recompute sheets and rule interactions before showing them
+- [UX for the one-night game](ux-one-night-game.md) — spines final 2026-11-19 and in step with GDD draft 0.6; architecture is next
+- [Architecture for the one-night game](architecture-one-night-game.md) — complete 2026-11-20, AD-1 to AD-70 in _bmad-output/game-architecture.md; read summary + validation first; project-context.md refreshed the same day; readiness check done, DW-19 closed
+- [Readiness check result](readiness-check-one-night-game.md) — 2026-11-20 NEEDS WORK, blockers fixed the same day (AD-69, AD-70, epic 1 stories in epics.md draft 0.8); epic 1 can start; owed items are DW-5, DW-18, DW-20 to DW-23
+- [End-of-story chores are automatic](end-of-story-chores-automatic.md) — after a story: Xvfb screen checks, agent time, commit (never main/--no-verify/push); in _bmad/custom/gds-dev-story.toml
+- [Explain purpose before options](explain-purpose-before-options.md) — before options on a mechanic, say what it is for (GDD/decision log) and name any document gap
+- [Fast test runs and the undo pass](fast-test-runs-and-undo-pass.md) — CI and a game/ commit take 10 min (bot nights 8); run named test files from a scratch runner, undo rules in copies of game/
+- [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin is private GitHub repo, push only on request
