@@ -388,9 +388,17 @@ func _test_walking_into_an_open_section_edges_round_it() -> void:
 	_check("edge: on tick 30 the feet are still where they stood, (0, 0, -14.7); not walking",
 			_at(sim, Vector3(0.0, 0.0, -14.7)) and not WardenRules.walking(sim) and sim.warden.move == WardenState.Move.EDGING,
 			str(sim.warden.position))
-	events = _push_until(sim, Vector2(0.0, -1.0), 151)
-	_check("edge: tick 150, half way: (1.1, 0, -17.35), nothing else happened", _story_of(events).is_empty()
-			and _at(sim, Vector3(1.1, 0.0, -17.35)), str(sim.warden.position))
+	# Sonlm's play of M1 (2026-11-22): the edging sidesteps onto the beam line in its first 0.5 s
+	# (30 ticks), then goes straight along it; the along part moves steadily over the whole 240.
+	events = _push_until(sim, Vector2(0.0, -1.0), 46)
+	_check("edge: tick 45, a quarter second in: half way across to the beam, (1.1, 0, -15.03125)",
+			_at(sim, Vector3(1.1, 0.0, -14.7 - 5.3 * 15.0 / 240.0)), str(sim.warden.position))
+	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 61))
+	_check("edge: tick 60, 0.5 s in: on the beam line, (2.2, 0, -15.3625)",
+			_at(sim, Vector3(2.2, 0.0, -14.7 - 5.3 * 30.0 / 240.0)), str(sim.warden.position))
+	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 151))
+	_check("edge: tick 150, half way: straight along the beam, (2.2, 0, -17.35), nothing else happened",
+			_story_of(events).is_empty() and _at(sim, Vector3(2.2, 0.0, -17.35)), str(sim.warden.position))
 	events = _push_until(sim, Vector2(0.0, -1.0), 270)
 	events.append_array(_push_until(sim, Vector2.ZERO, 271))
 	_check("edge: EDGING_ENDED s3 R on tick 270 (30 + 240)", _story_of(events) == PackedStringArray(["270 EDGING_ENDED s3 R"]),
@@ -520,8 +528,22 @@ func _test_crossing_a_gap() -> void:
 			str(_story_of(events)))
 	_check("gap: cut down to hang at the near edge: (0, -1.4, -15.0)", _at(sim, Vector3(0.0, -1.4, -15.0))
 			and sim.warden.move == WardenState.Move.CROSSING, str(sim.warden.position))
+	# Sonlm's play of M1 (2026-11-22): hand over hand, in reaches of 0.5 m (10 over the 5 m gap, 48
+	# ticks each): each a pull eased over its first 60 % (smoothstep), then still until the next.
+	# From tick 30: tick 54 (24 in, half a reach): 0.925926 of the first reach, z -15.462963; ticks 59
+	# to 78 (29 to 48 in): still at the end of the first reach, z -15.5; tick 79 moving again.
+	_push_until(sim, Vector2(0.0, -1.0), 55)
+	_check("gap: tick 54, half way through the first reach's time: (0, -1.4, -15.462963)",
+			_at(sim, Vector3(0.0, -1.4, -15.462963)), str(sim.warden.position))
+	var still: bool = true
+	for i: int in 20:
+		_push_until(sim, Vector2(0.0, -1.0), 60 + i)
+		still = still and _at(sim, Vector3(0.0, -1.4, -15.5))
+	_check("gap: ticks 59 to 78: still at the first reach's end, (0, -1.4, -15.5)", still, str(sim.warden.position))
+	_push_until(sim, Vector2(0.0, -1.0), 80)
+	_check("gap: tick 79: the next reach has begun", sim.warden.position.z < -15.5 - 0.0005, str(sim.warden.position))
 	_push_until(sim, Vector2(0.0, -1.0), 271)
-	_check("gap: tick 270, half way: (0, -1.4, -17.5)", _at(sim, Vector3(0.0, -1.4, -17.5)), str(sim.warden.position))
+	_check("gap: tick 270, half way (5 reaches): (0, -1.4, -17.5)", _at(sim, Vector3(0.0, -1.4, -17.5)), str(sim.warden.position))
 	events = _push_until(sim, Vector2(0.0, -1.0), 510)
 	events.append_array(_push_until(sim, Vector2.ZERO, 511))
 	_check("gap: CROSSING_ENDED s3 on tick 510 (30 + 480)", _story_of(events) == PackedStringArray(["510 CROSSING_ENDED s3"]),

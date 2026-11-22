@@ -259,8 +259,9 @@ func _test_the_climb_passes_a_bare_section() -> void:
 func _test_an_edging_warden_whose_section_falls() -> void:
 	# Story 1.6 AC 10, L6: section 3 open with 3 test weights (over the side beams' 2: it groans from
 	# tick 0 and falls on 120, GDD Game Mechanics 2). Placed at along 15.3 pushing toward the far pier:
-	# the edging begins on tick 30 (D1), from (0, 0, -14.7) toward (2.2, 0, -20.0). On tick 120 it is
-	# 90 of its 240 ticks in: the feet at 0.375 of the way, (0.825, 0, -16.6875). Section 3 falls in
+	# the edging begins on tick 30 (D1), from (0, 0, -14.7) toward (2.2, 0, -20.0), on the beam line
+	# from 0.5 s in (Sonlm's play of M1). On tick 120 it is 90 of its 240 ticks in: the feet at
+	# 0.375 of the way along, on the beam line: (2.2, 0, -16.6875). Section 3 falls in
 	# step 7 and the warden is caught in step 8, as story 1.5's climb: hanging from section 4's edge
 	# (along 15, z -15), x kept; climbed 300 ticks later onto section 4, 0.3 m in.
 	var start: StartState = StartState.new()
@@ -274,27 +275,28 @@ func _test_an_edging_warden_whose_section_falls() -> void:
 		events.append_array(sim.advance())
 	_check("edging falls: GROAN_STARTED s3 on 0, EDGING_STARTED s3 on 30", _names(events)
 			== str(["NIGHT_STARTED s0", "GROAN_STARTED s3", "EDGING_STARTED s3"]), _names(events))
-	_check("edging falls: on tick 119, 89 ticks in: (0.815833, 0, -16.665417)",
-			sim.warden.position.distance_to(Vector3(2.2 * 89.0 / 240.0, 0.0, -14.7 - 5.3 * 89.0 / 240.0)) < TOL,
+	_check("edging falls: on tick 119, 89 ticks in: (2.2, 0, -16.665417)",
+			sim.warden.position.distance_to(Vector3(2.2, 0.0, -14.7 - 5.3 * 89.0 / 240.0)) < TOL,
 			str(sim.warden.position))
 	sim.set_move(Vector2(0.0, -1.0))
 	var fell: Array[NightEvent] = sim.advance()
 	_check("edging falls: tick 120: SECTION_FELL s3 then WARDEN_CAUGHT s3", _names(fell)
 			== str(["SECTION_FELL s3", "WARDEN_CAUGHT s3"]), _names(fell))
-	_check("edging falls: hanging from section 4's edge, x kept: (0.825, -1.4, -15.0)",
-			sim.warden.position.distance_to(Vector3(0.825, -1.4, -15.0)) < TOL and sim.warden.move == WardenState.Move.CLIMBING,
+	_check("edging falls: hanging from section 4's edge, x kept: (2.2, -1.4, -15.0)",
+			sim.warden.position.distance_to(Vector3(2.2, -1.4, -15.0)) < TOL and sim.warden.move == WardenState.Move.CLIMBING,
 			str(sim.warden.position))
 	_check("edging falls: the edging's facts are cleared", sim.warden.move_section == 0 and sim.warden.move_toward == 0
 			and sim.warden.move_ticks_total == 0, str(sim.warden.values()))
 	events = _until(sim, FALL_TICK + CLIMB_TICKS + 1)
 	_check("edging falls: WARDEN_CLIMBED onto section 4 on tick 420, no EDGING_ENDED", _names(events)
 			== str(["WARDEN_CLIMBED s4"]) and roundi(events[0].t * 60.0) == 420, _names(events))
-	_check("edging falls: up on section 4 at (0.825, 0, -14.7)", sim.warden.position.distance_to(Vector3(0.825, 0.0, -14.7)) < TOL
+	_check("edging falls: up on section 4 at (2.2, 0, -14.7)", sim.warden.position.distance_to(Vector3(2.2, 0.0, -14.7)) < TOL
 			and WardenRules.can_stand(sim.warden.position, sim), str(sim.warden.position))
 	_check("edging falls: 8 planks in hand (section 3's, from the start), no fault", sim.span.in_hand(PLANK) == 8
 			and _faults.total() == 0, str(_faults.codes()))
 	# Whichever way they were edging: placed at 9.7 pushing toward the town, the edging runs from
-	# (0, 0, -20.3) toward (2.2, 0, -15.0); caught on 120 at 0.375 of the way, they still climb onto
+	# (0, 0, -20.3) toward (2.2, 0, -15.0); caught on 120 at 0.375 of the way along (on the beam line),
+	# they still climb onto
 	# section 4, the first toward the town with planks.
 	start = StartState.new()
 	start.planks = {3: 0}
@@ -305,8 +307,8 @@ func _test_an_edging_warden_whose_section_falls() -> void:
 	while sim.tick < FALL_TICK + 1:
 		sim.set_move(Vector2(0.0, 1.0))
 		events.append_array(sim.advance())
-	_check("edging falls town: caught on 120 from (0.825, 0, -18.3125), hanging at (0.825, -1.4, -15.0)",
-			_has(events, NightEvent.Kind.WARDEN_CAUGHT) and sim.warden.position.distance_to(Vector3(0.825, -1.4, -15.0)) < TOL,
+	_check("edging falls town: caught on 120 from (2.2, 0, -18.3125), hanging at (2.2, -1.4, -15.0)",
+			_has(events, NightEvent.Kind.WARDEN_CAUGHT) and sim.warden.position.distance_to(Vector3(2.2, -1.4, -15.0)) < TOL,
 			"%s %s" % [_names(events), sim.warden.position])
 	events = _until(sim, FALL_TICK + CLIMB_TICKS + 1)
 	_check("edging falls town: climbed onto section 4 on 420", _names(events) == str(["WARDEN_CLIMBED s4"]), _names(events))
@@ -363,10 +365,15 @@ func _test_the_last_plank_underfoot() -> void:
 
 
 func _test_the_last_plank_underfoot_half_way() -> void:
-	# From 12.5 (to (2.2, 0, -15.0) in 120 ticks): on tick 180, half way, (1.1, 0, -16.25).
+	# From 12.5 (to (2.2, 0, -15.0) in 120 ticks), sidestepping onto the beam line in the first 30
+	# (Sonlm's play of M1): on tick 135 half way across, (1.1, 0, -17.1875); on tick 180, half way
+	# along and on the line, (2.2, 0, -16.25).
 	var sim: NightSim = _strip_underfoot(12.5)
+	_until(sim, 136)
+	_check("gd68: tick 135: (1.1, 0, -17.1875)", sim.warden.position.distance_to(Vector3(1.1, 0.0, -17.1875)) < TOL,
+			str(sim.warden.position))
 	_until(sim, 181)
-	_check("gd68: tick 180, half way: (1.1, 0, -16.25)", sim.warden.position.distance_to(Vector3(1.1, 0.0, -16.25)) < TOL,
+	_check("gd68: tick 180, half way: (2.2, 0, -16.25)", sim.warden.position.distance_to(Vector3(2.2, 0.0, -16.25)) < TOL,
 			str(sim.warden.position))
 
 

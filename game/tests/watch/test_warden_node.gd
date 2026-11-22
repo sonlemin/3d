@@ -239,8 +239,10 @@ func _test_edging_blends_and_a_crossing_cuts() -> void:
 		if _has(events, NightEvent.Kind.CROSSING_STARTED) or _has(events, NightEvent.Kind.CROSSING_ENDED):
 			if snapped and warden.blend().value(1.0).is_equal_approx(sim.warden.position):
 				cut_at.append(tick)
-		elif sim.warden.move == WardenState.Move.CROSSING and snapped:
-			slid = false
+		elif sim.warden.move == WardenState.Move.CROSSING:
+			# Blended from the tick before (a still between reaches blends two equal points).
+			slid = slid and warden.blend().value(0.0).is_equal_approx(last) \
+					and warden.blend().value(1.0).is_equal_approx(sim.warden.position)
 		last = sim.warden.position
 	_check("node: every tick of the edging but its first is blended from the tick before", blended and edged == 239,
 			"%s %d" % [blended, edged])

@@ -122,8 +122,8 @@ static func way_on(section: int, toward: int, sim: NightSim) -> bool:
 
 ## Begins the edging (an open section) or crossing (a fallen one) of `section` heading `toward`,
 ## from where the feet are now (decision D2). An edging lasts `edge_ticks` (sim.ticks.edge, or GD-68's
-## share of it) and keeps the feet where they stand on its first tick, then drifts them onto the
-## nearer side beam's line (right when x >= 0) at deck height. A crossing lasts sim.ticks.cross_gap,
+## share of it) and keeps the feet where they stand on its first tick, then sidesteps them onto the
+## nearer side beam's line (right when x >= 0) at deck height and along it (move_point()). A crossing lasts sim.ticks.cross_gap,
 ## whatever `edge_ticks` says: the feet cut down to hang at the gap's near edge, x kept. The push
 ## starts again from 0. Emits EDGING_STARTED or CROSSING_STARTED.
 static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim) -> void:
@@ -283,8 +283,7 @@ static func tick_moves(sim: NightSim) -> void:
 	warden.move_ticks_left -= 1
 	if warden.move == WardenState.Move.EDGING or warden.move == WardenState.Move.CROSSING:
 		if warden.move_ticks_left > 0:
-			var done: float = float(warden.move_ticks_total - warden.move_ticks_left) / warden.move_ticks_total
-			warden.position = warden.move_from.lerp(warden.move_to, done)
+			warden.position = move_point(warden, warden.move_ticks_total - warden.move_ticks_left, sim.ticks)
 		else:
 			end_move(sim)
 		return
@@ -298,6 +297,30 @@ static func tick_moves(sim: NightSim) -> void:
 	var event: NightEvent = NightEvent.make(NightEvent.Kind.WARDEN_CLIMBED)
 	event.section = onto
 	sim.emit(event)
+
+
+## Pure: where the feet of the running edging or crossing are `done` ticks after it began (0 to
+## move_ticks_total), worked out from its ends, never summed. Sonlm's play of M1 of story 1.6
+## (2026-11-22): an edging's along part moves steadily over the whole move while its x sidesteps
+## onto the beam line within sim.ticks.edge_sidestep (or the whole move, if shorter), so it goes
+## straight along the beam after that; a crossing goes hand over hand in reaches of
+## WardenConstants.CROSS_REACH, each a pull eased over WardenConstants.CROSS_PULL_SHARE of its time
+## and then still, x and height kept.
+static func move_point(warden: WardenState, done: int, ticks: NightTicks) -> Vector3:
+	var total: int = maxi(warden.move_ticks_total, 1)
+	var share: float = clampf(float(done) / total, 0.0, 1.0)
+	var at: Vector3 = warden.move_from.lerp(warden.move_to, share)
+	if warden.move == WardenState.Move.EDGING:
+		var sidestep: int = clampi(ticks.edge_sidestep, 1, total)
+		at.x = lerpf(warden.move_from.x, warden.move_to.x, clampf(float(done) / sidestep, 0.0, 1.0))
+		return at
+	var length: float = absf(warden.move_to.z - warden.move_from.z)
+	var reaches: int = maxi(roundi(length / WardenConstants.CROSS_REACH), 1)
+	var reached: float = share * reaches
+	var whole: float = floorf(reached)
+	var pulled: float = whole + smoothstep(0.0, WardenConstants.CROSS_PULL_SHARE, reached - whole)
+	at.z = lerpf(warden.move_from.z, warden.move_to.z, pulled / reaches)
+	return at
 
 
 ## Step 1 (tick_moves()), story 1.6: the edging or crossing of `move_section` is done (EDGING_ENDED

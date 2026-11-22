@@ -432,3 +432,23 @@ owner: epic 2 (the creak gets its sound)
 severity: low
 reason: Story 1.5's decision D4 bows a creaking deck 5 cm at mid-section (`CREAK_BOW` in `game/watch/night/section_view.gd`) until the creak has a sound. On a virtual display the creak moved the planks 5 to 7 pixels. In play on 2026-11-22 Sonlm reported "i can see it sag a bit" and "You can feel the fall is coming", without saying after which strip, so whether the creak alone can be seen is not known. When epic 2 gives the creak its sound, judge whether the bow is still needed and at what depth.
 status: open
+
+## Deferred from: Sonlm's play of story 1.6 (2026-11-22)
+
+### DW-45: A newcomer may not understand sliding backward when the last plank goes
+
+origin: Sonlm's M2 of story 1.6, 2026-11-22
+location: game/watch/sim/consequence_rules.gd (`warden_on_beams`), game/watch/night/warden.gd (no view turn)
+owner: epic 2 (sound), epic 4 story 1 (the hands), the dusk lesson (epic 5); judged at gate 2 with newcomers
+severity: low
+reason: GD-68 puts a warden whose last plank goes on its side beam at once, edging toward the town. Facing the far pier (the usual stance for stripping), that edging goes backward to the view. Sonlm: "It work. I slide backward. First time player might not understand." Sonlm chose (2026-11-22) to keep it as built, with no view turn (the view is the player's; the fall's catch stays the only turn), and to let the sound, the hands and the lesson explain it. Check at gate 2 whether newcomers read it.
+status: open
+
+### DW-46: A section with few planks looks like walking on air
+
+origin: Sonlm's M2 of story 1.6, 2026-11-22
+location: game/watch/night/section_view.gd (only the planks left are drawn); GDD Game Mechanics 2 (only a section with no planks cannot be stood on)
+owner: epic 7 (the look); checked at gate 2
+severity: low
+reason: By the GDD a section can be stood on over its whole length while it has any plank, but the gray box draws only the planks left (one plank sits mid-section), so walking over a 1-plank section looks like walking on air. Sonlm: "i am at 1 plank and can still walk through still look rather strange like i am walking on air." Sonlm chose (2026-11-22) to keep the rule and leave it to the look (epic 7) to show what holds the warden up on a sparse section; no gray-box change now. If gate 2 newcomers are confused by it, put a gray-box frame (joists between the side beams) back to Sonlm as an option.
+status: open

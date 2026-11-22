@@ -80,7 +80,8 @@ box around it. The aid is not part of the game: it is removed with epic 4's hand
 **Open sections and gaps (story 1.6).** A section with no planks that has not fallen is open; a
 fallen one is a gap. Neither can be stood on, but neither traps you. Walk up to one and keep
 pushing straight into it (within 45 degrees of straight) for half a second: you edge round an open
-section along its side beam in 4 s, or cross a gap hand over hand, hanging under the deck, in 8 s.
+section along its side beam in 4 s (a sidestep onto the beam, then straight along it), or cross a
+gap hand over hand, hanging under the deck, in 8 s (ten pulls of half a metre).
 Meanwhile you can look around but not walk or act, and a hold you had running is cancelled (what
 you carry stays in hand). Several in a row are crossed one after another, each at its own time.
 Toward the far pier a run only begins if there is something to stand on at its end; if the section

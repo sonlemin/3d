@@ -27,6 +27,9 @@ var cross_gap: int = 0
 ## Story 1.6 D1: the push that begins an edging or crossing (WardenConstants.PUSH_TO_CROSS_S): the
 ## move begins on the tick after this many ticks of pushing in a row.
 var push_to_cross: int = 0
+## Sonlm's play of M1 of story 1.6: an edging's sidestep onto its beam line
+## (WardenConstants.EDGE_SIDESTEP_S), in ticks.
+var edge_sidestep: int = 0
 
 
 func _init() -> void:
@@ -39,6 +42,7 @@ func _init() -> void:
 	edge = of(WardenConstants.EDGE_S)
 	cross_gap = of(WardenConstants.CROSS_GAP_S)
 	push_to_cross = of(WardenConstants.PUSH_TO_CROSS_S)
+	edge_sidestep = of(WardenConstants.EDGE_SIDESTEP_S)
 
 
 ## Whole ticks for a time in seconds, rounded to the nearest tick.
