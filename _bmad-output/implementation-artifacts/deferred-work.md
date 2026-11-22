@@ -424,6 +424,8 @@ status: open
 
 ### DW-44: The creak's bow has not been judged on its own
 
+origin: Sonlm's M1 and M2 of story 1.5, 2026-11-22
+location: game/watch/night/section_view.gd (`CREAK_BOW` 0.05 m, `GROAN_BOW` 0.25 m)
 owner: epic 2 (the creak gets its sound)
 severity: low
 reason: Story 1.5's decision D4 bows a creaking deck 5 cm at mid-section (`CREAK_BOW` in `game/watch/night/section_view.gd`) until the creak has a sound. On a virtual display the creak moved the planks 5 to 7 pixels. In play on 2026-11-22 Sonlm reported "i can see it sag a bit" and "You can feel the fall is coming", without saying after which strip, so whether the creak alone can be seen is not known. When epic 2 gives the creak its sound, judge whether the bow is still needed and at what depth.
