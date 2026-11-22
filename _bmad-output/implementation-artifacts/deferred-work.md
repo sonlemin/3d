@@ -421,3 +421,10 @@ severity: low
 reason: In story 1.5 a section's strength is its planks only, so a section with no planks and a load of 1 groans and falls after 2 s (a test checks it). GDD Game Mechanics 2 gives an open section's side beams a load of 2: story 1.6 replaces this by adding the beams to `strength()` for an open section, and that test changes with it. Story 1.5's decision D2 (a warden beside a fallen section within 0.3 m steps straight back to 0.3 m from the gap, in the same tick) is the precedent for a warden beside a section that goes open, if 1.6 needs one; 1.6's edging replaces story 1.4's D3, which `step_back()` deliberately leaves alone (it moves the feet only when a probe is over a fallen section).
 note (code review of story 1.5, 2026-11-22): in `game/tests/watch/test_bot_nights.gd`, `_each_tick` drops a held bare section once it has fallen. No bot path yet bares a section that later falls, so removing that clause changes no run: it is a guard, not a proven check. When story 1.6's paths bare sections that can then fall, undo it once to see a run fail.
 status: open
+
+### DW-44: The creak's bow has not been judged on its own
+
+owner: epic 2 (the creak gets its sound)
+severity: low
+reason: Story 1.5's decision D4 bows a creaking deck 5 cm at mid-section (`CREAK_BOW` in `game/watch/night/section_view.gd`) until the creak has a sound. On a virtual display the creak moved the planks 5 to 7 pixels. In play on 2026-11-22 Sonlm reported "i can see it sag a bit" and "You can feel the fall is coming", without saying after which strip, so whether the creak alone can be seen is not known. When epic 2 gives the creak its sound, judge whether the bow is still needed and at what depth.
+status: open
