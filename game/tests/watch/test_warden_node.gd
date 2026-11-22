@@ -208,7 +208,8 @@ func _test_the_catch_turns_the_view_to_the_edge() -> void:
 
 
 func _test_edging_blends_and_a_crossing_cuts() -> void:
-	# Story 1.6 D2: an edging moves the feet steadily at deck height, blended tick by tick (no
+	# Story 1.6 D2: an edging moves the feet at deck height (a sidestep onto the beam in its first
+	# 0.5 s, steadily along the whole way), blended tick by tick (no
 	# judder above 60 Hz); a crossing cuts down at its start and up at its end (CROSSING_STARTED,
 	# CROSSING_ENDED), blended in between. Section 3 open, section 2 fallen; placed at along 15.3
 	# pushing toward the far pier: edging of 3 from tick 30 to 270, crossing of 2 from 270 to 750.

@@ -99,8 +99,8 @@ func _test_the_moves_of_story_1_6() -> void:
 	# Story 1.6 D2: the beam line is the standable band's edge, the 5 m deck less the 0.3 m clearance
 	# (story 1.3 D1): x -2.2 on the left, 2.2 on the right. A move over section n toward the town (+1)
 	# runs from its far-pier end (along (n - 1) x 5) to its town end (n x 5); toward the far pier (-1)
-	# the other way. A crossing hangs 1.4 m below the deck (story 1.5 D3), x kept within +-2.2. A move
-	# ends on the next floor, 0.3 m in.
+	# the other way. A crossing hangs 2.4 m below the deck under the gap's rope, on the centre line
+	# (x 0; Sonlm's play of M1). A move ends on the next floor, 0.3 m in.
 	var g: SpanGeometry = _geometry()
 	_check("moves: the beam lines are x -2.2 (left) and 2.2 (right)", is_equal_approx(g.beam_line_x(LEFT), -2.2)
 			and is_equal_approx(g.beam_line_x(RIGHT), 2.2), "%f %f" % [g.beam_line_x(LEFT), g.beam_line_x(RIGHT)])

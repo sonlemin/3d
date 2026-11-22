@@ -470,3 +470,14 @@ owner: a gds-gdd run after gate 2
 severity: low
 reason: Sonlm asked whether the warden should be able to attach a rope across a gap. It would be a new action spending rope, the scarcest resource ("Rope runs out first", GDD worked night), and a strung rope could become something Grapplers hook (GD-20). Since one rope already stays across every gap for free (DW-47), an attached rope must give something to be worth its cost (a faster crossing than 8 s, for example); the other way, removing the free rope so stringing one is the only way across, brings back the stranding the GDD ruled out. Sonlm chose (2026-11-22) to log it and decide after gate 2 shows whether rope and crossing time matter in play. Nothing is built for it.
 status: open
+
+## Deferred from: code review of 1-6-open-sections-and-gaps.md (2026-11-22)
+
+### DW-49: An open section is stronger than one with a single plank, both ways
+
+origin: story 1.6 decision D4 (Sonlm, 2026-11-22) and its code review, 2026-11-22
+location: game/watch/sim/span_rules.gd (`strength()`), game/watch/sim/span_constants.gd (`SIDE_BEAM_LOAD`); GDD Game Mechanics 2, GD-19
+owner: gate 2, with the dead on the beams (epic 3); a GDD change if it is judged wrong
+severity: low
+reason: By the GDD as written a section's strength is its planks, and an open section's side beams carry 2. So a section at 1 plank is weaker than one with none. D4 kept that and said it would be judged at gate 2; no item tracked it. Sonlm was shown one side when choosing: taking the last plank of a section groaning under 2 stops the groan (test L5). The code review measured the other side: re-laying one plank on an open section that carries 2 makes it groan and fall 2 s later with the plank, and a second re-lay (3 s) cannot save it (`test_hands.gd`, `_test_a_relay_onto_a_loaded_open_section_brings_it_down`). In epic 3 that load is the dead: repairing a section they are edging round drops it. The option declined at D4 was strength never below 2 (`max(planks, 2)`, a GD-19 change). Judge both sides at gate 2.
+status: open

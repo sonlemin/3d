@@ -411,6 +411,7 @@ static func beams_script(def: NightDef, night_seed: int, faults: WatchFaults, ea
 	if def.section_count >= STRIP_MIN_SECTIONS:
 		start.planks = {c: 1, a: 0}
 		start.weights = {a: BEAMS_WEIGHTS}
+		# The same spot as g.section_start(c) + CLEARANCE below; the geometry comes with the sim.
 		start.warden_along = (c - 1) * SpanConstants.SECTION_LENGTH + WardenConstants.CLEARANCE
 	def.start = start
 	var sim: NightSim = NightSim.new(def, night_seed, faults)
@@ -470,13 +471,15 @@ static func _until_moving(sim: NightSim, wish: Vector2, each_tick: Callable) -> 
 
 
 ## Ticks until the warden is climbing (caught by a fall), at most WALK_GUARD; not caught by then
-## is `bot.walk_lost`: the script's later steps are not where it thinks.
+## is `bot.walk_lost`: the script's later steps are not where it thinks. It asks for the climb
+## itself, not "not walking": beams calls it while the warden is edging (code review 2026-11-22).
 static func _until_climbing(sim: NightSim, each_tick: Callable) -> void:
 	for i: int in WALK_GUARD:
-		if not WardenRules.walking(sim):
+		if sim.warden.move == WardenState.Move.CLIMBING:
 			return
 		_ticks(sim, 1, each_tick)
-	sim.faults.report(&"bot.walk_lost", "no fall under the warden at %s" % sim.warden.position)
+	if sim.warden.move != WardenState.Move.CLIMBING:
+		sim.faults.report(&"bot.walk_lost", "no fall under the warden at %s" % sim.warden.position)
 
 
 ## Ticks until the warden walks again (a climb, an edging or a crossing ended), at most WALK_GUARD.
@@ -485,7 +488,8 @@ static func _until_walking(sim: NightSim, each_tick: Callable) -> void:
 		if WardenRules.walking(sim):
 			return
 		_ticks(sim, 1, each_tick)
-	sim.faults.report(&"bot.walk_lost", "the timed move never ended at %s" % sim.warden.position)
+	if not WardenRules.walking(sim):
+		sim.faults.report(&"bot.walk_lost", "the timed move never ended at %s" % sim.warden.position)
 
 
 static func _ticks(sim: NightSim, count: int, each_tick: Callable) -> void:

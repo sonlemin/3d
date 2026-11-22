@@ -63,7 +63,8 @@ func _ready() -> void:
 
 
 ## Makes the planks, rails and weights match `sim`'s state for section `n`, the planks bowed by its
-## creak or groan. A fallen section shows nothing (what fall() took is dropping on its own).
+## creak or groan. A fallen section shows only the one rope left strung across its gap (what fall()
+## took is dropping on its own).
 func show_state(sim: NightSim, n: int) -> void:
 	if sim.span.fallen(n):
 		_clear()

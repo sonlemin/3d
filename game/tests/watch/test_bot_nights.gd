@@ -11,18 +11,22 @@
 ## from every section with none; or a timed move runs and the feet are at its place, by this file's
 ## own record of it, kept from its _STARTED event (_moves_ok()): an edging (GDD Game Mechanics 2: 4 s,
 ## 240 ticks; GD-68: roundi(240 x left / 5), at least 1, when it began with the feet on the section)
-## at deck height, onto x +-2.2 (decision D2, sidestepping in its first 0.5 s since Sonlm's play),
-## toward the section's far edge; a crossing (8 s, 480 ticks) 2.4 m below the deck under the gap's
-## rope (x 0, Sonlm's play), within the gap. An edging may end in
-## WARDEN_CAUGHT instead (AC 10). Any path can start a move (the wanders can), so this runs on all.
+## at deck height, toward x +-2.2 (decision D2, sidestepping in its first 0.5 s since Sonlm's play;
+## an edging shorter than those 30 ticks gets only its share of the way across), along to the
+## section's far edge, and 0.3 m past it when a floor lay beyond as it began (code review
+## 2026-11-22); a crossing (8 s, 480 ticks) 2.4 m below the deck under the gap's rope (x 0, Sonlm's
+## play), within the gap. An edging may end in WARDEN_CAUGHT instead (AC 10). Any path can start a
+## move (the wanders can), so this runs on all.
 extends WatchTest
 
 ## GDD Game Mechanics 2: the edging and the crossing, in ticks.
 const EDGE_TICKS: int = 240
 const CROSS_TICKS: int = 480
 ## Story 1.6 D2: the beam lines (5 m deck less 0.3 m clearance); story 1.5 D3: the hang of a climb;
-## Sonlm's play of story 1.6's M1: a crossing hangs 2.4 m down under the gap's rope, on the centre line.
+## Sonlm's play of story 1.6's M1: a crossing hangs 2.4 m down under the gap's rope, on the centre line;
+## an edging sidesteps onto its beam line in its first 0.5 s (30 ticks).
 const BEAM_X: float = 2.2
+const SIDESTEP_TICKS: int = 30
 const HANG: float = 1.4
 const CROSS_HANG: float = 2.4
 ## GD-19: one tick's walk, 3.5 m/s at 60 ticks a second.
@@ -47,7 +51,8 @@ var _caught_at: int = -1
 var _fell_from: int = 0
 ## Story 1.6: the running edging ("edge") or crossing ("cross") as recorded here from its _STARTED
 ## event, "" for none; its section, first tick, length in ticks, way (+1 toward the town), the feet on
-## its first tick, the x it drifts onto, and the feet on the tick before. Reset per run.
+## its first tick, the x it sidesteps to, the along its line ends at, and the feet on the tick before.
+## Reset per run.
 var _move: String = ""
 var _move_section: int = 0
 var _move_began: int = 0
@@ -55,14 +60,27 @@ var _move_length: int = 0
 var _move_toward: int = 0
 var _move_from: Vector3 = Vector3.ZERO
 var _move_x_to: float = 0.0
+var _move_far: float = 0.0
 var _move_last: Vector3 = Vector3.ZERO
 
 
 func _reset_run() -> void:
 	_caught_at = -1
 	_fell_from = 0
+	_forget_move()
+
+
+## No move is on record: every fact of it back to its start value.
+func _forget_move() -> void:
 	_move = ""
 	_move_section = 0
+	_move_began = 0
+	_move_length = 0
+	_move_toward = 0
+	_move_from = Vector3.ZERO
+	_move_x_to = 0.0
+	_move_far = 0.0
+	_move_last = Vector3.ZERO
 
 
 func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
@@ -78,10 +96,11 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 			NightEvent.Kind.WARDEN_CAUGHT:
 				_caught_at = tick
 				_fell_from = event.section
-				if _move == "edge" and event.section == _move_section:
-					_move = ""  # AC 10: the edging ends in the catch, with no EDGING_ENDED.
-				elif _move != "":
+				if _move != "" and not (_move == "edge" and event.section == _move_section):
 					problems.append("caught on s%d during a %s of s%d" % [event.section, _move, _move_section])
+				# AC 10: the edging ends in the catch, with no EDGING_ENDED. A catch that should not
+				# have happened ends the record too, so one problem is not followed by false ones.
+				_forget_move()
 			NightEvent.Kind.WARDEN_CLIMBED:
 				if tick - _caught_at != 300:
 					problems.append("climbed %d ticks after the catch" % (tick - _caught_at))
@@ -93,11 +112,12 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 				var kind: String = "edge" if event.kind == NightEvent.Kind.EDGING_ENDED else "cross"
 				if _move != kind or event.section != _move_section:
 					problems.append("%s of s%d ended with no start" % [kind, event.section])
-				elif tick - _move_began != _move_length:
-					problems.append("%s of s%d lasted %d ticks, wanted %d" % [kind, event.section, tick - _move_began,
-							_move_length])
-				ended = [kind, _move_section, _move_toward, _move_x_to if kind == "edge" else _move_from.x]
-				_move = ""
+				else:
+					if tick - _move_began != _move_length:
+						problems.append("%s of s%d lasted %d ticks, wanted %d" % [kind, event.section, tick - _move_began,
+								_move_length])
+					ended = [kind, _move_section, _move_toward, _move_x_to if kind == "edge" else _move_from.x]
+				_forget_move()
 	var planks: int = sim.span.total(NightTypes.Part.PLANK)
 	var ropes: int = sim.span.total(NightTypes.Part.ROPE)
 	# Story 1.3 AC 7 and story 1.6 AC 7: walking where it can stand, or at the place of its timed move.
@@ -106,7 +126,7 @@ func _each_tick(events: Array[NightEvent], sim: NightSim) -> void:
 				and absf(sim.warden.position.z + _length - _hang_edge(sim)) < TOL):
 			problems.append("not hanging at the edge")
 	elif _move != "":
-		problems.append_array(_moves_ok(sim))
+		problems.append_array(_moves_ok(sim, tick))
 	else:
 		if not WardenRules.walking(sim):
 			problems.append("a timed move with no event")
@@ -145,9 +165,12 @@ func _move_began_here(event: NightEvent, sim: NightSim, tick: int) -> PackedStri
 			problems.append("a crossing of s%d begun away from a gap's edge" % n)
 		return problems
 	_move = "edge"
-	_move_x_to = BEAM_X if feet.x >= 0.0 else -BEAM_X
+	var beam: float = BEAM_X if feet.x >= 0.0 else -BEAM_X
 	if along > start + TOL and along < end - TOL:
-		# GD-68: on the section when its last plank went, toward the town in the share left.
+		# GD-68: on the section when its last plank went, toward the town in the share left. (An
+		# edging chained from one whose line ran on 0.3 m into a section that then went open would
+		# begin inside it too and be misread here; nothing opens a section during a move in epic 1.
+		# Epic 3's deck hooks can: tell the two apart then.)
 		_move_toward = 1
 		_move_length = maxi(roundi(EDGE_TICKS * (end - along) / 5.0), 1)
 	elif along >= end - TOL:
@@ -160,21 +183,29 @@ func _move_began_here(event: NightEvent, sim: NightSim, tick: int) -> PackedStri
 		_move_length = EDGE_TICKS
 		if absf(along - start) > TOL and absf(along - (start - 0.3)) > TOL:
 			problems.append("an edging of s%d begun away from its edge or stop" % n)
+	# The line's end, worked out here: the far edge, and 0.3 m past it when what lies beyond as the
+	# edging begins is a floor (a section with a plank that has not fallen, or the landing). The x: the
+	# beam line, or the share of the way there that an edging shorter than the sidestep has time for.
+	var beyond: int = n + _move_toward
+	var floor_beyond: bool = beyond > sim.def.section_count or (beyond >= 1 and sim.span.planks(beyond) > 0
+			and not sim.span.fallen(beyond))
+	_move_far = (end if _move_toward > 0 else start) + (0.3 * _move_toward if floor_beyond else 0.0)
+	_move_x_to = feet.x + (beam - feet.x) * minf(float(_move_length) / SIDESTEP_TICKS, 1.0)
 	var side: float = BEAM_X if event.side == NightTypes.Side.RIGHT else -BEAM_X
-	if absf(feet.y) > TOL or side != _move_x_to or sim.span.planks(n) != 0 or sim.span.fallen(n):
+	if absf(feet.y) > TOL or side != beam or sim.span.planks(n) != 0 or sim.span.fallen(n):
 		problems.append("an edging of s%d begun off the deck, on the wrong side or not open" % n)
 	return problems
 
 
-## While a move runs: the feet at its place, moving one way. An edging at deck height, x drifting
-## from where it began onto its beam line, along from where it began toward the far edge; a crossing
-## 2.4 m down, under the rope (x 0), within the gap.
-func _moves_ok(sim: NightSim) -> PackedStringArray:
+## While a move runs: the feet at its place, moving one way. An edging at deck height, x moving
+## from where it began toward the x it sidesteps to, along from where it began toward its line's end
+## (_move_far), each at its pace for the tick; a crossing 2.4 m down, under the rope (x 0), within
+## the gap.
+func _moves_ok(sim: NightSim, tick: int) -> PackedStringArray:
 	var problems: PackedStringArray = []
 	var feet: Vector3 = sim.warden.position
 	var along: float = feet.z + _length
 	var last_along: float = _move_last.z + _length
-	var far: float = (_move_section - 1) * 5.0 if _move_toward < 0 else _move_section * 5.0
 	var from_along: float = _move_from.z + _length
 	if WardenRules.walking(sim):
 		problems.append("walking during a %s with no end" % _move)
@@ -184,9 +215,17 @@ func _moves_ok(sim: NightSim) -> PackedStringArray:
 			problems.append("crossing off its line")
 	else:
 		var x_ok: bool = absf(feet.x) <= BEAM_X + TOL and absf(feet.x - _move_x_to) <= absf(_move_last.x - _move_x_to) + TOL
-		var along_ok: bool = (along - far) * _move_toward <= TOL and (along - from_along) * _move_toward >= -TOL
+		var along_ok: bool = (along - _move_far) * _move_toward <= TOL and (along - from_along) * _move_toward >= -TOL
 		if absf(feet.y) > TOL or not x_ok or not along_ok:
 			problems.append("edging off its line")
+		# Its pace, worked out here (code review 2026-11-22): the along part the same size on every
+		# tick, from where it began to its line's end; the x across within the first 30 ticks (or the
+		# whole edging, if shorter), then still.
+		var done: float = tick - _move_began
+		var want_along: float = from_along + (_move_far - from_along) * done / _move_length
+		var want_x: float = _move_from.x + (_move_x_to - _move_from.x) * minf(done / mini(SIDESTEP_TICKS, _move_length), 1.0)
+		if absf(along - want_along) > TOL or absf(feet.x - want_x) > TOL:
+			problems.append("edging off its pace: wanted x %.4f along %.4f" % [want_x, want_along])
 	if (along - last_along) * _move_toward < -TOL:
 		problems.append("the %s went back" % _move)
 	return problems
@@ -377,7 +416,7 @@ func _test_strip_reaches_its_cases() -> void:
 									# GD-68: begun on the strip's tick, ended 0.3 m onto the next section toward
 									# the town (or a walking step past it: the bot pushes on to its goal).
 									if event.section == bared_under[0] and along >= event.section * 5.0 + 0.3 - 0.001 \
-											and along <= event.section * 5.0 + 0.3 + 3.5 / 60.0 + 0.001:
+											and along <= event.section * 5.0 + 0.3 + STEP + 0.001:
 										reached["edged off it toward the town (GD-68)"] = true
 									bared_under[0] = 0
 								NightEvent.Kind.RAIL_STRIPPED:
@@ -427,6 +466,37 @@ func _test_a_walk_that_cannot_arrive_is_a_fault() -> void:
 	NightBot._go_to(sim, 0.0, 12.5, no_check)
 	_check("bot: a walk that arrives reports nothing more", _faults.count(&"bot.walk_lost") == 1
 			and absf(sim.warden.position.z + 30.0 - 12.5) < 0.001, str(sim.warden.position))
+
+
+func _test_until_climbing_waits_for_the_climb() -> void:
+	# Code review 2026-11-22: the bot's wait for a fall asks for the climb itself. Before, it asked
+	# for "not walking" and so returned at once while the warden was edging, and could never report.
+	# Section 3 open, nothing on it: pushed into from 15.3, the edging runs 240 ticks and nothing
+	# falls, so the wait runs its whole guard and reports bot.walk_lost.
+	var start: StartState = StartState.new()
+	start.planks = {3: 0}
+	start.warden_along = 15.3
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	var no_check: Callable = func(_events: Array[NightEvent], _sim: NightSim) -> void: pass
+	NightBot._until_moving(sim, Vector2(0.0, -1.0), no_check)
+	var began: int = sim.tick
+	_expect_begin()
+	NightBot._until_climbing(sim, no_check)
+	_expect_end("bot: waiting for a fall that never comes is bot.walk_lost", [["ERROR", "bot.walk_lost", 1]])
+	_check("bot: the wait began while edging (tick 31) and ran its whole guard, not returning at once",
+			began == 31 and sim.tick == began + NightBot.WALK_GUARD and _faults.count(&"bot.walk_lost") == 1,
+			"%d %d" % [began, sim.tick])
+	# With 3 weights on it the section falls on tick 120 (GDD Game Mechanics 2) under the edging
+	# warden: the wait ends on the tick after the catch, with no fault.
+	start = StartState.new()
+	start.planks = {3: 0}
+	start.weights = {3: 3}
+	start.warden_along = 15.3
+	sim = _sim_with(_def_with(start), 1)
+	NightBot._until_moving(sim, Vector2(0.0, -1.0), no_check)
+	NightBot._until_climbing(sim, no_check)
+	_check("bot: with a fall on tick 120 the wait ends there, climbing, with no fault", sim.tick == 121
+			and sim.warden.move == WardenState.Move.CLIMBING and _faults.total() == 0, "%d %s" % [sim.tick, _faults.codes()])
 
 
 func _test_strip_needs_four_sections() -> void:
@@ -621,7 +691,9 @@ func _chained(log: Array[String], start: String, first: String, second: String, 
 		for j: int in range(i - 1, -1, -1):
 			var s: PackedStringArray = log[j].split(" ")
 			if "%s %s" % [s[0], s[1]] == start:
-				return int(a[2]) - int(s[2]) == length
+				if int(a[2]) - int(s[2]) == length:
+					return true
+				break  # This pair is not it; a later one may be.
 	return false
 
 
@@ -667,6 +739,14 @@ func _test_gaps_reaches_its_cases() -> void:
 							if event.kind == NightEvent.Kind.CREAK_STARTED and event.section == 1 and sim.span.planks(1) == 0 \
 									and sim.span.weights(1) == 2 and not sim.span.fallen(1):
 								reached["an open section creaking under 2"] = true
+							# The way of a crossing, from where it begins: c from its town end (toward
+							# the far pier), a from its far-pier end (back toward the town).
+							if event.kind == NightEvent.Kind.CROSSING_STARTED and event.section == c \
+									and absf(along - c * 5.0) < 0.001:
+								reached["c crossed toward the far pier"] = true
+							if event.kind == NightEvent.Kind.CROSSING_STARTED and event.section == a \
+									and absf(along - (a - 1) * 5.0) < 0.001:
+								reached["a crossed back toward the town"] = true
 							if event.kind == NightEvent.Kind.CROSSING_ENDED and event.section == a \
 									and absf(along - (b * 5.0 - 0.3)) < 0.001:
 								reached["onto b"] = true
@@ -674,10 +754,8 @@ func _test_gaps_reaches_its_cases() -> void:
 									and absf(along - (c * 5.0 + 0.3)) < 0.001:
 								reached["onto the town section"] = true)
 			if _chained(log, "CROSSING_STARTED s%d" % c, "CROSSING_ENDED s%d" % c, "CROSSING_STARTED s%d" % a, 480):
-				reached["c crossed toward the far pier"] = true
 				reached["a crossed right after c"] = true
 			if _chained(log, "CROSSING_STARTED s%d" % a, "CROSSING_ENDED s%d" % a, "CROSSING_STARTED s%d" % c, 480):
-				reached["a crossed back toward the town"] = true
 				reached["c crossed right after a"] = true
 			var missing: PackedStringArray = []
 			for case: String in wanted:

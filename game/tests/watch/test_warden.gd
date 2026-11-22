@@ -333,10 +333,12 @@ func _test_warden_state_values() -> void:
 # --- Story 1.6: edging round an open section, crossing a gap, the push, runs, turning back ------
 # GDD Game Mechanics 2: the warden edges round an open section in 4 s (240 ticks) and crosses a gap
 # hand over hand in 8 s (480). Decision D1: a move begins after 0.5 s (30 ticks) of pushing straight
-# into it at the stop (within 45 degrees), in step 1 of the 31st tick in a row. D2: edging, the feet
-# stay at deck height and drift onto the nearer side beam's line (x +-2.2: the 5 m deck less the
-# 0.3 m clearance, right when x >= 0); crossing, they hang 1.4 m below the deck. At the end the feet
-# step onto the next floor 0.3 m in. One night is 30 m: world z = along - 30.
+# into it at the stop (within 45 degrees), in step 1 of the 31st tick in a row. D2 and Sonlm's plays
+# of M1: edging, the feet stay at deck height and sidestep onto the nearer side beam's line (x +-2.2:
+# the 5 m deck less the 0.3 m clearance, right when x >= 0) in the first 0.5 s; crossing, they hang
+# 2.4 m below the deck under the gap's rope, on the centre line (x 0). A move ends with the feet on
+# the next floor 0.3 m in: an edging's line runs on to that spot, so its every tick is the same size
+# (code review 2026-11-22); a crossing cuts up onto it. One night is 30 m: world z = along - 30.
 
 ## "tick KIND sN[ L|R]" for every event but NIGHT_STARTED.
 func _story_of(events: Array[NightEvent]) -> PackedStringArray:
@@ -390,16 +392,21 @@ func _test_walking_into_an_open_section_edges_round_it() -> void:
 			str(sim.warden.position))
 	# Sonlm's play of M1 (2026-11-22): the edging sidesteps onto the beam line in its first 0.5 s
 	# (30 ticks), then goes straight along it; the along part moves steadily over the whole 240.
+	# Code review 2026-11-22 (Sonlm): the line runs from the stop (along 15.3) to the spot the feet
+	# step off at, 0.3 m onto section 2 (along 9.7): 5.6 m in 240 ticks, 0.023333 m on every tick, the
+	# last one too (before, the line ended at the section's edge and the last tick added the 0.3 m).
 	events = _push_until(sim, Vector2(0.0, -1.0), 46)
-	_check("edge: tick 45, a quarter second in: half way across to the beam, (1.1, 0, -15.03125)",
-			_at(sim, Vector3(1.1, 0.0, -14.7 - 5.3 * 15.0 / 240.0)), str(sim.warden.position))
+	_check("edge: tick 45, a quarter second in: half way across to the beam, (1.1, 0, -15.05)",
+			_at(sim, Vector3(1.1, 0.0, -15.05)), str(sim.warden.position))
 	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 61))
-	_check("edge: tick 60, 0.5 s in: on the beam line, (2.2, 0, -15.3625)",
-			_at(sim, Vector3(2.2, 0.0, -14.7 - 5.3 * 30.0 / 240.0)), str(sim.warden.position))
+	_check("edge: tick 60, 0.5 s in: on the beam line, (2.2, 0, -15.4)",
+			_at(sim, Vector3(2.2, 0.0, -15.4)), str(sim.warden.position))
 	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 151))
-	_check("edge: tick 150, half way: straight along the beam, (2.2, 0, -17.35), nothing else happened",
-			_story_of(events).is_empty() and _at(sim, Vector3(2.2, 0.0, -17.35)), str(sim.warden.position))
+	_check("edge: tick 150, half way: straight along the beam, (2.2, 0, -17.5), nothing else happened",
+			_story_of(events).is_empty() and _at(sim, Vector3(2.2, 0.0, -17.5)), str(sim.warden.position))
 	events = _push_until(sim, Vector2(0.0, -1.0), 270)
+	_check("edge: tick 269, its last tick but one: (2.2, 0, -20.276667), one tick's 0.023333 m short of the end",
+			_story_of(events).is_empty() and _at(sim, Vector3(2.2, 0.0, -20.276667)), str(sim.warden.position))
 	events.append_array(_push_until(sim, Vector2.ZERO, 271))
 	_check("edge: EDGING_ENDED s3 R on tick 270 (30 + 240)", _story_of(events) == PackedStringArray(["270 EDGING_ENDED s3 R"]),
 			str(_story_of(events)))
@@ -512,11 +519,22 @@ func _test_the_push() -> void:
 	events = _push_until(sim, Vector2(1.0, -1.0).normalized(), 31)
 	_check("push: at 45 degrees it begins on tick 30", _story_of(events) == PackedStringArray(["30 EDGING_STARTED s3 R"]),
 			str(_story_of(events)))
-	# A push away from it, or along the deck with nothing ahead, is no push.
+	# The walk up to the stop is no push: 10 ticks away (0.583 m), then toward it from tick 10. The
+	# feet are back at the stop on tick 19, the first tick that counts; the 31st is tick 49. Had the 9
+	# ticks of walking up counted, it would begin on tick 40.
 	sim = _broken(15.3, {3: 0})
 	events = _push_until(sim, Vector2(0.0, 1.0), 10)
-	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 40))
-	_check("push: walking away first does not count toward it", _story_of(events).is_empty(), str(_story_of(events)))
+	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 49))
+	_check("push: ticks 10 to 48, walking up then 30 at the stop: nothing begins", _story_of(events).is_empty()
+			and _at(sim, Vector3(0.0, 0.0, -14.7)), "%s %s" % [_story_of(events), sim.warden.position])
+	events = _push_until(sim, Vector2(0.0, -1.0), 50)
+	_check("push: it begins on tick 49, the 31st at the stop", _story_of(events) == PackedStringArray(["49 EDGING_STARTED s3 R"]),
+			str(_story_of(events)))
+	# Along the deck with nothing ahead (mid section 4, 2.5 m from the open section): no count.
+	sim = _broken(17.5, {3: 0})
+	_push_until(sim, Vector2(0.0, -1.0), 10)
+	_check("push: walking along the deck toward it from 2.5 m away counts nothing", sim.warden.pushed == 0
+			and WardenRules.walking(sim), str(sim.warden.pushed))
 	_check("push: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
@@ -609,6 +627,23 @@ func _test_a_run_is_crossed_one_section_at_a_time() -> void:
 	_check("run town: s5 crossed, s6 edged, onto the landing at (2.2, 0, 0.3)", _story_of(events) == PackedStringArray([
 			"30 CROSSING_STARTED s5", "510 CROSSING_ENDED s5", "510 EDGING_STARTED s6 R", "750 EDGING_ENDED s6 R"])
 			and _at(sim, Vector3(2.2, 0.0, 0.3)), "%s %s" % [_story_of(events), sim.warden.position])
+	# Two open sections in a row (code review 2026-11-22): open 3 and open 2, from along 15.3. The
+	# first edging's line ends at section 3's far edge (an open section lies beyond, not a floor); the
+	# second begins there on the same tick, on the beam line already (no sidestep), and runs 5.3 m to
+	# 0.3 m onto section 1.
+	sim = _broken(15.3, {2: 0, 3: 0})
+	events = _push_until(sim, Vector2(0.0, -1.0), 271)
+	_check("run: two opens: s3 edged 30 to 270, s2 begun on 270 at s3's far edge on the beam line: (2.2, 0, -20.0)",
+			_story_of(events) == PackedStringArray(["30 EDGING_STARTED s3 R", "270 EDGING_ENDED s3 R", "270 EDGING_STARTED s2 R"])
+			and _at(sim, Vector3(2.2, 0.0, -20.0)), "%s %s" % [_story_of(events), sim.warden.position])
+	events = _push_until(sim, Vector2(0.0, -1.0), 391)
+	_check("run: two opens: tick 390, half way along section 2's 5.3 m: (2.2, 0, -22.65)", _story_of(events).is_empty()
+			and _at(sim, Vector3(2.2, 0.0, -22.65)), str(sim.warden.position))
+	events = _push_until(sim, Vector2(0.0, -1.0), 510)
+	events.append_array(_push_until(sim, Vector2.ZERO, 511))
+	_check("run: two opens: s2 ended on 510, onto section 1 at (2.2, 0, -25.3), walking",
+			_story_of(events) == PackedStringArray(["510 EDGING_ENDED s2 R"]) and _at(sim, Vector3(2.2, 0.0, -25.3))
+			and WardenRules.walking(sim) and _faults.total() == 0, "%s %s" % [_story_of(events), sim.warden.position])
 	# Toward the far pier a run that ends at the far pier blocks like an edge: open 2, fallen 1.
 	sim = _broken(10.3, {2: 0}, [1])
 	events = _push_until(sim, Vector2(0.0, -1.0), 600)
@@ -622,8 +657,18 @@ func _test_turning_back() -> void:
 	# tick 0 and falls on 120, GD-19). Placed at 10.3 pushing toward the far pier: the edging of 2
 	# begins on 30 (the run then ends on section 1, standing). Section 1 falls on 120. When the edging
 	# ends on 270 the way on ends at the far pier: the warden edges back over section 2 toward the town.
+	# Code review 2026-11-22: the edging's line was set on tick 30 to end 0.3 m onto section 1 (a floor
+	# then), and stays there when section 1 falls: on tick 269 the feet are at (2.2, 0, -25.276667),
+	# at deck height past the beam's end over the new gap, not caught (an edging warden's footing is
+	# the section edged). The edging back begins there: 5.6 m to 0.3 m onto section 3.
 	var sim: NightSim = _broken(10.3, {1: 1, 2: 0}, [], {1: 2})
-	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), 510)
+	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), 270)
+	_check("back: tick 269: (2.2, 0, -25.276667), past the beam's end over the gap of section 1, still edging",
+			_at(sim, Vector3(2.2, 0.0, -25.276667)) and sim.warden.move == WardenState.Move.EDGING, str(sim.warden.position))
+	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 271))
+	_check("back: tick 270: the edging back begins where the feet are, (2.2, 0, -25.3)", _at(sim, Vector3(2.2, 0.0, -25.3))
+			and sim.warden.move == WardenState.Move.EDGING and sim.warden.move_toward == 1, str(sim.warden.position))
+	events.append_array(_push_until(sim, Vector2(0.0, -1.0), 510))
 	events.append_array(_push_until(sim, Vector2.ZERO, 511))
 	_check("back: edged out, section 1 fell, edged back", _story_of(events) == PackedStringArray([
 			"0 GROAN_STARTED s1", "30 EDGING_STARTED s2 R", "120 SECTION_FELL s1", "270 EDGING_ENDED s2 R",
@@ -631,6 +676,49 @@ func _test_turning_back() -> void:
 	_check("back: onto section 3 at (2.2, 0, -19.7), walking", _at(sim, Vector3(2.2, 0.0, -19.7)) and WardenRules.walking(sim),
 			str(sim.warden.position))
 	_check("back: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_turning_back_out_of_a_crossing() -> void:
+	# Code review 2026-11-22: the same turn after a crossing. Section 3 fallen; section 2 at 1 plank
+	# with 2 weights (it groans from tick 0 and falls on 120, GD-19); section 1 open. Placed at 15.3
+	# pushing toward the far pier: the crossing of 3 begins on 30 (the run then ends on section 2,
+	# standing). When it ends on 510 the way on is a gap, an open section and the far pier: the warden
+	# crosses back over section 3 from the same edge, 480 more ticks, onto section 4.
+	var sim: NightSim = _broken(15.3, {1: 0, 2: 1}, [3], {2: 2})
+	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), 511)
+	_check("back gap: crossed out, section 2 fell, the crossing back begins on 510", _story_of(events) == PackedStringArray([
+			"0 GROAN_STARTED s2", "30 CROSSING_STARTED s3", "120 SECTION_FELL s2", "510 CROSSING_ENDED s3",
+			"510 CROSSING_STARTED s3"]), str(_story_of(events)))
+	_check("back gap: tick 510: hanging again at the edge just reached, (0, -2.4, -20.0), heading for the town",
+			_at(sim, Vector3(0.0, -2.4, -20.0)) and sim.warden.move == WardenState.Move.CROSSING and sim.warden.move_toward == 1,
+			str(sim.warden.position))
+	events = _push_until(sim, Vector2(0.0, -1.0), 990)
+	events.append_array(_push_until(sim, Vector2.ZERO, 991))
+	_check("back gap: CROSSING_ENDED s3 on 990 (510 + 480), onto section 4 at (0, 0, -14.7), walking",
+			_story_of(events) == PackedStringArray(["990 CROSSING_ENDED s3"]) and _at(sim, Vector3(0.0, 0.0, -14.7))
+			and WardenRules.walking(sim), "%s %s" % [_story_of(events), sim.warden.position])
+	_check("back gap: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_crossing_from_the_landing() -> void:
+	# Code review 2026-11-22: the town section starts fallen (AC 11 allows any section). From the
+	# landing's centre (along 32) toward the far pier: 1.7 m at 3.5 m/s is 29.14 ticks, so the feet are
+	# at the stop (along 30.3, 0.3 m from the span's end) on tick 29, the first pushing tick; the 31st
+	# is tick 59. The crossing runs from the span's end (z 0) to section 6's far edge, 480 ticks, onto
+	# section 5.
+	var sim: NightSim = _broken(-1.0, {}, [6])
+	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), 59)
+	_check("landing: ticks 0 to 58: nothing begins, the feet at the stop on the landing: (0, 0, 0.3)",
+			_story_of(events).is_empty() and _at(sim, Vector3(0.0, 0.0, 0.3)), "%s %s" % [_story_of(events), sim.warden.position])
+	events = _push_until(sim, Vector2(0.0, -1.0), 60)
+	_check("landing: CROSSING_STARTED s6 on 59, hanging at the span's end: (0, -2.4, 0)",
+			_story_of(events) == PackedStringArray(["59 CROSSING_STARTED s6"]) and _at(sim, Vector3(0.0, -2.4, 0.0)),
+			"%s %s" % [_story_of(events), sim.warden.position])
+	events = _push_until(sim, Vector2(0.0, -1.0), 539)
+	events.append_array(_push_until(sim, Vector2.ZERO, 540))
+	_check("landing: CROSSING_ENDED s6 on 539 (59 + 480), onto section 5 at (0, 0, -5.3), walking",
+			_story_of(events) == PackedStringArray(["539 CROSSING_ENDED s6"]) and _at(sim, Vector3(0.0, 0.0, -5.3))
+			and WardenRules.walking(sim) and _faults.total() == 0, "%s %s" % [_story_of(events), sim.warden.position])
 
 
 func _test_way_on() -> void:

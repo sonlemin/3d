@@ -33,8 +33,10 @@ const CROSS_GAP_S: float = 8.0
 ## Not a GDD value: a feel size, tuned in M1 of story 1.6.
 const PUSH_TO_CROSS_S: float = 0.5
 ## Sonlm's play of M1 of story 1.6 (2026-11-22; replaces D2's drift over the whole edging): an
-## edging sidesteps onto its side beam's line in this long (or the whole edging, if shorter), then
-## goes straight along it; the along part moves steadily over the whole edging. Not a GDD value.
+## edging sidesteps onto its side beam's line in this long, then goes straight along it; the along
+## part moves steadily over the whole edging. An edging shorter than this (GD-68 with under about
+## 0.61 m left) sidesteps at the same pace and steps off where that got it, short of the line (code
+## review 2026-11-22, Sonlm). Not a GDD value.
 const EDGE_SIDESTEP_S: float = 0.5
 ## Sonlm's play of M1 of story 1.6 (2026-11-22): a crossing goes hand over hand in reaches of this
 ## many metres (10 over a 5 m gap), each in an equal share of its time. Not a GDD value: a feel size.

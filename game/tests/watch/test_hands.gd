@@ -767,9 +767,14 @@ func _test_a_hold_is_cancelled_by_an_edging_or_a_crossing() -> void:
 				and _tick_of(events[2]) == 30 and _tick_of(events[3]) == 30, _names(events))
 		_check("ac6 %s: the hold is gone and section 4 kept its 8 planks" % what, not sim.hands.holding()
 				and sim.span.planks(4) == 8)
-		_advance(sim, 600)
-		_check("ac6 %s: after the move, the parts in hand are the same as before (%d planks)" % [what, in_hand],
-				WardenRules.walking(sim) and sim.span.in_hand(PLANK) == in_hand, str(sim.span.in_hand(PLANK)))
+		# The wish let go, the hammer still down: the move ends (the edging on 270, the crossing on
+		# 510) and the button, held through it, starts nothing (a walk would hide a hold begun again).
+		sim.set_move(Vector2.ZERO)
+		var after: Array[NightEvent] = _advance(sim, 600)
+		_check("ac6 %s: after the move, standing still with the button down: no new hold, the parts in hand as before (%d planks)"
+				% [what, in_hand], WardenRules.walking(sim) and sim.span.in_hand(PLANK) == in_hand
+				and not _kinds(after).has(NightEvent.Kind.HOLD_STARTED) and not sim.hands.holding(),
+				"%s %d" % [_names(after), sim.span.in_hand(PLANK)])
 		_check("ac6 %s: no fault" % what, _faults.total() == 0, str(_faults.codes()))
 
 
@@ -861,6 +866,39 @@ func _test_relay_onto_an_open_section() -> void:
 		_check("ac4 from %s: 120 ticks walk 7 m over it with no move: along %.1f" % ["4" if from_town else "2", want],
 				walked.is_empty() and absf(_along(sim) - want) < TOL and WardenRules.walking(sim), "%s %f" % [_names(walked), _along(sim)])
 		_check("ac4: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_relay_onto_a_loaded_open_section_brings_it_down() -> void:
+	# Decision D4's other side (code review 2026-11-22): the side beams carry 2, one plank carries 1.
+	# Section 3 open under 2 test weights creaks from tick 0 (load 2 = strength 2). Placed at 15.3
+	# looking down at its deck (_loaded_at() runs tick 0 to find what is looked at), E pressed for
+	# tick 1: the plank is laid on tick 181 (GD-19: re-lay 3 s = 180 ticks). Strength is then 1 under
+	# a load of 2: the creak stops, the groan starts, and the section falls 2 s later, on 301 (GDD Game
+	# Mechanics 2: 120 ticks), with the plank just laid. A second re-lay, pressed for tick 182, would
+	# need until 362: it is cancelled the tick after the fall (story 1.5, DW-34).
+	var sim: NightSim = _loaded_at(15.3, {3: 0}, {3: 2})
+	_check("d4 mirror: before the re-lay the open section creaks and does not groan", sim.span.creaking(3)
+			and sim.span.groan_left(3) == 0 and SpanRules.strength(3, sim.span) == 2)
+	_press(sim, USE)
+	var events: Array[NightEvent] = _advance(sim, 181)
+	var told: Array[String] = []
+	for event: NightEvent in events:
+		if event.kind != NightEvent.Kind.NIGHT_STARTED:
+			told.append("%d %s s%d" % [_tick_of(event), NightEvent.Kind.find_key(event.kind), event.section])
+	_check("d4 mirror: creaking, strength 2 under a load of 2; on 181 the plank is laid, the creak stops and the groan starts",
+			told == ["1 HOLD_STARTED s3", "181 PLANK_RELAID s3", "181 CREAK_STOPPED s3", "181 GROAN_STARTED s3"]
+			and sim.span.planks(3) == 1 and sim.span.in_hand(PLANK) == 7, str(told))
+	_release(sim, USE)
+	_press(sim, USE)
+	events = _advance(sim, 122)
+	told = []
+	for event: NightEvent in events:
+		told.append("%d %s s%d" % [_tick_of(event), NightEvent.Kind.find_key(event.kind), event.section])
+	_check("d4 mirror: a second re-lay begun on 182 cannot save it: SECTION_FELL s3 on 301, the hold cancelled on 302",
+			told == ["182 HOLD_STARTED s3", "301 SECTION_FELL s3", "302 HOLD_CANCELLED s3"], str(told))
+	_check("d4 mirror: the plank laid is lost with the section: 7 in hand, 1 lost, 48 in all, no fault",
+			sim.span.fallen(3) and sim.span.in_hand(PLANK) == 7 and sim.span.count_at(PLANK, PartPlace.lost()) == 1
+			and sim.span.total(PLANK) == 48 and _faults.total() == 0, str(_faults.codes()))
 
 
 func _test_last_plank_town_section() -> void:

@@ -121,12 +121,23 @@ static func way_on(section: int, toward: int, sim: NightSim) -> bool:
 
 
 ## Begins the edging (an open section) or crossing (a fallen one) of `section` heading `toward`,
-## from where the feet are now (decision D2). An edging lasts `edge_ticks` (sim.ticks.edge, or GD-68's
-## share of it) and keeps the feet where they stand on its first tick, then sidesteps them onto the
-## nearer side beam's line (right when x >= 0) at deck height and along it (move_point()). A crossing lasts sim.ticks.cross_gap,
-## whatever `edge_ticks` says: the feet cut down to hang under the gap's rope at its near edge (on the
-## rope's line: Sonlm's play of M1). The push
-## starts again from 0. Emits EDGING_STARTED or CROSSING_STARTED.
+## from where the feet are now (decision D2). The push starts again from 0. Emits EDGING_STARTED or
+## CROSSING_STARTED.
+##
+## An edging lasts `edge_ticks` (sim.ticks.edge, or GD-68's share of it). The feet stay where they
+## stand on its first tick, then sidestep toward the nearer side beam's line (right when x >= 0) at
+## deck height and go along it (move_point()). Where its line ends (code review 2026-11-22, Sonlm):
+## - Along: at the spot the feet step off at, CLEARANCE onto the next floor, when the next section
+##   that way is a floor (or the landing) now; so every tick of the edging is the same size and the
+##   last one adds no step. With an open section or a gap beyond, at the section's far edge, where
+##   the next move begins. A floor beyond that falls meanwhile leaves the line where it was: the
+##   feet end CLEARANCE past the beam's end, over the new gap, and end_move() goes on from there.
+## - Across: on the beam line when the edging lasts sim.ticks.edge_sidestep or more. A shorter one
+##   (GD-68 with little left) sidesteps at the same pace and ends where that gets it: its share
+##   (edge_ticks / edge_sidestep) of the way to the line.
+##
+## A crossing lasts sim.ticks.cross_gap, whatever `edge_ticks` says: the feet cut down to hang under
+## the gap's rope at its near edge, on the rope's line (Sonlm's play of M1).
 static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim) -> void:
 	var warden: WardenState = sim.warden
 	var g: SpanGeometry = sim.geometry
@@ -143,10 +154,15 @@ static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim
 		event = NightEvent.make(NightEvent.Kind.CROSSING_STARTED)
 	else:
 		var side: NightTypes.Side = NightTypes.Side.RIGHT if x >= 0.0 else NightTypes.Side.LEFT
+		var next: int = section + toward
 		warden.move = WardenState.Move.EDGING
 		warden.move_from = Vector3(x, 0.0, warden.position.z)
 		warden.move_to = g.edging_point(side, g.far_edge(section, toward))
+		if next > sim.def.section_count or (next >= 1 and _floor_section(next, sim)):
+			warden.move_to = g.move_end(section, toward, warden.move_to.x)
 		warden.move_ticks_total = maxi(edge_ticks, 1)
+		var sidestep: int = maxi(sim.ticks.edge_sidestep, 1)
+		warden.move_to.x = lerpf(x, warden.move_to.x, minf(float(warden.move_ticks_total) / sidestep, 1.0))
 		event = NightEvent.make(NightEvent.Kind.EDGING_STARTED)
 		event.side = side
 	warden.move_ticks_left = warden.move_ticks_total
@@ -303,8 +319,9 @@ static func tick_moves(sim: NightSim) -> void:
 ## Pure: where the feet of the running edging or crossing are `done` ticks after it began (0 to
 ## move_ticks_total), worked out from its ends, never summed. Sonlm's play of M1 of story 1.6
 ## (2026-11-22): an edging's along part moves steadily over the whole move while its x sidesteps
-## onto the beam line within sim.ticks.edge_sidestep (or the whole move, if shorter), so it goes
-## straight along the beam after that; a crossing goes hand over hand in reaches of
+## to move_to.x within sim.ticks.edge_sidestep (or the whole move, if shorter: begin_move() has then
+## set move_to.x short of the beam line, so the pace is the same), and it goes straight along the
+## beam after that; a crossing goes hand over hand in reaches of
 ## WardenConstants.CROSS_REACH, each a pull eased over WardenConstants.CROSS_PULL_SHARE of its time
 ## and then still, under the rope.
 static func move_point(warden: WardenState, done: int, ticks: NightTicks) -> Vector3:
@@ -326,7 +343,9 @@ static func move_point(warden: WardenState, done: int, ticks: NightTicks) -> Vec
 
 ## Step 1 (tick_moves()), story 1.6: the edging or crossing of `move_section` is done (EDGING_ENDED
 ## or CROSSING_ENDED). The next section the same way decides what follows, worked out now: a floor
-## (planks, or the landing) and the feet step onto it, CLEARANCE in, x kept, walking from this tick;
+## (planks, or the landing) and the feet are on it, CLEARANCE in, at the x the move ended on (the
+## beam's for an edging, whose line ran to this spot already; the rope's, x 0, for a crossing, which
+## cuts up onto it), walking from this tick;
 ## open or fallen and the move over it begins on this same tick. Toward the far pier a run that no
 ## longer ends on a floor (the section beyond fell meanwhile) turns the warden back: the move over
 ## the section just crossed begins again, toward the town. Nothing leaves the warden nowhere to go.
@@ -354,7 +373,9 @@ static func end_move(sim: NightSim) -> void:
 		begin_move(next, toward, sim.ticks.edge, sim)
 
 
-## Step 8 (ConsequenceRules.warden_footing), story 1.5 decision D2 and story 1.6 decision D3: feet
+## Step 4 or 8 (ConsequenceRules.warden_footing): story 1.5 decision D2 (beside a section that fell,
+## step 8) and story 1.6 decision D3 (beside one that went open: step 4 in epic 1, where only the
+## warden's own strip, step 2, opens a section). Feet
 ## beside a section that cannot be stood on (fallen, or open), with a clearance probe along the span
 ## over it and on no floor that can be walked on, move straight away from it until they are
 ## CLEARANCE from its edge: at most CLEARANCE, in the same tick. The x is kept. Asked only while the

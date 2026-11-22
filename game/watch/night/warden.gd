@@ -55,9 +55,9 @@ func start_at(sim: NightSim) -> void:
 ## catch at a fall and the end of the climb back (story 1.5 D3) are cuts, and so is every move
 ## while climbing (the edge hung from fell, and the feet went to the next one): the blend snaps, so
 ## the view jumps rather than sliding through the gap. So are the start and the end of a crossing
-## (story 1.6 D2: cut down to hang under the deck, cut up onto the far one). Every other move
-## blends: walking, D2's step back, an edging (it starts from where the feet stand, so nothing
-## jumps), and the ticks of a crossing between its two cuts.
+## (story 1.6 D2: cut down to hang under the gap's rope, cut up onto the far deck). Every other move
+## blends: walking, D2's step back, an edging (it starts from where the feet stand and its line ends
+## where they step off, so no tick of it jumps), and the ticks of a crossing between its two cuts.
 ## At the catch the view also cuts to face the edge caught (code review 2026-11-22, Sonlm): toward
 ## the town, level, so the deck is at eye height and not the gap. Once only: the player looks
 ## freely after it, and nothing else ever turns the view for them (no turn at any story 1.6 move).

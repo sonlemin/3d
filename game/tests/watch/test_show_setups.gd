@@ -169,6 +169,15 @@ func _test_gaps_and_last_plank_setups() -> void:
 	_check("show: gaps: pushing on crosses 4 and edges 2, then section 1 is reached", kinds.count(NightEvent.Kind.CROSSING_ENDED) == 1
 			and kinds.count(NightEvent.Kind.EDGING_ENDED) == 1 and sim.warden.position.z + 30.0 < 5.0
 			and WardenRules.walking(sim), "%s %s" % [kinds, sim.warden.position])
+	# And back the same way ("both ways"; code review 2026-11-22): pushing toward the town from the far
+	# pier's stop edges section 2 again and crosses section 4 again, back past where M1 began.
+	for i: int in 1300:
+		sim.set_move(Vector2(0.0, 1.0))
+		kinds.append_array(_kinds(sim.advance()))
+	_check("show: gaps: pushing back edges 2 and crosses 4 again, onto section 5 or beyond",
+			kinds.count(NightEvent.Kind.CROSSING_ENDED) == 2 and kinds.count(NightEvent.Kind.EDGING_ENDED) == 2
+			and sim.warden.position.z + 30.0 > 20.0 and WardenRules.walking(sim) and _faults.total() == 0,
+			"%s %s" % [kinds, sim.warden.position])
 	# last_plank (M2): section 3 at 1 plank, the warden at along 11.0 (z -19.0) facing the far pier, 7
 	# planks in hand; the deck ahead (pitch -1.2 lands at 10.378) is section 3's, in reach.
 	var last: NightDef = ShowSetups.def_of(&"last_plank")

@@ -57,8 +57,12 @@ static func parts_lost(sim: NightSim) -> void:
 ## then: only the warden's own strip opens a section, and it has just completed; epic 3's deck hooks
 ## can). Climbing: the edge hung from may itself have gone, so the hang point is worked out again
 ## (code review 2026-11-22). Edging (story 1.6 AC 10): the section being edged fell, whichever way
-## and wherever the feet are along it, and they catch the edge as from under their feet. Crossing:
-## nothing can fall under a gap.
+## and wherever the feet are along it, and they catch the edge as from under their feet. An edging
+## warden's footing is asked of the section edged, never of the feet: from the tick the edging
+## begins they are on its beam. So for the 0.3 m at each end where the feet are still (or already)
+## over the next section: that section falling does not catch them, and the edged section falling
+## does, though the feet are over planks (story 1.6 Dev Notes; pinned by tests). Crossing: nothing
+## can fall under a gap.
 static func warden_footing(sim: NightSim) -> void:
 	match sim.warden.move:
 		WardenState.Move.CLIMBING:

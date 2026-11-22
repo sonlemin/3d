@@ -150,7 +150,8 @@ func _test_four_sections_drawn() -> void:
 # --- Story 1.5: weights, the bow and the fall (decision D4) ------------------------------------
 # GD-19 / GDD Game Mechanics 2: 3 planks under 4 weights groans from tick 0 and falls on tick 120.
 # D4 (gray box): creaking bows 5 cm at mid-section; groaning grows to 25 cm as the groan runs out;
-# at the fall every piece drops out of sight over 1.5 s and the section then draws nothing.
+# at the fall every piece drops out of sight over 1.5 s and the section then draws only the one
+# rope left across its gap (Sonlm's play of story 1.6's M1).
 
 func _weights_of(section: SectionView) -> Array[Node]:
 	var out: Array[Node] = []
@@ -373,7 +374,8 @@ func _test_a_section_processes_only_while_it_falls() -> void:
 
 
 func _test_a_fall_not_seen_still_clears() -> void:
-	# AD-49: a view that missed SECTION_FELL (made after it) still draws nothing for a fallen section.
+	# AD-49: a view that missed SECTION_FELL (made after it) still draws nothing of a fallen section
+	# but the rope across its gap.
 	var sim: NightSim = _loaded_sim({4: 3}, {4: 4})
 	_advance(sim, 130)
 	var view: SpanView = _view_of(sim)
@@ -382,9 +384,27 @@ func _test_a_fall_not_seen_still_clears() -> void:
 			section4.get_child_count() == 1 and section4.get_node_or_null("GapRope") != null and section4.falling() == null,
 			str(section4.get_children()))
 	_check("view: a section that stands has no gap rope", view.get_node("Section3").get_node_or_null("GapRope") == null)
-	# The rope's 10 pieces follow SpanGeometry.gap_rope_points(): the middle of the first piece.
+	# The rope's 10 pieces follow SpanGeometry.gap_rope_points(): each sits between two of its points,
+	# is as long as they are apart, and lies along the line between them (code review 2026-11-22:
+	# every piece, not the first alone).
 	var pts: Array[Vector3] = sim.geometry.gap_rope_points(4)
-	var first: Node3D = section4.get_node("GapRope").get_child(0) as Node3D
-	_check("view: its first piece sits between the rope's first two points", first.position.is_equal_approx((pts[0] + pts[1]) / 2.0),
-			"%s %s" % [first.position, (pts[0] + pts[1]) / 2.0])
+	var rope: Node = section4.get_node("GapRope")
+	var wrong: PackedStringArray = []
+	for i: int in mini(rope.get_child_count(), pts.size() - 1):
+		var piece: MeshInstance3D = rope.get_child(i) as MeshInstance3D
+		var between: Vector3 = pts[i + 1] - pts[i]
+		var size: Vector3 = (piece.mesh as BoxMesh).size
+		if not piece.position.is_equal_approx((pts[i] + pts[i + 1]) / 2.0) or absf(size.z - between.length()) > 0.0001 \
+				or absf(absf(piece.transform.basis.z.dot(between.normalized())) - 1.0) > 0.0001:
+			wrong.append("piece %d at %s, %s long" % [i + 1, piece.position, size.z])
+	_check("view: each of the rope's 10 pieces sits between two of its points, as long as they are apart, lying along them",
+			rope.get_child_count() == 10 and wrong.is_empty(), str(wrong))
+	# Literally, for section 4 (along 15 to 20, z -15 to -10): tied 0.1 m under the deck top, sagging
+	# 0.4 m at mid-gap as 4u(1 - u). Piece 1 runs from y -0.1 to -0.244: centre (0, -0.172, -14.75).
+	# Piece 5 runs from y -0.484 to the lowest point, -0.5: centre (0, -0.492, -12.75).
+	var first: Node3D = rope.get_child(0) as Node3D
+	var fifth: Node3D = rope.get_child(4) as Node3D
+	_check("view: the rope's first piece is centred at (0, -0.172, -14.75), its fifth at (0, -0.492, -12.75)",
+			first.position.distance_to(Vector3(0.0, -0.172, -14.75)) < 0.0001
+			and fifth.position.distance_to(Vector3(0.0, -0.492, -12.75)) < 0.0001, "%s %s" % [first.position, fifth.position])
 	view.free()

@@ -79,10 +79,15 @@ func shown_progress() -> float:
 ## a hold. HoldRules' own gates in its own order (`_press_hand`): the warden not walking (story
 ## 1.5's climb back), the forearm up, a hold running, the Press once grace, then HandRules' action
 ## and check on what is looked at.
-## One tick it does not mirror (code review 2026-11-22): the climb's last. The climb ends in step 1
-## of the next tick, before the press is taken, so that press can start a hold; but the feet are
-## cut onto the deck first and what is looked at changes with them, so nothing read now says what
-## it would start. The aid shows "not ready" for that one tick (1/60 s).
+## Ticks it does not mirror (code reviews of 2026-11-22), each 1/60 s:
+## - The last tick of a timed move (the climb, an edging, a crossing). The move ends in step 1 of
+##   the next tick, before the press is taken, so that press can start a hold; but the feet move
+##   onto the deck first and what is looked at changes with them, so nothing read now says what it
+##   would start. The aid shows "not ready".
+## - The tick before a push begins an edging or a crossing (story 1.6 D1: the wish has pushed for
+##   sim.ticks.push_to_cross ticks). If the wish is still down on the next tick the move begins in
+##   step 1 and the press is ignored; if it is let go, the press is taken. The aid cannot know which
+##   and shows what the hands could start.
 static func would_start(input: NightTypes.HandInput, sim: NightSim) -> bool:
 	var hands: HandsState = sim.hands
 	if not WardenRules.walking(sim) or hands.forearm_raised or hands.holding():

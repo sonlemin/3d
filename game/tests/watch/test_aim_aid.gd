@@ -1,7 +1,8 @@
 ## The temporary aim aid (DW-41; Sonlm, 2026-11-21): a debug mark at the centre of the night view.
 ## Its reading must never drift from the rules: it says "a button would start a hold" exactly
 ## when a press of that button, taken on the next tick, emits HOLD_STARTED (but for the last tick of
-## a climb back, where the cut onto the deck changes what is looked at: AimAid.would_start()). Also: the word for
+## a timed move, where the feet move onto the deck and change what is looked at, and the tick before
+## a push begins an edging or a crossing: AimAid.would_start()). Also: the word for
 ## what is in reach, the ring's progress, that it takes no input, and that Main adds it to a night
 ## only when the debug tools are there. What it looks like, and that the dot sits on the view
 ## line, are checked on screen.
@@ -101,7 +102,8 @@ func _cases() -> Dictionary[String, Callable]:
 			sim.set_view(PI, DOWN)
 			_advance(sim, 200)
 			return sim,
-		# Story 1.6: half way through an edging (section 3 open) and a crossing (section 3 fallen),
+		# Story 1.6: 119 ticks into an edging (section 3 open; half of its 240) and into a crossing
+		# (section 3 fallen; a quarter of its 480),
 		# pushed into from along 15.3 (begun on tick 30), looking down at section 4's deck behind (yaw
 		# pi), 8 planks in hand for the edging. Neither move ends on the next tick.
 		"edging an open section, looking at a deck": func() -> NightSim: return _mid_move(false),
@@ -109,7 +111,8 @@ func _cases() -> Dictionary[String, Callable]:
 	}
 
 
-## Story 1.6: tick 150 of a move begun on tick 30 by pushing from along 15.3, looking back down.
+## Story 1.6: after tick 149 of a move begun on tick 30 by pushing from along 15.3 (119 ticks in),
+## looking back down.
 func _mid_move(gap: bool) -> NightSim:
 	var start: StartState = StartState.new()
 	start.warden_along = 15.3

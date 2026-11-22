@@ -80,21 +80,30 @@ box around it. The aid is not part of the game: it is removed with epic 4's hand
 **Open sections and gaps (story 1.6).** A section with no planks that has not fallen is open; a
 fallen one is a gap. Neither can be stood on, but neither traps you. Walk up to one and keep
 pushing straight into it (within 45 degrees of straight) for half a second: you edge round an open
-section along its side beam in 4 s (a sidestep onto the beam, then straight along it), or cross a
+section along its side beam in 4 s (a sidestep onto the beam in the first half second while you
+move along it, then straight along it, at one steady pace to 0.3 m onto the next floor), or cross a
 gap hand over hand in 8 s, hanging under the one rope left strung across it (ten pulls of half a
 metre).
-Meanwhile you can look around but not walk or act, and a hold you had running is cancelled (what
-you carry stays in hand). Several in a row are crossed one after another, each at its own time.
+Meanwhile you can look around but not walk or act; a hold you had running is cancelled and the
+forearm is lowered (what you carry stays in hand), and a button still held when the move ends does
+nothing until you press it again. Several in a row are crossed one after another, each at its own time.
 Toward the far pier a run only begins if there is something to stand on at its end; if the section
 beyond falls while you cross, you turn back toward the town. Strip the last plank of the section
 you stand on and you are on its side beam at once, edging toward the town for the share of 4 s
-that is left. Strip it from the next section, standing within 0.3 m of it, and you are moved back
+that is left (with under about 0.6 m left that share is shorter than the sidestep, and you step
+off before you reach the beam's line). Strip it from the next section, standing within 0.3 m of it, and you are moved back
 to 0.3 m from it. Re-lay a plank on an open section (E, looking at its deck from the next section)
 and it can be walked again. An open section's side beams carry a load of 2: more for 2 s and it
-falls, so taking a section's last plank can stop its groan (1 plank holds 1, the beams hold 2). If
-it falls while you edge along it, you catch the edge and climb back as below.
+falls, so taking a section's last plank can stop its groan (1 plank holds 1, the beams hold 2).
+The other side of that: re-laying one plank on an open section that carries 2 makes it groan, and
+it falls 2 s later with the plank; a second re-lay takes 3 s and cannot save it. (Story 1.6's
+decision D4, to be judged at gate 2: DW-49.) If it falls while you edge along it, you catch the
+edge and climb back as below, wherever along the edging you are: from the moment an edging begins
+you are on that section's beam, also for the first and last 0.3 m, when you are still over the
+section beside it.
 
-**Weight, creak, groan and fall (story 1.5).** A section's strength is its planks; its load is
+**Weight, creak, groan and fall (story 1.5).** A section's strength is its planks (or 2, its side
+beams, once it has none: see above); its load is
 what stands on it. Until the dead arrive (epics 2 and 3) the only load is gray test weights, 1
 each, placed by the show-me setups and the tests (never in a plain `--start=night`); you add no
 load yourself. When the load equals the strength the section creaks (its planks bow a little);

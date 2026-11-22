@@ -55,8 +55,9 @@ const WEIGHT_ACROSS: Array[float] = [0.0, -1.5, 1.5]
 ## Along, in metres from the section's far-pier end: the middle 2.5 m, so no weight stands within
 ## 1.25 m of either end, where the deck is aimed at from the next section.
 const WEIGHT_ALONG: Array[float] = [2.5, 1.75, 3.25]
-## Sonlm's play of M1 of story 1.6 (2026-11-22; gray box, not a rule): one rope stays strung across a
-## fallen section, along its centre line (this x), for the warden to cross hand over hand under it.
+## Sonlm's play of M1 of story 1.6 (2026-11-22): one rope stays strung across a fallen section, along
+## its centre line (this x), for the warden to cross hand over hand under it. A gray-box size, but
+## crossing_point() puts a crossing warden's feet on this x, so it is in the sim's state.
 const GAP_ROPE_X: float = 0.0
 ## Gray box: how far under the deck top the rope is tied at each end of the gap, in metres.
 const GAP_ROPE_DROP: float = 0.1
@@ -228,9 +229,9 @@ func _climb_x(onto: int, x: float) -> float:
 	return clampf(x, -half, half)
 
 
-## Story 1.6 decision D2: the x of the line an edging warden's feet drift onto, along the side
+## Story 1.6 decision D2: the x of the line an edging warden's feet sidestep onto, along the side
 ## beam of `side`: the edge of the band that can be stood on (the deck's half width less
-## WardenConstants.CLEARANCE), so the feet never leave it and nothing jumps when the move ends.
+## WardenConstants.CLEARANCE), so the feet never leave that band.
 func beam_line_x(side: NightTypes.Side) -> float:
 	var x: float = SpanConstants.SECTION_WIDTH / 2.0 - WardenConstants.CLEARANCE
 	return -x if side == NightTypes.Side.LEFT else x
@@ -260,7 +261,8 @@ func crossing_point(along: float) -> Vector3:
 
 ## Sonlm's play of M1 of story 1.6: the rope left across fallen section `section`, as
 ## GAP_ROPE_PIECES + 1 points from its far-pier end to its town end: tied GAP_ROPE_DROP under the deck
-## top at each end, sagging GAP_ROPE_SAG at mid-gap. Gray box: drawn by SectionView; no rule reads it.
+## top at each end, sagging GAP_ROPE_SAG at mid-gap. Gray box: drawn by SectionView; no rule reads
+## these points (a crossing's line is crossing_point(): the rope's x, CROSS_HANG_DROP down).
 func gap_rope_points(section: int) -> Array[Vector3]:
 	var out: Array[Vector3] = []
 	for i: int in GAP_ROPE_PIECES + 1:
