@@ -207,6 +207,48 @@ func _test_the_catch_turns_the_view_to_the_edge() -> void:
 	night.free()
 
 
+func _test_edging_blends_and_a_crossing_cuts() -> void:
+	# Story 1.6 D2: an edging moves the feet steadily at deck height, blended tick by tick (no
+	# judder above 60 Hz); a crossing cuts down at its start and up at its end (CROSSING_STARTED,
+	# CROSSING_ENDED), blended in between. Section 3 open, section 2 fallen; placed at along 15.3
+	# pushing toward the far pier: edging of 3 from tick 30 to 270, crossing of 2 from 270 to 750.
+	var night: NightScreen = _night()
+	var warden: Warden = _warden_of(night)
+	var start: StartState = StartState.new()
+	start.planks = {3: 0}
+	start.fallen = [2]
+	start.warden_along = 15.3
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	warden.start_at(sim)
+	var blended: bool = true
+	var edged: int = 0
+	var last: Vector3 = sim.warden.position
+	var cut_at: Array[int] = []
+	var slid: bool = true
+	for i: int in 760:
+		sim.set_move(Vector2(0.0, -1.0))
+		var events: Array[NightEvent] = sim.advance()
+		warden.on_tick(events, sim)
+		var tick: int = sim.tick - 1
+		var snapped: bool = warden.blend().value(0.0).is_equal_approx(warden.blend().value(1.0))
+		if sim.warden.move == WardenState.Move.EDGING and not _has(events, NightEvent.Kind.EDGING_STARTED):
+			# One tick's share of the edging: blended from where the feet were the tick before.
+			edged += 1
+			blended = blended and warden.blend().value(0.0).is_equal_approx(last) \
+					and warden.blend().value(1.0).is_equal_approx(sim.warden.position) and not snapped
+		if _has(events, NightEvent.Kind.CROSSING_STARTED) or _has(events, NightEvent.Kind.CROSSING_ENDED):
+			if snapped and warden.blend().value(1.0).is_equal_approx(sim.warden.position):
+				cut_at.append(tick)
+		elif sim.warden.move == WardenState.Move.CROSSING and snapped:
+			slid = false
+		last = sim.warden.position
+	_check("node: every tick of the edging but its first is blended from the tick before", blended and edged == 239,
+			"%s %d" % [blended, edged])
+	_check("node: the crossing's start (270) and end (750) are cuts", cut_at == [270, 750], str(cut_at))
+	_check("node: the ticks between are blended", slid)
+	night.free()
+
+
 func _test_placed_start_is_drawn() -> void:
 	# D3: a show-me setup that places the warden mid-span is drawn there from the first frame.
 	var start: StartState = StartState.new()

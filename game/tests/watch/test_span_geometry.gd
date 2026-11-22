@@ -93,3 +93,42 @@ func _test_other_plank_count_falls_back() -> void:
 	_check("geometry: the fallback keeps the first places", sim.geometry.places_kept(4) == [1, 2, 3, 4],
 			str(sim.geometry.places_kept(4)))
 	_check("geometry: reported once only", _faults.count(&"span.plank_order") == 1)
+
+
+func _test_the_moves_of_story_1_6() -> void:
+	# Story 1.6 D2: the beam line is the standable band's edge, the 5 m deck less the 0.3 m clearance
+	# (story 1.3 D1): x -2.2 on the left, 2.2 on the right. A move over section n toward the town (+1)
+	# runs from its far-pier end (along (n - 1) x 5) to its town end (n x 5); toward the far pier (-1)
+	# the other way. A crossing hangs 1.4 m below the deck (story 1.5 D3), x kept within +-2.2. A move
+	# ends on the next floor, 0.3 m in.
+	var g: SpanGeometry = _geometry()
+	_check("moves: the beam lines are x -2.2 (left) and 2.2 (right)", is_equal_approx(g.beam_line_x(LEFT), -2.2)
+			and is_equal_approx(g.beam_line_x(RIGHT), 2.2), "%f %f" % [g.beam_line_x(LEFT), g.beam_line_x(RIGHT)])
+	_check("moves: section 3's near and far edges toward the far pier are along 15 and 10",
+			is_equal_approx(g.near_edge(3, -1), 15.0) and is_equal_approx(g.far_edge(3, -1), 10.0))
+	_check("moves: and toward the town 10 and 15", is_equal_approx(g.near_edge(3, 1), 10.0)
+			and is_equal_approx(g.far_edge(3, 1), 15.0))
+	# L2: the edging of section 3 toward the far pier ends at (2.2, 0, -20.0), and steps off at
+	# (2.2, 0, -20.3); toward the town (2.2, 0, -15.0), off at (2.2, 0, -14.7).
+	_check("moves: an edging point on the right beam at along 10: (2.2, 0, -20)",
+			g.edging_point(RIGHT, 10.0).is_equal_approx(Vector3(2.2, 0.0, -20.0)), str(g.edging_point(RIGHT, 10.0)))
+	_check("moves: on the left beam at along 15: (-2.2, 0, -15)",
+			g.edging_point(LEFT, 15.0).is_equal_approx(Vector3(-2.2, 0.0, -15.0)), str(g.edging_point(LEFT, 15.0)))
+	# L3: a crossing hangs at (x, -1.4, z), x kept within the band.
+	_check("moves: a crossing point at along 15, x 0: (0, -1.4, -15)",
+			g.crossing_point(15.0, 0.0).is_equal_approx(Vector3(0.0, -1.4, -15.0)), str(g.crossing_point(15.0, 0.0)))
+	_check("moves: x kept within +-2.2", g.crossing_point(12.5, 2.4).is_equal_approx(Vector3(2.2, -1.4, -17.5))
+			and g.crossing_point(12.5, -3.0).is_equal_approx(Vector3(-2.2, -1.4, -17.5)), str(g.crossing_point(12.5, 2.4)))
+	var ends: Dictionary[String, Array] = {
+		"section 3 toward the far pier, x 2.2": [g.move_end(3, -1, 2.2), Vector3(2.2, 0.0, -20.3)],
+		"section 3 toward the town, x 2.2": [g.move_end(3, 1, 2.2), Vector3(2.2, 0.0, -14.7)],
+		"section 3 toward the far pier, x 0": [g.move_end(3, -1, 0.0), Vector3(0.0, 0.0, -20.3)],
+		"section 6 toward the town (the landing), x 2.2": [g.move_end(6, 1, 2.2), Vector3(2.2, 0.0, 0.3)],
+		"section 2 toward the far pier, x -2.4 (kept in)": [g.move_end(2, -1, -2.4), Vector3(-2.2, 0.0, -25.3)],
+	}
+	var sim: NightSim = _sim_with(_def_with(StartState.new()), 1)
+	for what: String in ends:
+		var got: Vector3 = ends[what][0]
+		_check("moves: a move over %s ends at %s" % [what, ends[what][1]], got.is_equal_approx(ends[what][1]), str(got))
+		_check("moves: which can be stood on (%s)" % what, WardenRules.can_stand(got, sim))
+

@@ -142,7 +142,8 @@ func refuse(reason: NightTypes.Reason, target: LookTarget, action: NightTypes.Ha
 	emit(event)
 
 
-## A hash of the tick, every part count, the warden's base facts (the feet and the timed move),
+## A hash of the tick, every part count, the warden's base facts (the feet, the timed move and,
+## since story 1.6, its section, way, ends and length, and the push),
 ## the view, the hands (the hold and the forearm), the Holds option, the span's load facts (weights,
 ## lifts to come, fallen, creak and groan, story 1.5) and the generator's state (AD-37): the
 ## determinism test now, the replay check in epic 6.
@@ -155,10 +156,12 @@ func checksum() -> int:
 	return hash(values)
 
 
-## 1. Inputs (AD-34): the move wish and the view; the warden's timed move counts down (the climb
-## back of story 1.5, AD-52), then the warden walks (WardenRules); the look target is worked out
-## from the eye (AD-47, LookRules); then each queued command, in the order it arrived, goes to
-## HoldRules, which starts, refuses or cancels a hold, or ignores it while the warden is not walking.
+## 1. Inputs (AD-34): the move wish and the view; the warden's timed move counts down (AD-52: the
+## climb back of story 1.5; story 1.6's edging and crossing, which end here and may chain the next
+## section's move or turn back), then the warden walks and the push of story 1.6 D1 is counted (it
+## may begin an edging or a crossing) (WardenRules); the look target is worked out from the eye
+## (AD-47, LookRules); then each queued command, in the order it arrived, goes to HoldRules, which
+## starts, refuses or cancels a hold, or ignores it while the warden is not walking.
 func _step_inputs() -> void:
 	move_wish = _next_move
 	yaw = _next_yaw
@@ -184,7 +187,9 @@ func _step_rigs() -> void:
 	pass
 
 
-## 4. Consequences of what steps 2 and 3 changed (AD-34, AD-48): ConsequenceRules.settle().
+## 4. Consequences of what steps 2 and 3 changed (AD-34, AD-48): ConsequenceRules.settle(). Since
+## story 1.6 a strip that takes the warden's last plank puts them on its side beam here (GD-68,
+## warden_on_beams), and one beside it steps back (D3).
 func _step_consequences_of_actions() -> void:
 	ConsequenceRules.settle(self)
 
@@ -205,12 +210,14 @@ func _step_dead() -> void:
 	SpanRules.take_lifts(self)
 
 
-## 7. Loads, creaks, groans and collapses (AD-34): SpanRules.tick_loads().
+## 7. Loads, creaks, groans and collapses (AD-34): SpanRules.tick_loads(). An open section's
+## strength is its side beams' 2 (story 1.6).
 func _step_loads() -> void:
 	SpanRules.tick_loads(self)
 
 
-## 8. Consequences of what step 7 changed (AD-34, AD-48): ConsequenceRules.settle().
+## 8. Consequences of what step 7 changed (AD-34, AD-48): ConsequenceRules.settle(). Since story
+## 1.6 a warden edging along a section that fell catches the edge here (AC 10).
 func _step_consequences_of_loads() -> void:
 	ConsequenceRules.settle(self)
 
@@ -242,11 +249,12 @@ func _step_ending() -> void:
 	pass
 
 
-## Moves what `start` takes off the span into the warden's hand, and places its test weights and
-## lifts (story 1.5). A section outside 1 to n, or a count outside 0 to the planks per section, is
-## `span.bad_start`: skipped or clamped. So is a negative count of weights (clamped to 0); a lift on
-## a bad section or before tick 0, or more lifts on a section than its weights, is `span.bad_start`
-## and that lift is dropped.
+## Moves what `start` takes off the span into the warden's hand, fells the sections that start
+## fallen (story 1.6), and places its test weights and lifts (story 1.5). A section outside 1 to n,
+## or a count outside 0 to the planks per section, is `span.bad_start`: skipped or clamped. So is a
+## negative count of weights (clamped to 0); a lift on a bad section or before tick 0, or more lifts
+## on a section than its weights, is `span.bad_start` and that lift is dropped. Weights or a lift on
+## a section that starts fallen are `span.bad_start` and skipped.
 func _apply_start(start: StartState) -> void:
 	for section: int in start.planks:
 		var left: int = start.planks[section]
@@ -265,10 +273,14 @@ func _apply_start(start: StartState) -> void:
 			continue
 		SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.rail(rail.x, rail.y as NightTypes.Side),
 				PartPlace.hand(), self)
+	_apply_fallen(start.fallen)
 	for section: int in start.weights:
 		var count: int = start.weights[section]
 		if section < 1 or section > def.section_count:
 			faults.report(&"span.bad_start", "weights on section %d (1 to %d)" % [section, def.section_count])
+			continue
+		if span.fallen(section):
+			faults.report(&"span.bad_start", "weights on section %d, which starts fallen" % section)
 			continue
 		if count < 0:
 			faults.report(&"span.bad_start", "%d weights on section %d" % [count, section])
@@ -279,11 +291,32 @@ func _apply_start(start: StartState) -> void:
 		if lift.x < 1 or lift.x > def.section_count or lift.y < 0:
 			faults.report(&"span.bad_start", "lift %s (section 1 to %d, tick 0 or later)" % [lift, def.section_count])
 			continue
+		if span.fallen(lift.x):
+			faults.report(&"span.bad_start", "lift %s on section %d, which starts fallen" % [lift, lift.x])
+			continue
 		if lifted.get(lift.x, 0) >= span.weights(lift.x):
 			faults.report(&"span.bad_start", "lift %s: more lifts than weights on section %d" % [lift, lift.x])
 			continue
 		lifted[lift.x] = lifted.get(lift.x, 0) + 1
 		span.add_lift(lift)
+
+
+## Story 1.6 AC 11: each section of `fallen` starts as a gap. What is still on its deck and its
+## rails goes to lost through the ledger (what the StartState took off first is in hand already), so
+## the def's totals hold. A section outside 1 to n is `span.bad_start` and skipped; a repeat is
+## ignored. Nothing is emitted: the night begins with the gap.
+func _apply_fallen(fallen: Array[int]) -> void:
+	for section: int in fallen:
+		if section < 1 or section > def.section_count:
+			faults.report(&"span.bad_start", "fallen section %d (1 to %d)" % [section, def.section_count])
+			continue
+		if span.fallen(section):
+			continue
+		span.set_fallen(section)
+		SpanRules.move_parts(NightTypes.Part.PLANK, span.planks(section), PartPlace.deck(section), PartPlace.lost(), self)
+		for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
+			if span.rail_standing(section, side):
+				SpanRules.move_parts(NightTypes.Part.ROPE, 1, PartPlace.rail(section, side), PartPlace.lost(), self)
 
 
 ## Story 1.3 decision D3: the warden starts at `start.warden_along` on the centre line, or on the

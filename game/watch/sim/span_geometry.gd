@@ -219,6 +219,46 @@ func _climb_x(onto: int, x: float) -> float:
 	return clampf(x, -half, half)
 
 
+## Story 1.6 decision D2: the x of the line an edging warden's feet drift onto, along the side
+## beam of `side`: the edge of the band that can be stood on (the deck's half width less
+## WardenConstants.CLEARANCE), so the feet never leave it and nothing jumps when the move ends.
+func beam_line_x(side: NightTypes.Side) -> float:
+	var x: float = SpanConstants.SECTION_WIDTH / 2.0 - WardenConstants.CLEARANCE
+	return -x if side == NightTypes.Side.LEFT else x
+
+
+## Story 1.6: the along where a move over `section` heading `toward` (+1 toward the town, -1 toward
+## the far pier) begins: the section's end on the side it is entered from.
+func near_edge(section: int, toward: int) -> float:
+	return section_start(section) if toward > 0 else section_end(section)
+
+
+## Story 1.6: the along where a move over `section` heading `toward` ends: its other end.
+func far_edge(section: int, toward: int) -> float:
+	return section_end(section) if toward > 0 else section_start(section)
+
+
+## Story 1.6 D2: a point of an edging on the line of the `side` beam, at deck height.
+func edging_point(side: NightTypes.Side, along: float) -> Vector3:
+	return Vector3(beam_line_x(side), 0.0, world_z(along))
+
+
+## Story 1.6 D2: a point of a crossing at `along`: hanging WardenConstants.HANG_DROP below the deck
+## top (as story 1.5's hang), `x` kept within the beam lines.
+func crossing_point(along: float, x: float) -> Vector3:
+	var limit: float = beam_line_x(NightTypes.Side.RIGHT)
+	return Vector3(clampf(x, -limit, limit), -WardenConstants.HANG_DROP, world_z(along))
+
+
+## Story 1.6: where the feet step onto the next floor when a move over `section` heading `toward`
+## ends: WardenConstants.CLEARANCE past its far edge, `x` kept within that floor's band. Toward the
+## town it is exactly climb_end() of the next section (or the landing past the town section).
+func move_end(section: int, toward: int, x: float) -> Vector3:
+	if toward > 0:
+		return climb_end(section + 1 if section < _sections else 0, x)
+	return Vector3(_climb_x(section - 1, x), 0.0, world_z(section_start(section) - WardenConstants.CLEARANCE))
+
+
 ## The x of a section's side edge.
 func _edge_x(side: NightTypes.Side) -> float:
 	var half: float = SpanConstants.SECTION_WIDTH / 2.0

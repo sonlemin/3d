@@ -101,7 +101,29 @@ func _cases() -> Dictionary[String, Callable]:
 			sim.set_view(PI, DOWN)
 			_advance(sim, 200)
 			return sim,
+		# Story 1.6: half way through an edging (section 3 open) and a crossing (section 3 fallen),
+		# pushed into from along 15.3 (begun on tick 30), looking down at section 4's deck behind (yaw
+		# pi), 8 planks in hand for the edging. Neither move ends on the next tick.
+		"edging an open section, looking at a deck": func() -> NightSim: return _mid_move(false),
+		"crossing a gap, looking at a deck": func() -> NightSim: return _mid_move(true),
 	}
+
+
+## Story 1.6: tick 150 of a move begun on tick 30 by pushing from along 15.3, looking back down.
+func _mid_move(gap: bool) -> NightSim:
+	var start: StartState = StartState.new()
+	start.warden_along = 15.3
+	if gap:
+		start.fallen = [3]
+	else:
+		start.planks = {3: 0}
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(PI, DOWN)
+	for i: int in 150:
+		sim.set_move(Vector2(0.0, -1.0))
+		sim.advance()
+	sim.set_move(Vector2.ZERO)
+	return sim
 
 
 ## A strip of a full deck completed in Press once, then `wait` more ticks. A press taken on the

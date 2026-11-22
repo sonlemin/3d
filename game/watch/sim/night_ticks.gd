@@ -20,6 +20,13 @@ var press_once_grace: int = 0
 var groan: int = 0
 ## GDD Game Mechanics 2: the climb back after a fall (WardenConstants.CLIMB_BACK_S), in ticks.
 var climb_back: int = 0
+## GDD Game Mechanics 2: edging round an open section (WardenConstants.EDGE_S), in ticks.
+var edge: int = 0
+## GDD Game Mechanics 2: crossing a gap hand over hand (WardenConstants.CROSS_GAP_S), in ticks.
+var cross_gap: int = 0
+## Story 1.6 D1: the push that begins an edging or crossing (WardenConstants.PUSH_TO_CROSS_S): the
+## move begins on the tick after this many ticks of pushing in a row.
+var push_to_cross: int = 0
 
 
 func _init() -> void:
@@ -29,6 +36,9 @@ func _init() -> void:
 	press_once_grace = of(HandConstants.PRESS_ONCE_GRACE_S)
 	groan = of(SpanConstants.GROAN_S)
 	climb_back = of(WardenConstants.CLIMB_BACK_S)
+	edge = of(WardenConstants.EDGE_S)
+	cross_gap = of(WardenConstants.CROSS_GAP_S)
+	push_to_cross = of(WardenConstants.PUSH_TO_CROSS_S)
 
 
 ## Whole ticks for a time in seconds, rounded to the nearest tick.

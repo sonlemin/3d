@@ -26,6 +26,8 @@ godot --path game -- --show=strip                 # mid section 5, nothing in ha
 godot --path game -- --show=forearm               # 12 planks and 3 ropes in hand, on the landing
 godot --path game -- --show=overload              # strip section 4 from section 5 until it falls
 godot --path game -- --show=fall_under            # stand on section 4 and strip it under you
+godot --path game -- --show=gaps                  # cross a gap and edge round an open section
+godot --path game -- --show=last_plank            # strip your last plank and edge off it, then re-lay it
 godot --path game -- --show=list                  # list the show-me setups, then quit
 godot --path game -- --start=night --trace        # print every event of the night
 ```
@@ -37,7 +39,7 @@ posts and two rail ropes, the far pier beyond and the town pier under you.
 The night is first person. Walk with **W A S D** (by key position, so the same keys on AZERTY
 and other layouts) at 3.5 m/s; there is no sprint and no jump. Look with the mouse, which the
 night captures. You stop 0.3 m short of the rails, the far pier, the landing's edges and any
-section with no planks; you cannot cross a plankless section yet (story 1.6). Until the pause
+section with no planks (see below for crossing one). Until the pause
 screen arrives in epic 5, **Esc** only frees the mouse (the night keeps running, and you can
 still walk), and a **left click** captures it again (that click does nothing else).
 
@@ -48,7 +50,7 @@ action is a hold:
 |---|---|---|---|
 | Left mouse | a section's deck | 2 s | strips one plank into your hands |
 | Right mouse | a standing rail rope | 3 s | strips the rope |
-| E | a deck with room, a plank in hand | 3 s | re-lays one plank (a bare deck takes one too) |
+| E | a deck with room, a plank in hand | 3 s | re-lays one plank (an open deck takes one too) |
 | Tab | | held | raises the forearm: planks and ropes in hand as tally strokes in fives |
 
 A part moves only when the hold completes. Letting go, walking more than 0.5 m from where you
@@ -75,8 +77,20 @@ The deck is in reach only close to your feet (within about 1.2 m): look well dow
 `rail` shows a little before the dot touches the rope, as the rope is grabbed through a 0.3 m
 box around it. The aid is not part of the game: it is removed with epic 4's hands (DW-41).
 
-Strip the last plank of the section you stand on and you stay where you are, and can walk off it;
-once off, it blocks like any bare section (story 1.6 brings edging round an open section).
+**Open sections and gaps (story 1.6).** A section with no planks that has not fallen is open; a
+fallen one is a gap. Neither can be stood on, but neither traps you. Walk up to one and keep
+pushing straight into it (within 45 degrees of straight) for half a second: you edge round an open
+section along its side beam in 4 s, or cross a gap hand over hand, hanging under the deck, in 8 s.
+Meanwhile you can look around but not walk or act, and a hold you had running is cancelled (what
+you carry stays in hand). Several in a row are crossed one after another, each at its own time.
+Toward the far pier a run only begins if there is something to stand on at its end; if the section
+beyond falls while you cross, you turn back toward the town. Strip the last plank of the section
+you stand on and you are on its side beam at once, edging toward the town for the share of 4 s
+that is left. Strip it from the next section, standing within 0.3 m of it, and you are moved back
+to 0.3 m from it. Re-lay a plank on an open section (E, looking at its deck from the next section)
+and it can be walked again. An open section's side beams carry a load of 2: more for 2 s and it
+falls, so taking a section's last plank can stop its groan (1 plank holds 1, the beams hold 2). If
+it falls while you edge along it, you catch the edge and climb back as below.
 
 **Weight, creak, groan and fall (story 1.5).** A section's strength is its planks; its load is
 what stands on it. Until the dead arrive (epics 2 and 3) the only load is gray test weights, 1
@@ -86,7 +100,7 @@ when it is more, it groans (the bow deepens) and falls for good 2 s later, unles
 back first. Strip planks from under weights to overload a section. When it falls, everything on it
 drops out of sight and the gap reads black; it can never be re-laid, and aiming into it reaches
 nothing. If you stand on it, you catch the edge of the next section toward the town that still
-has planks (or the landing; a bare section is passed) and hang there for 5 s. At the catch your
+has planks (or the landing; an open section is passed) and hang there for 5 s. At the catch your
 view is turned to face that edge, so you look along its deck; after that you can look around but
 not walk or act. Then you are up on it, 0.3 m in, with everything you carried. If the edge you
 hang from falls too, you are cut to the next one, and the 5 s keep running. A button still held
@@ -102,6 +116,9 @@ ropes in hand, on the landing). For story 1.5: `overload` (section 4 at 4 planks
 standing on section 5 just short of it: look down at section 4 and strip it twice, looking up
 along it after each strip to see the bow) and
 `fall_under` (the same section 4, standing on it near its town end: strip your own deck twice).
+For story 1.6: `gaps` (section 4 fallen and section 2 open, standing mid section 5 facing the far
+pier: walk on and keep pushing, then come back) and `last_plank` (on section 3 at its last plank,
+1 m from section 2: strip the deck ahead, then re-lay it from section 4).
 
 With `--trace`, story 1.5 adds lines like these (one of each kind, not one run):
 
@@ -114,6 +131,15 @@ With `--trace`, story 1.5 adds lines like these (one of each kind, not one run):
   2.000 WARDEN_CAUGHT     warden s4
   7.000 WARDEN_CLIMBED    warden s5
   7.000 WARDEN_CLIMBED    warden landing
+```
+
+Story 1.6 adds the moves; an edging names the side beam it goes along:
+
+```
+  0.500 EDGING_STARTED    warden s3 R
+  4.500 EDGING_ENDED      warden s3 R
+  0.500 CROSSING_STARTED  warden s3
+  8.500 CROSSING_ENDED    warden s3
 ```
 
 ## Running the ear test

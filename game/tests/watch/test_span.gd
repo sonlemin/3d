@@ -375,12 +375,125 @@ func _test_no_load_no_creak() -> void:
 	_check("load: a bare section and a full one with no weight never creak", _story(sim, 600).is_empty())
 
 
-func _test_a_bare_section_with_a_weight_falls() -> void:
-	# Until story 1.6's side beams: strength 0, load 1 groans and falls by the general rule.
+# --- Story 1.6: an open section's side beams (GDD Game Mechanics 2; decision D4) ---------------
+# "Strength = planks left, 0 to 8" and "The side beams carry a load of 2; more than that for 2 s and
+# the section falls". D4: as the GDD is written, an open section (no planks, not fallen) has
+# strength 2, and a section with planks has its planks.
+
+func _test_open_and_the_side_beams() -> void:
+	var sim: NightSim = _loaded({2: 0, 3: 1, 4: 3}, {4: 4})
+	_check("open: a section with no planks that stands is open", SpanRules.open(2, sim.span))
+	_check("open: one with 1 plank, or full, is not", not SpanRules.open(3, sim.span) and not SpanRules.open(1, sim.span))
+	_advance(sim, 121)
+	_check("open: a fallen section is not open (GDD: a gap)", sim.span.fallen(4) and sim.span.planks(4) == 0
+			and not SpanRules.open(4, sim.span))
+	_check("open: an open section's strength is 2 (the side beams)", SpanRules.strength(2, sim.span) == 2,
+			str(SpanRules.strength(2, sim.span)))
+	_check("open: a section's strength is its planks while it has any (1, 8)", SpanRules.strength(3, sim.span) == 1
+			and SpanRules.strength(1, sim.span) == 8)
+	_check("open: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_the_side_beams_carry_2() -> void:
+	# AC 3, L4: section 2 open from the start with 1, 2 and 3 test weights (a load of 1 each).
 	var sim: NightSim = _loaded({2: 0}, {2: 1})
+	var story: PackedStringArray = _story(sim, 600)
+	_check("beams: 1 weight on an open section: nothing in 600 ticks", story.is_empty(), str(story))
+	sim = _loaded({2: 0}, {2: 2})
+	story = _story(sim, 600)
+	_check("beams: 2 weights: it creaks from tick 0 and never falls", story == PackedStringArray(["0 CREAK_STARTED s2"])
+			and not sim.span.fallen(2), str(story))
+	sim = _loaded({2: 0}, {2: 3})
+	story = _story(sim, 600)
+	_check("beams: 3 weights: it groans from tick 0 and falls on tick 120 (2 s)",
+			story == PackedStringArray(["0 GROAN_STARTED s2", "120 SECTION_FELL s2"]) and sim.span.fallen(2), str(story))
+	_check("beams: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_the_last_plank_saves_a_groaning_section() -> void:
+	# L5 (D4): section 3 at 1 plank under 2 weights groans from tick 0. The warden on section 4 at
+	# along 15.4 (0.4 m from it) strips its last plank: begun on tick 0 (the hammer pressed before it,
+	# aimed at section 3's deck about along 14.9), done on tick 120 (GD-19: 2 s), in step 2 of the tick
+	# the groan would end in step 7. Open, its strength is 2: the groan stops and it creaks.
+	var start: StartState = StartState.new()
+	start.planks = {3: 1}
+	start.weights = {3: 2}
+	start.warden_along = 15.4
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(0.0, -atan2(1.6, 0.5))
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	var first: Array[NightEvent] = sim.advance()
+	_check("saved: tick 0: HOLD_STARTED s3, NIGHT_STARTED, GROAN_STARTED s3", _kinds(first) == [NightEvent.Kind.HOLD_STARTED,
+			NightEvent.Kind.NIGHT_STARTED, NightEvent.Kind.GROAN_STARTED] and first[0].section == 3 and first[2].section == 3,
+			str(_kinds(first)))
+	var story: PackedStringArray = _story(sim, 599)
+	_check("saved: tick 120: the plank goes, the groan stops, it creaks; no fall in 600 ticks",
+			story == PackedStringArray(["120 PLANK_STRIPPED s3", "120 GROAN_STOPPED s3", "120 CREAK_STARTED s3"])
+			and not sim.span.fallen(3), str(story))
+	_check("saved: the warden, 0.4 m away, did not step back (along 15.4)",
+			sim.warden.position.distance_to(Vector3(0.0, 0.0, -14.6)) < 0.001 and WardenRules.walking(sim), str(sim.warden.position))
+	_check("saved: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+# --- Story 1.6 AC 11: a section can start fallen -----------------------------------------------
+
+func _fallen_start(fallen: Array[int], planks: Dictionary[int, int] = {}, rails: Array[Vector2i] = [],
+		weights: Dictionary[int, int] = {}, lifts: Array[Vector2i] = []) -> NightSim:
+	var start: StartState = StartState.new()
+	start.fallen = fallen
+	start.planks = planks
+	start.stripped_rails = rails
+	start.weights = weights
+	start.lifts = lifts
+	return _sim_with(_def_with(start), 1)
+
+
+func _test_a_section_can_start_fallen() -> void:
+	var sim: NightSim = _fallen_start([4])
+	_check("start fallen: section 4 is a gap from the start", sim.span.fallen(4) and sim.span.planks(4) == 0
+			and not sim.span.rail_standing(4, LEFT) and not sim.span.rail_standing(4, RIGHT))
+	_check("start fallen: its 8 planks and 2 ropes are lost, none in hand", sim.span.count_at(PLANK, PartPlace.lost()) == 8
+			and sim.span.count_at(ROPE, PartPlace.lost()) == 2 and sim.span.in_hand(PLANK) == 0 and sim.span.in_hand(ROPE) == 0)
+	_check("start fallen: 48 planks and 12 ropes in all (GD-19)", sim.span.total(PLANK) == 48 and sim.span.total(ROPE) == 12)
 	var story: PackedStringArray = _story(sim, 200)
-	_check("load: a bare section with one weight groans and falls",
-			story == PackedStringArray(["0 GROAN_STARTED s2", "120 SECTION_FELL s2"]), str(story))
+	_check("start fallen: no event of its own, no other section changed", story.is_empty() and sim.span.planks(3) == 8
+			and sim.span.planks(5) == 8, str(story))
+	_check("start fallen: no fault", _faults.total() == 0, str(_faults.codes()))
+	# What planks and stripped_rails take off first is in hand; the rest is lost.
+	sim = _fallen_start([2, 5], {2: 3}, [Vector2i(2, RIGHT)])
+	_check("start fallen: section 2's 5 taken off are in hand, its other 3 lost, with section 5's 8",
+			sim.span.in_hand(PLANK) == 5 and sim.span.count_at(PLANK, PartPlace.lost()) == 11, "%d %d" % [sim.span.in_hand(PLANK),
+			sim.span.count_at(PLANK, PartPlace.lost())])
+	_check("start fallen: section 2's right rope in hand, its left lost, with both of section 5's",
+			sim.span.in_hand(ROPE) == 1 and sim.span.count_at(ROPE, PartPlace.lost()) == 3)
+	_check("start fallen: totals still 48 and 12", sim.span.total(PLANK) == 48 and sim.span.total(ROPE) == 12)
+	_check("start fallen: no fault", _faults.total() == 0, str(_faults.codes()))
+	# A repeat is ignored.
+	sim = _fallen_start([3, 3])
+	_check("start fallen: a repeat is ignored (8 planks lost, not a fault)", sim.span.fallen(3)
+			and sim.span.count_at(PLANK, PartPlace.lost()) == 8 and _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_bad_fallen_start() -> void:
+	for bad: int in [0, 7, -1]:
+		_expect_begin()
+		var sim: NightSim = _fallen_start([bad])
+		_expect_end("start fallen: section %d is span.bad_start" % bad, [["ERROR", "span.bad_start", 1]])
+		_check("start fallen: section %d skipped, nothing lost" % bad, _faults.count(&"span.bad_start") == 1
+				and sim.span.count_at(PLANK, PartPlace.lost()) == 0)
+	_expect_begin()
+	var sim: NightSim = _fallen_start([4], {}, [], {4: 2, 3: 1})
+	_expect_end("start fallen: weights on a section that starts fallen are span.bad_start",
+			[["ERROR", "span.bad_start: weights on section 4, which starts fallen", 1]])
+	_check("start fallen: those skipped, the others placed", sim.span.weights(4) == 0 and sim.span.weights(3) == 1
+			and _faults.count(&"span.bad_start") == 1)
+	_expect_begin()
+	sim = _fallen_start([4], {}, [], {3: 1}, [Vector2i(4, 10)])
+	# (Told by its own message: with the weights skipped the lift would also be "more lifts than weights".)
+	_expect_end("start fallen: a lift on a section that starts fallen is span.bad_start",
+			[["ERROR", "span.bad_start: lift (4, 10) on section 4, which starts fallen", 1]])
+	_check("start fallen: and dropped", sim.span.lifts().is_empty() and _faults.count(&"span.bad_start") == 1,
+			str(sim.span.lifts()))
 
 
 func _test_bad_weights_and_lifts() -> void:

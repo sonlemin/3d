@@ -19,3 +19,8 @@ var weights: Dictionary[int, int] = {}
 ## (step 6, WEIGHT_LIFTED). It stands in for one of the dead walking off a section (epic 3), so a
 ## groan that holds can be reached through ticks.
 var lifts: Array[Vector2i] = []
+## Story 1.6 (AC 11): sections that start as gaps. Their planks and ropes go to lost through the
+## ledger (what `planks` and `stripped_rails` take off first is in hand), so the def's totals still
+## hold. A section outside 1 to n is `span.bad_start` and skipped; a repeat is ignored. Weights or
+## lifts on a section that starts fallen are `span.bad_start` and skipped.
+var fallen: Array[int] = []

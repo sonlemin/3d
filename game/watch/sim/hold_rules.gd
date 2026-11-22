@@ -10,10 +10,10 @@
 ## idle hands (story 1.4 code review, Sonlm, 2026-11-21): otherwise a hold or a raised forearm
 ## would be left with no button behind it. In Press once, a press of the button whose hold has
 ## just completed is ignored for a short grace (HandConstants.PRESS_ONCE_GRACE_S).
-## While the warden is not walking (story 1.5's climb back, a timed move of WardenRules), every
-## press is ignored with no event, and tick() cancels a running hold and lowers the forearm. A
-## button still down when the climb ends has nothing behind it, as after a change of mode: nothing
-## starts or rises until a fresh press.
+## While the warden is not walking (a timed move of WardenRules: story 1.5's climb back, story 1.6's
+## edging and crossing), every press is ignored with no event, and tick() cancels a running hold and
+## lowers the forearm. A button still down when the move ends has nothing behind it, as after a
+## change of mode: nothing starts or rises until a fresh press.
 class_name HoldRules
 extends RefCounted
 
@@ -39,7 +39,7 @@ static func take(command: NightCommand, sim: NightSim) -> void:
 			_release(command.input, sim)
 
 
-## Step 2 of the tick (AD-34), in its order: the warden not walking (a climb: the hold is
+## Step 2 of the tick (AD-34), in its order: the warden not walking (a timed move: the hold is
 ## cancelled and the forearm lowered), then still possible? then progress, then completion.
 ## A hold begun on tick T gets its first progress on T + 1 and completes on T + N (AD-33). A hold
 ## whose target fell on tick F (step 7) is cancelled here on F + 1, before its progress, so also

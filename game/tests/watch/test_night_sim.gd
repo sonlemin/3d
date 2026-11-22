@@ -199,7 +199,7 @@ func _test_event_fields_match_comments() -> void:
 	# The other direction (a named field left unset) cannot be told from a value: a set field
 	# may hold its default (side LEFT, seed 0). Each kind's own test checks the fields it sets.
 	# The strip bot's night emits every kind of story 1.4, with a right rail (a side that is not
-	# the default) among them; the overload bot's every kind of story 1.5.
+	# the default) among them; the overload bot's every kind of story 1.5; gaps' and beams' story 1.6's.
 	var sim: NightSim = _sim_with(NightDefs.one_night(), 1)
 	var unset: NightEvent = NightEvent.new()
 	var bad: PackedStringArray = []
@@ -215,6 +215,13 @@ func _test_event_fields_match_comments() -> void:
 			func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
 	_check("sim: the overload night whose events are checked ran with no fault", overload_faults.total() == 0,
 			str(overload_faults.codes()))
+	# Story 1.6: the gaps and beams bots' nights emit the edging and crossing kinds.
+	for path: Callable in [NightBot.gaps, NightBot.beams]:
+		var path_faults: WatchFaults = WatchFaults.new()
+		path.call(NightDefs.one_night(), 1, path_faults,
+				func(events: Array[NightEvent], _sim: NightSim) -> void: all.append_array(events))
+		_check("sim: the %s night whose events are checked ran with no fault" % path.get_method(), path_faults.total() == 0,
+				str(path_faults.codes()))
 	var kinds: Dictionary[NightEvent.Kind, bool] = {}
 	for event: NightEvent in all:
 		kinds[event.kind] = true
@@ -334,14 +341,14 @@ func _test_checksum_covers_the_load_facts() -> void:
 	a.advance()
 	b.advance()
 	_check("sim: a lift still to come changes the checksum", a.checksum() != b.checksum())
-	# Section 4 bare with both ropes in hand from the start: with a weight it falls on tick 120
-	# (nothing left to lose; the weight goes with it), without one it stands. After tick 120 the two
-	# differ only in "fallen".
+	# Section 4 bare with both ropes in hand from the start: with 3 weights it falls on tick 120 (over
+	# the side beams' load of 2, story 1.6; nothing left to lose; the weights go with it), without
+	# any it stands. After tick 120 the two differ only in "fallen".
 	var rails: Array[Vector2i] = [Vector2i(4, NightTypes.Side.LEFT), Vector2i(4, NightTypes.Side.RIGHT)]
 	var weighted: StartState = StartState.new()
 	weighted.planks = {4: 0}
 	weighted.stripped_rails = rails
-	weighted.weights = {4: 1}
+	weighted.weights = {4: 3}
 	var bare: StartState = StartState.new()
 	bare.planks = {4: 0}
 	bare.stripped_rails = rails
@@ -352,3 +359,26 @@ func _test_checksum_covers_the_load_facts() -> void:
 	_check("sim: the two nights differ only in section 4 having fallen", a.span.fallen(4) and not b.span.fallen(4)
 			and a.span.weights(4) == 0 and a.span.counts() == b.span.counts())
 	_check("sim: fallen changes the checksum", a.checksum() != b.checksum())
+
+
+func _test_checksum_covers_the_push_and_a_fallen_start() -> void:
+	# Story 1.6 D1: the push is state. Two nights at the stop by open section 3 (along 15.3), one
+	# pushing into it for 10 ticks and one standing still: the feet, view and all else the same.
+	var start: StartState = StartState.new()
+	start.planks = {3: 0}
+	start.warden_along = 15.3
+	var a: NightSim = _sim_with(_def_with(start), 7)
+	var b: NightSim = _sim_with(_def_with(start), 7)
+	for i: int in 10:
+		a.set_move(Vector2(0.0, -1.0))
+		a.advance()
+		b.advance()
+	_check("sim: pushing at the stop moved nothing", a.warden.position == b.warden.position)
+	_check("sim: the push alone changes the checksum", a.warden.pushed != b.warden.pushed and a.checksum() != b.checksum(),
+			"%d %d" % [a.warden.pushed, b.warden.pushed])
+	# AC 11: a section that starts fallen.
+	var fallen: StartState = StartState.new()
+	fallen.fallen = [2]
+	a = _sim_with(_def_with(fallen), 7)
+	b = _sim_with(_def_with(StartState.new()), 7)
+	_check("sim: a fallen start changes the checksum", a.checksum() != b.checksum())

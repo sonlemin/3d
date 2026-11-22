@@ -19,6 +19,10 @@ static func _table() -> Dictionary[StringName, Array]:
 				ShowSetups.overload],
 		&"fall_under": ["stand on section 4 (4 planks, 3 weights) and strip it under you (M2 of story 1.5)",
 				ShowSetups.fall_under],
+		&"gaps": ["section 4 fallen, section 2 open; from section 5, cross the gap and edge round the open section, both ways (M1 of story 1.6)",
+				ShowSetups.gaps],
+		&"last_plank": ["on section 3 at 1 plank; strip it under you and edge toward the town, then re-lay it (M2 of story 1.6)",
+				ShowSetups.last_plank],
 	}
 
 
@@ -60,8 +64,8 @@ static func span_counts_start(section_count: int) -> StartState:
 	return start
 
 
-## M1 of story 1.3: the whole span can be walked (every section has a plank; crossing a
-## plankless one is story 1.6), and it passes the sparse sections up close. From the landing.
+## M1 of story 1.3: the whole span can be walked (every section has a plank), and it passes the
+## sparse sections up close. From the landing.
 static func walk() -> NightDef:
 	var def: NightDef = NightDefs.one_night()
 	def.start = walk_start()
@@ -122,4 +126,29 @@ static func overload() -> NightDef:
 static func fall_under() -> NightDef:
 	var def: NightDef = overload()
 	def.start.warden_along = 19.2
+	return def
+
+
+## M1 of story 1.6: section 4 fallen (a gap from the start; its parts lost) and section 2 open (its
+## 8 planks start in hand), the warden mid section 5 (along 22.5) facing the far pier. Pushing on
+## toward the far pier crosses the gap (8 s) onto section 3, then edges round section 2 (4 s) onto
+## section 1; and back. Nothing starts a move by itself, so 120 untouched frames see none.
+static func gaps() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = StartState.new()
+	def.start.planks = {2: 0}
+	def.start.fallen = [4]
+	def.start.warden_along = 22.5
+	return def
+
+
+## M2 of story 1.6: section 3 at 1 plank (7 in hand), the warden on it at along 11.0, 1 m from
+## section 2, facing the far pier: the deck ahead (about along 10.4) is in reach. Stripping it puts
+## them on the side beam, edging toward the town (GD-68: 4 m left of 5, 3.2 s) onto section 4; from
+## there, a plank re-laid on section 3 makes it walkable again.
+static func last_plank() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = StartState.new()
+	def.start.planks = {3: 1}
+	def.start.warden_along = 11.0
 	return def

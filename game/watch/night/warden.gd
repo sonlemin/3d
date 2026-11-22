@@ -18,6 +18,11 @@ const LOOK_RADIANS_PER_PIXEL: float = 0.0025
 const MAX_PITCH_DEGREES: float = 80.0
 ## AD-67: yaw 0 faces the far pier (-Z); this faces the town (+Z), the way a climb back goes.
 const TOWN_YAW: float = PI
+## The events whose tick is a cut, besides WARDEN_CAUGHT (which also turns the view): the end of a
+## climb and both ends of a crossing (story 1.6 D2).
+const CUT_KINDS: Array[NightEvent.Kind] = [
+	NightEvent.Kind.WARDEN_CLIMBED, NightEvent.Kind.CROSSING_STARTED, NightEvent.Kind.CROSSING_ENDED,
+]
 # Field of view: the camera's default 75 degrees, also the ear test's. A setting in epic 5 (UX-39).
 
 var _blend: TickBlend = TickBlend.new()
@@ -49,17 +54,20 @@ func start_at(sim: NightSim) -> void:
 ## A consumer of the night (`on_tick(events, sim)`): the sim's new position joins the blend. The
 ## catch at a fall and the end of the climb back (story 1.5 D3) are cuts, and so is every move
 ## while climbing (the edge hung from fell, and the feet went to the next one): the blend snaps, so
-## the view jumps rather than sliding through the gap. Every other move, D2's step back too, blends.
+## the view jumps rather than sliding through the gap. So are the start and the end of a crossing
+## (story 1.6 D2: cut down to hang under the deck, cut up onto the far one). Every other move
+## blends: walking, D2's step back, an edging (it starts from where the feet stand, so nothing
+## jumps), and the ticks of a crossing between its two cuts.
 ## At the catch the view also cuts to face the edge caught (code review 2026-11-22, Sonlm): toward
 ## the town, level, so the deck is at eye height and not the gap. Once only: the player looks
-## freely after it, and nothing else ever turns the view for them.
+## freely after it, and nothing else ever turns the view for them (no turn at any story 1.6 move).
 func on_tick(events: Array[NightEvent], sim: NightSim) -> void:
-	var cut: bool = not WardenRules.walking(sim)
+	var cut: bool = sim.warden.move == WardenState.Move.CLIMBING
 	for event: NightEvent in events:
 		if event.kind == NightEvent.Kind.WARDEN_CAUGHT:
 			_face(TOWN_YAW, 0.0)
 			cut = true
-		elif event.kind == NightEvent.Kind.WARDEN_CLIMBED:
+		elif event.kind in CUT_KINDS:
 			cut = true
 	if cut:
 		_blend.snap(sim.warden.position)

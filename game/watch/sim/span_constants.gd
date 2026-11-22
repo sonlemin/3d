@@ -24,3 +24,7 @@ const GROAN_S: float = 2.0
 ## Loads are multiples of 0.5 (a hatchling, epic 3), exact in binary, so a load compares with an
 ## int strength by ==.
 const TEST_WEIGHT_LOAD: float = 1.0
+## GDD Game Mechanics 2: "The side beams carry a load of 2; more than that for 2 s and the section
+## falls" (story 1.6). An open section's strength (no planks, not fallen; decision D4: as the GDD is
+## written, so a section at 1 plank is weaker than one with none). An int: it is a strength.
+const SIDE_BEAM_LOAD: int = 2

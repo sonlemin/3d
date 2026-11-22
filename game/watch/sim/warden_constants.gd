@@ -20,3 +20,15 @@ const CLIMB_BACK_S: float = 5.0
 ## is being climbed onto, so the eye (EYE_HEIGHT above them) is 0.2 m above that deck. Not a GDD
 ## value: a gray-box size, tuned in M2 of story 1.5.
 const HANG_DROP: float = 1.4
+## GDD Game Mechanics 2: "Crossing it along its side beams takes ... the warden 4 s": edging round
+## an open section, whichever way and from wherever it begins (story 1.6). A timed move (AD-52). A
+## warden whose last plank goes underfoot takes the share of it that the distance left is of the
+## section's length (GD-68).
+const EDGE_S: float = 4.0
+## GDD Game Mechanics 2: "The warden crosses hand over hand in 8 s": a fallen section, a gap. A timed
+## move (AD-52), one per gap.
+const CROSS_GAP_S: float = 8.0
+## Story 1.6 decision D1: an edging or crossing begins once the move wish has pushed straight into
+## the open section or gap, at the stop, for this long in a row (within 45 degrees of straight in).
+## Not a GDD value: a feel size, tuned in M1 of story 1.6.
+const PUSH_TO_CROSS_S: float = 0.5

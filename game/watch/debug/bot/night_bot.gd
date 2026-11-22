@@ -8,12 +8,13 @@ extends RefCounted
 ## How long each path runs: 10 s of night (AD-33: 60 ticks a second).
 const PATH_TICKS: int = 600
 ## Story 1.3's walk: 40 s. The scripted part takes the first 23 s (WALK_SCRIPT); the wander has
-## the rest. Section 2 is plankless, so the bot never reaches section 1 or the far pier (those
-## limits are checked in test_warden.gd).
+## the rest. Section 1 is open with the far pier beyond it (story 1.6), so the bot stops at its edge
+## and no push begins an edging there (those limits are checked in test_warden.gd).
 const WALK_TICKS: int = 2400
 ## The walk's scripted part: [the tick it ends before, the move wish]. Toward the far pier until
-## the plankless section 2 stops it; into the left rail, the right rail; a diagonal; then back past
-## the landing's back edge, pushing into it. A wander follows.
+## open section 1 stops it (along 5.3, about 458 ticks from the landing, then about 140 ticks of
+## pushing that begin nothing: story 1.6 AC 9); into the left rail, the right rail; a diagonal; then
+## back past the landing's back edge, pushing into it. A wander follows.
 const WALK_SCRIPT: Array[Array] = [
 	[600, Vector2(0.0, -1.0)],
 	[720, Vector2(-1.0, 0.0)],
@@ -39,12 +40,20 @@ const OVERLOAD_WANDER_TICKS: int = 300
 ## on 3 planks groan from tick 0; the first lift (3 on 3) holds it and it creaks, the second
 ## (2 on 3) ends the creak. Both well before the 120 ticks of the groan run out.
 const OVERLOAD_LIFTS: Array[int] = [60, 90]
+## Story 1.6's gaps and beams paths: the wander after their scripts, in ticks.
+const MOVES_WANDER_TICKS: int = 300
+## Story 1.6's gaps path: section 1 open under 2 test weights (the side beams' load: it creaks for
+## the whole path and never falls), when the def has a section 1 apart from the path's four.
+const GAPS_BEAM_WEIGHTS: int = 2
+## Story 1.6's beams path: test weights on its open section `a`, over the side beams' 2: it groans
+## from tick 0 and falls 2 s later, under the warden edging along it.
+const BEAMS_WEIGHTS: int = 3
 
 
 ## Every path, each `(def, seed, faults, each_tick) -> NightSim`: it builds its night on `def`
 ## (the one night or a shorter test def), runs it and returns the sim.
 static func paths() -> Array[Callable]:
-	return [NightBot.span_counts, NightBot.walk, NightBot.strip, NightBot.overload]
+	return [NightBot.span_counts, NightBot.walk, NightBot.strip, NightBot.overload, NightBot.gaps, NightBot.beams]
 
 
 ## Story 1.2: the span_counts show's StartState, then 600 ticks with a changing move wish,
@@ -65,13 +74,13 @@ static func span_counts(def: NightDef, night_seed: int, faults: WatchFaults, eac
 	return sim
 
 
-## Story 1.3: the warden walks. Section 2 has no planks (so the bot meets a plankless edge), the
-## rest are full. WALK_SCRIPT first, then a wander driven by the bot's own generator, seeded from
+## Story 1.3: the warden walks. Section 1 is open (story 1.6: the bot meets a plankless edge with the
+## far pier beyond, so its push begins nothing), the rest are full. WALK_SCRIPT first, then a wander driven by the bot's own generator, seeded from
 ## the night's seed (a consumer owns its own generator, AD-33): a new wish every WANDER_EVERY ticks,
 ## any direction, a length-1 diagonal or standing still, and the view changing too.
 static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
 	var start: StartState = StartState.new()
-	start.planks = {2: 0}
+	start.planks = {1: 0}
 	def.start = start
 	var sim: NightSim = NightSim.new(def, night_seed, faults)
 	var wander: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -109,7 +118,7 @@ static func walk(def: NightDef, night_seed: int, faults: WatchFaults, each_tick:
 ## - at mid b: E at its full deck (DECK_FULL); cancels by letting go, by walking 0.6 m, and by a
 ##   second press in Press once;
 ## - back at a: a re-lay; at b: all 8 of b's planks stripped from where the warden stands, the last
-##   one underfoot, then walking off it toward the town (D3);
+##   one underfoot: on its side beam at once, edging toward the town onto a (story 1.6, GD-68);
 ## - from a's edge, looking back at bare b: the hammer (NO_PLANKS_LEFT), then a re-lay onto it;
 ## - at mid town: stripped down to its floor of 4, once more (LAST_SECTION_MINIMUM), then its right
 ##   rail stripped at 4 planks (right, so the events' side is not the field's default);
@@ -184,7 +193,8 @@ static func strip_script(def: NightDef, night_seed: int, faults: WatchFaults, ea
 	sim.command(NightCommand.press(hammer))
 	_ticks(sim, 1, each_tick)
 	sim.command(NightCommand.set_option(NightTypes.Option.HOLDS, NightTypes.Holds.HOLD))
-	# A re-lay at a, then b stripped bare from where the warden stands, and off it toward the town.
+	# A re-lay at a, then b stripped bare from where the warden stands: the last plank puts them on its
+	# side beam, edging toward the town (GD-68), and _go_to waits for the edging to end.
 	_go_to(sim, 0.0, mid_a, each_tick)
 	_aim_at_deck(sim, mid_a - 0.6, each_tick)
 	_hold(sim, use, sim.ticks.relay_plank, each_tick)
@@ -316,6 +326,149 @@ static func overload_script(def: NightDef, night_seed: int, faults: WatchFaults,
 	return sim
 
 
+## Story 1.6 (AD-63): crossing gaps. Every section number comes from the def: the town, `c` one
+## before it, `a` two before, `b` three before. Its StartState: `a` and `c` fallen from the start (two
+## gaps side by side, floors on both sides); on a def with a section 1 apart from those four, section
+## 1 open under GAPS_BEAM_WEIGHTS test weights (it creaks throughout). From the landing:
+## - at the stop before `c`: 30 ticks of pushing, then a tick without (D1: nothing begins);
+## - aimed back at the town section's own deck, the hammer pressed and held, then pushing until the
+##   crossing of `c` begins: the hold is cancelled on that tick; `c` then `a` crossed, 8 s each, onto
+##   `b`;
+## - from `b`, pushing back toward the town: `a`, then `c`, onto the town section;
+## - a short wander, as strip's.
+## A def with fewer than STRIP_MIN_SECTIONS sections is `bot.bad_def`: built, returned, not run.
+static func gaps(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var sim: NightSim = gaps_script(def, night_seed, faults, each_tick)
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		_wander(sim, night_seed, MOVES_WANDER_TICKS, each_tick)
+	return sim
+
+
+## gaps' scripted part alone, with no wander after it.
+static func gaps_script(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var town: int = def.section_count
+	var c: int = town - 1
+	var a: int = town - 2
+	var b: int = town - 3
+	var start: StartState = StartState.new()
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		start.fallen = [a, c]
+		if b > 1:
+			start.planks = {1: 0}
+			start.weights = {1: GAPS_BEAM_WEIGHTS}
+	def.start = start
+	var sim: NightSim = NightSim.new(def, night_seed, faults)
+	if def.section_count < STRIP_MIN_SECTIONS:
+		faults.report(&"bot.bad_def", "gaps needs %d sections, the def has %d" % [STRIP_MIN_SECTIONS, def.section_count])
+		return sim
+	var g: SpanGeometry = sim.geometry
+	var stop: float = g.section_start(town) + WardenConstants.CLEARANCE
+	var toward_pier: Vector2 = Vector2(0.0, -1.0)
+	# At the stop before c: a push too short to begin anything.
+	_go_to(sim, 0.0, stop, each_tick)
+	_ticks(sim, 1, each_tick)
+	_push(sim, toward_pier, sim.ticks.push_to_cross, each_tick)
+	_ticks(sim, 1, each_tick)
+	# A hold on the town section's own deck, cancelled when the crossing of c begins.
+	_aim_at_deck(sim, stop + 0.6, each_tick)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	_until_moving(sim, toward_pier, each_tick)
+	sim.command(NightCommand.release(NightTypes.HandInput.HAMMER))
+	_until_walking(sim, each_tick)
+	# From b, back over a and c onto the town section.
+	_until_moving(sim, Vector2(0.0, 1.0), each_tick)
+	_until_walking(sim, each_tick)
+	return sim
+
+
+## Story 1.6 (AD-63): open sections and the side beams. Section numbers as gaps'. Its StartState: `c`
+## at 1 plank; `a` open under BEAMS_WEIGHTS test weights (over the side beams' 2: it groans from tick
+## 0 and falls 2 s later); `b` full; the warden at the stop before `a` (section_start(c) + 0.3):
+## - pushing toward the far pier from tick 0: the edging of `a` begins (D1), `a` falls under it, and
+##   the warden is caught and climbs back onto `c` (AC 10);
+## - at mid `c`, its last plank stripped underfoot: on its beam, edging toward the town (GD-68) onto
+##   the town section;
+## - from the town section's stop, a plank re-laid on `c` (GD-69); walked over `c` to its far end and
+##   back; from 0.1 m inside the town section, `c`'s last plank stripped again: the warden steps back
+##   to 0.3 m from it (D3);
+## - pushing toward the far pier: edging `c`, then crossing `a` (chained), onto `b`; pushing back:
+##   crossing `a`, edging `c`, onto the town section;
+## - a short wander, as strip's.
+## A def with fewer than STRIP_MIN_SECTIONS sections is `bot.bad_def`: built, returned, not run.
+static func beams(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var sim: NightSim = beams_script(def, night_seed, faults, each_tick)
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		_wander(sim, night_seed, MOVES_WANDER_TICKS, each_tick)
+	return sim
+
+
+## beams' scripted part alone, with no wander after it.
+static func beams_script(def: NightDef, night_seed: int, faults: WatchFaults, each_tick: Callable) -> NightSim:
+	var town: int = def.section_count
+	var c: int = town - 1
+	var a: int = town - 2
+	var start: StartState = StartState.new()
+	if def.section_count >= STRIP_MIN_SECTIONS:
+		start.planks = {c: 1, a: 0}
+		start.weights = {a: BEAMS_WEIGHTS}
+		start.warden_along = (c - 1) * SpanConstants.SECTION_LENGTH + WardenConstants.CLEARANCE
+	def.start = start
+	var sim: NightSim = NightSim.new(def, night_seed, faults)
+	if def.section_count < STRIP_MIN_SECTIONS:
+		faults.report(&"bot.bad_def", "beams needs %d sections, the def has %d" % [STRIP_MIN_SECTIONS, def.section_count])
+		return sim
+	var g: SpanGeometry = sim.geometry
+	var hammer: NightTypes.HandInput = NightTypes.HandInput.HAMMER
+	var toward_pier: Vector2 = Vector2(0.0, -1.0)
+	var mid_c: float = g.section_start(c) + SpanConstants.SECTION_LENGTH / 2.0
+	var town_stop: float = g.section_start(town) + WardenConstants.CLEARANCE
+	# Edging a, which falls under the beam: caught, climbed back onto c.
+	_until_moving(sim, toward_pier, each_tick)
+	_until_climbing(sim, each_tick)
+	_until_walking(sim, each_tick)
+	# c's last plank underfoot: edging toward the town (GD-68).
+	_go_to(sim, 0.0, mid_c, each_tick)
+	_aim_at_deck(sim, mid_c - 0.6, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	_until_walking(sim, each_tick)
+	# Re-laid from the town section's stop, walked over, stripped again from beside it: a step back.
+	_go_to(sim, 0.0, town_stop, each_tick)
+	_aim_at_deck(sim, town_stop - 0.7, each_tick)
+	_hold(sim, NightTypes.HandInput.USE, sim.ticks.relay_plank, each_tick)
+	_go_to(sim, 0.0, g.section_start(c) + WardenConstants.CLEARANCE, each_tick)
+	_go_to(sim, 0.0, g.section_start(town) + 0.1, each_tick)
+	_aim_at_deck(sim, g.section_start(town) - 0.5, each_tick)
+	_hold(sim, hammer, sim.ticks.strip_plank, each_tick)
+	_ticks(sim, 1, each_tick)
+	# Over c and a toward the far pier, onto b; and back.
+	_until_moving(sim, toward_pier, each_tick)
+	_until_walking(sim, each_tick)
+	_until_moving(sim, Vector2(0.0, 1.0), each_tick)
+	_until_walking(sim, each_tick)
+	return sim
+
+
+## Pushes `wish` for `ticks` ticks, then lets go (the wish back to none).
+static func _push(sim: NightSim, wish: Vector2, ticks: int, each_tick: Callable) -> void:
+	sim.set_move(wish)
+	_ticks(sim, ticks, each_tick)
+	sim.set_move(Vector2.ZERO)
+
+
+## Pushes `wish` until a timed move begins (an edging or a crossing, story 1.6 D1), at most
+## WALK_GUARD ticks, then lets go; none by then is `bot.walk_lost`.
+static func _until_moving(sim: NightSim, wish: Vector2, each_tick: Callable) -> void:
+	sim.set_move(wish)
+	for i: int in WALK_GUARD:
+		if not WardenRules.walking(sim):
+			sim.set_move(Vector2.ZERO)
+			return
+		_ticks(sim, 1, each_tick)
+	sim.set_move(Vector2.ZERO)
+	if WardenRules.walking(sim):
+		sim.faults.report(&"bot.walk_lost", "no move began pushing %s at %s" % [wish, sim.warden.position])
+
+
 ## Ticks until the warden is climbing (caught by a fall), at most WALK_GUARD; not caught by then
 ## is `bot.walk_lost`: the script's later steps are not where it thinks.
 static func _until_climbing(sim: NightSim, each_tick: Callable) -> void:
@@ -326,13 +479,13 @@ static func _until_climbing(sim: NightSim, each_tick: Callable) -> void:
 	sim.faults.report(&"bot.walk_lost", "no fall under the warden at %s" % sim.warden.position)
 
 
-## Ticks until the warden walks again (the climb ended), at most WALK_GUARD.
+## Ticks until the warden walks again (a climb, an edging or a crossing ended), at most WALK_GUARD.
 static func _until_walking(sim: NightSim, each_tick: Callable) -> void:
 	for i: int in WALK_GUARD:
 		if WardenRules.walking(sim):
 			return
 		_ticks(sim, 1, each_tick)
-	sim.faults.report(&"bot.walk_lost", "the climb never ended at %s" % sim.warden.position)
+	sim.faults.report(&"bot.walk_lost", "the timed move never ended at %s" % sim.warden.position)
 
 
 static func _ticks(sim: NightSim, count: int, each_tick: Callable) -> void:
@@ -358,6 +511,8 @@ static func _hold(sim: NightSim, input: NightTypes.HandInput, ticks: int, each_t
 ## Walks the feet to (x, along) at up to full speed, the last step shortened to land on it.
 ## Not there after WALK_GUARD ticks (something is in the way) is `bot.walk_lost`: the script goes
 ## on from where the warden stands, and the fault says its later steps are not where it thinks.
+## Since story 1.6 the wish pushes straight at the goal, so a walk across an open section or a gap
+## with a floor beyond edges or crosses it (the wish is ignored meanwhile).
 static func _go_to(sim: NightSim, x: float, along: float, each_tick: Callable) -> void:
 	var goal: Vector2 = Vector2(x, sim.geometry.world_z(along))
 	var arrived: bool = false

@@ -60,7 +60,7 @@ func _test_hand_lines() -> void:
 	nothing.reason = NightTypes.Reason.NO_ACTION_HERE
 	_check("trace: a refusal with no action has no section",
 			NightTrace.line(nothing) == "  0.500 REFUSED           warden NO_ACTION_HERE", "'%s'" % NightTrace.line(nothing))
-	# Every kind name fits the 17-wide column (the longest today is 14).
+	# Every kind name fits the 17-wide column (the longest today is 16, CROSSING_STARTED).
 	var widest: int = 0
 	for kind_name: String in NightEvent.Kind.keys():
 		widest = maxi(widest, kind_name.length())
@@ -80,6 +80,11 @@ func _test_load_and_climb_lines() -> void:
 		[_event(NightEvent.Kind.WARDEN_CAUGHT, 2.0, 4), "  2.000 WARDEN_CAUGHT     warden s4"],
 		[_event(NightEvent.Kind.WARDEN_CLIMBED, 7.0, 5), "  7.000 WARDEN_CLIMBED    warden s5"],
 		[_event(NightEvent.Kind.WARDEN_CLIMBED, 7.0, 0), "  7.000 WARDEN_CLIMBED    warden landing"],
+		# Story 1.6: the moves are the warden's; the edging kinds carry their side, as a rail action.
+		[_event(NightEvent.Kind.EDGING_STARTED, 0.5, 3, &"", NightTypes.Side.RIGHT), "  0.500 EDGING_STARTED    warden s3 R"],
+		[_event(NightEvent.Kind.EDGING_ENDED, 4.5, 3, &"", NightTypes.Side.LEFT), "  4.500 EDGING_ENDED      warden s3 L"],
+		[_event(NightEvent.Kind.CROSSING_STARTED, 0.5, 3), "  0.500 CROSSING_STARTED  warden s3"],
+		[_event(NightEvent.Kind.CROSSING_ENDED, 8.5, 3), "  8.500 CROSSING_ENDED    warden s3"],
 	]
 	for case: Array in cases:
 		var got: String = NightTrace.line(case[0])

@@ -56,8 +56,8 @@ func _names(events: Array[NightEvent]) -> String:
 func _test_settle_steps_in_order() -> void:
 	# AD-64: the footing of the dead (here the test weights), rigs, lanterns, parts, hooks, the warden.
 	var names: Array = ConsequenceRules.steps().map(func(c: Callable) -> StringName: return c.get_method())
-	_check("settle: its steps are weights_fall, parts_lost, warden_footing, in that order",
-			names == [&"weights_fall", &"parts_lost", &"warden_footing"], str(names))
+	_check("settle: its steps are weights_fall, parts_lost, warden_footing, warden_on_beams, in that order",
+			names == [&"weights_fall", &"parts_lost", &"warden_footing", &"warden_on_beams"], str(names))
 
 
 func _test_what_falls_with_it() -> void:
@@ -256,34 +256,179 @@ func _test_the_climb_passes_a_bare_section() -> void:
 	_check("bare: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
-func _test_a_bare_section_that_holds_the_warden_falls_with_them() -> void:
-	# "Who falls with a section": a warden held on a bare section (story 1.4 D3) falls with it.
-	# Section 4 has 1 plank and 1 weight (creaks from tick 0). The warden, mid section 4 (along 17.5),
-	# strips that plank from under their own feet (pitch -1.2 lands at along 16.883): begun on tick 0,
-	# done on tick 120 (GD-19: 2 s). Strength 0 under a load of 1: it groans from 120 and falls on 240.
-	var sim: NightSim = _night({4: 1}, {4: 1}, 17.5)
+func _test_an_edging_warden_whose_section_falls() -> void:
+	# Story 1.6 AC 10, L6: section 3 open with 3 test weights (over the side beams' 2: it groans from
+	# tick 0 and falls on 120, GDD Game Mechanics 2). Placed at along 15.3 pushing toward the far pier:
+	# the edging begins on tick 30 (D1), from (0, 0, -14.7) toward (2.2, 0, -20.0). On tick 120 it is
+	# 90 of its 240 ticks in: the feet at 0.375 of the way, (0.825, 0, -16.6875). Section 3 falls in
+	# step 7 and the warden is caught in step 8, as story 1.5's climb: hanging from section 4's edge
+	# (along 15, z -15), x kept; climbed 300 ticks later onto section 4, 0.3 m in.
+	var start: StartState = StartState.new()
+	start.planks = {3: 0}
+	start.weights = {3: 3}
+	start.warden_along = 15.3
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	var events: Array[NightEvent] = []
+	while sim.tick < FALL_TICK:
+		sim.set_move(Vector2(0.0, -1.0))
+		events.append_array(sim.advance())
+	_check("edging falls: GROAN_STARTED s3 on 0, EDGING_STARTED s3 on 30", _names(events)
+			== str(["NIGHT_STARTED s0", "GROAN_STARTED s3", "EDGING_STARTED s3"]), _names(events))
+	_check("edging falls: on tick 119, 89 ticks in: (0.815833, 0, -16.665417)",
+			sim.warden.position.distance_to(Vector3(2.2 * 89.0 / 240.0, 0.0, -14.7 - 5.3 * 89.0 / 240.0)) < TOL,
+			str(sim.warden.position))
+	sim.set_move(Vector2(0.0, -1.0))
+	var fell: Array[NightEvent] = sim.advance()
+	_check("edging falls: tick 120: SECTION_FELL s3 then WARDEN_CAUGHT s3", _names(fell)
+			== str(["SECTION_FELL s3", "WARDEN_CAUGHT s3"]), _names(fell))
+	_check("edging falls: hanging from section 4's edge, x kept: (0.825, -1.4, -15.0)",
+			sim.warden.position.distance_to(Vector3(0.825, -1.4, -15.0)) < TOL and sim.warden.move == WardenState.Move.CLIMBING,
+			str(sim.warden.position))
+	_check("edging falls: the edging's facts are cleared", sim.warden.move_section == 0 and sim.warden.move_toward == 0
+			and sim.warden.move_ticks_total == 0, str(sim.warden.values()))
+	events = _until(sim, FALL_TICK + CLIMB_TICKS + 1)
+	_check("edging falls: WARDEN_CLIMBED onto section 4 on tick 420, no EDGING_ENDED", _names(events)
+			== str(["WARDEN_CLIMBED s4"]) and roundi(events[0].t * 60.0) == 420, _names(events))
+	_check("edging falls: up on section 4 at (0.825, 0, -14.7)", sim.warden.position.distance_to(Vector3(0.825, 0.0, -14.7)) < TOL
+			and WardenRules.can_stand(sim.warden.position, sim), str(sim.warden.position))
+	_check("edging falls: 8 planks in hand (section 3's, from the start), no fault", sim.span.in_hand(PLANK) == 8
+			and _faults.total() == 0, str(_faults.codes()))
+	# Whichever way they were edging: placed at 9.7 pushing toward the town, the edging runs from
+	# (0, 0, -20.3) toward (2.2, 0, -15.0); caught on 120 at 0.375 of the way, they still climb onto
+	# section 4, the first toward the town with planks.
+	start = StartState.new()
+	start.planks = {3: 0}
+	start.weights = {3: 3}
+	start.warden_along = 9.7
+	sim = _sim_with(_def_with(start), 1)
+	events = []
+	while sim.tick < FALL_TICK + 1:
+		sim.set_move(Vector2(0.0, 1.0))
+		events.append_array(sim.advance())
+	_check("edging falls town: caught on 120 from (0.825, 0, -18.3125), hanging at (0.825, -1.4, -15.0)",
+			_has(events, NightEvent.Kind.WARDEN_CAUGHT) and sim.warden.position.distance_to(Vector3(0.825, -1.4, -15.0)) < TOL,
+			"%s %s" % [_names(events), sim.warden.position])
+	events = _until(sim, FALL_TICK + CLIMB_TICKS + 1)
+	_check("edging falls town: climbed onto section 4 on 420", _names(events) == str(["WARDEN_CLIMBED s4"]), _names(events))
+
+
+# --- Story 1.6 GD-68: the last plank underfoot --------------------------------------------------
+# GD-68: a warden whose last plank goes is on the side beam at once and finishes toward the town in
+# the share of 4 s (240 ticks) that the distance left is of 5 m: roundi(240 x left / 5), at least 1.
+
+## Section 3 at 1 plank (and `fallen`), the warden at `along` on it facing `yaw`, the hammer pressed
+## before tick 0 at the deck 0.622 m ahead (pitch -1.2, test_hands.gd), held: the strip of the last
+## plank completes on tick 120 (GD-19: 2 s).
+func _strip_underfoot(along: float, yaw: float = 0.0, fallen: Array[int] = []) -> NightSim:
+	var start: StartState = StartState.new()
+	start.planks = {3: 1}
+	start.fallen = fallen
+	start.warden_along = along
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(yaw, -1.2)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	return sim
+
+
+func _test_the_last_plank_underfoot() -> void:
+	# AC 2, L1: from along 12.5 (2.5 m left: 120 ticks), 11.0 (4 m: 192) and 14.9 (0.1 m: 4.8, so 5).
+	# "Whichever way the warden faces": from 12.5 and 11.0 facing either way (from 14.9 the deck 0.622
+	# m ahead toward the town is section 4's, so that one faces the far pier only).
+	for case: Array in [[12.5, 120], [11.0, 192], [14.9, 5]]:
+		var along: float = case[0]
+		var ticks: int = case[1]
+		var yaws: Array[float] = [0.0]
+		if along != 14.9:
+			yaws.append(PI)
+		for yaw: float in yaws:
+			var facing: String = "facing the far pier" if yaw == 0.0 else "facing the town"
+			var sim: NightSim = _strip_underfoot(along, yaw)
+			_until(sim, FALL_TICK)
+			var strip: Array[NightEvent] = sim.advance()
+			_check("gd68 %.1f %s: tick 120: PLANK_STRIPPED s3 then EDGING_STARTED s3 (step 4)" % [along, facing],
+					_names(strip) == str(["PLANK_STRIPPED s3", "EDGING_STARTED s3"]) and strip[1].side == RIGHT, _names(strip))
+			_check("gd68 %.1f %s: the feet stay where they stood, not walking" % [along, facing],
+					sim.warden.position.distance_to(Vector3(0.0, 0.0, along - 30.0)) < TOL and not WardenRules.walking(sim),
+					str(sim.warden.position))
+			var events: Array[NightEvent] = _until(sim, FALL_TICK + ticks)
+			_check("gd68 %.1f %s: nothing until tick %d" % [along, facing, FALL_TICK + ticks], events.is_empty()
+					and not WardenRules.walking(sim), _names(events))
+			var ended: Array[NightEvent] = sim.advance()
+			_check("gd68 %.1f %s: EDGING_ENDED s3 R on tick %d (120 + %d)" % [along, facing, FALL_TICK + ticks, ticks],
+					_names(ended) == str(["EDGING_ENDED s3"]) and ended[0].side == RIGHT, _names(ended))
+			_check("gd68 %.1f %s: on section 4 at (2.2, 0, -14.7), walking" % [along, facing],
+					sim.warden.position.distance_to(Vector3(2.2, 0.0, -14.7)) < TOL and WardenRules.walking(sim),
+					str(sim.warden.position))
+			_check("gd68 %.1f %s: no fault" % [along, facing], _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_the_last_plank_underfoot_half_way() -> void:
+	# From 12.5 (to (2.2, 0, -15.0) in 120 ticks): on tick 180, half way, (1.1, 0, -16.25).
+	var sim: NightSim = _strip_underfoot(12.5)
+	_until(sim, 181)
+	_check("gd68: tick 180, half way: (1.1, 0, -16.25)", sim.warden.position.distance_to(Vector3(1.1, 0.0, -16.25)) < TOL,
+			str(sim.warden.position))
+
+
+func _test_the_last_plank_underfoot_into_a_gap() -> void:
+	# L9: section 4 fallen from the start. The GD-68 edging of section 3 from 12.5 ends on 240 and the
+	# gap of section 4 is crossed from there: cut down to (2.2, -1.4, -15.0), 480 ticks, onto section 5.
+	var sim: NightSim = _strip_underfoot(12.5, 0.0, [4])
+	_until(sim, 240)
+	var ended: Array[NightEvent] = sim.advance()
+	_check("gd68 gap: tick 240: EDGING_ENDED s3 then CROSSING_STARTED s4", _names(ended)
+			== str(["EDGING_ENDED s3", "CROSSING_STARTED s4"]), _names(ended))
+	_check("gd68 gap: cut down to (2.2, -1.4, -15.0)", sim.warden.position.distance_to(Vector3(2.2, -1.4, -15.0)) < TOL,
+			str(sim.warden.position))
+	var events: Array[NightEvent] = _until(sim, 721)
+	_check("gd68 gap: CROSSING_ENDED s4 on tick 720 (240 + 480)", _names(events) == str(["CROSSING_ENDED s4"])
+			and roundi(events[0].t * 60.0) == 720, _names(events))
+	_check("gd68 gap: up on section 5 at (2.2, 0, -9.7)", sim.warden.position.distance_to(Vector3(2.2, 0.0, -9.7)) < TOL
+			and WardenRules.walking(sim), str(sim.warden.position))
+	_check("gd68 gap: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_section_that_goes_open_beside_the_warden() -> void:
+	# AC 8, L7 (D3): section 3 at 1 plank. On section 4 at along 15.1 (0.1 m from it), facing the far
+	# pier, the warden strips its last plank (the aim lands at 14.478): on tick 120 the feet step back
+	# to along 15.3, x kept, with no event but the strip.
+	var start: StartState = StartState.new()
+	start.planks = {3: 1}
+	start.warden_along = 15.1
+	var sim: NightSim = _sim_with(_def_with(start), 1)
 	sim.set_view(0.0, -1.2)
 	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
-	var events: Array[NightEvent] = _until(sim, FALL_TICK)
-	_check("held: ticks 0 to 119: the strip begins and the section creaks, both on tick 0", _names(events)
-			== str(["HOLD_STARTED s4", "NIGHT_STARTED s0", "CREAK_STARTED s4"]), _names(events))
-	events = sim.advance()
-	_check("held: tick 120: the last plank goes, the creak stops, the groan starts", _names(events)
-			== str(["PLANK_STRIPPED s4", "CREAK_STOPPED s4", "GROAN_STARTED s4"]), _names(events))
-	events = _until(sim, 240)
-	_check("held: ticks 121 to 239: the bare section holds the warden where they stood (0, 0, -12.5)", events.is_empty()
-			and WardenRules.walking(sim) and sim.warden.position.distance_to(Vector3(0.0, 0.0, -12.5)) < TOL
-			and not sim.span.fallen(4), "%s %s" % [_names(events), sim.warden.position])
-	events = sim.advance()
-	_check("held: tick 240 (120 + 120): it falls and the warden falls with it", _names(events)
-			== str(["SECTION_FELL s4", "WARDEN_CAUGHT s4"]) and roundi(events[0].t * 60.0) == 240, _names(events))
-	_check("held: hanging from section 5's edge: (0, -1.4, -10.0)",
-			sim.warden.position.distance_to(Vector3(0.0, -1.4, -10.0)) < TOL, str(sim.warden.position))
-	events = _until(sim, 240 + CLIMB_TICKS + 1)
-	_check("held: WARDEN_CLIMBED onto section 5 on tick 540 (240 + 300)", _names(events) == str(["WARDEN_CLIMBED s5"])
-			and roundi(events[0].t * 60.0) == 540, _names(events))
-	_check("held: 8 planks in hand (7 from the start and the one stripped), no fault", sim.span.in_hand(PLANK) == 8
-			and _faults.total() == 0, "%d %s" % [sim.span.in_hand(PLANK), _faults.codes()])
+	_until(sim, FALL_TICK)
+	var strip: Array[NightEvent] = sim.advance()
+	_check("open beside: tick 120: the strip and nothing else", _names(strip) == str(["PLANK_STRIPPED s3"]), _names(strip))
+	_check("open beside: stepped back to along 15.3: (0, 0, -14.7), walking",
+			sim.warden.position.distance_to(Vector3(0.0, 0.0, -14.7)) < TOL and WardenRules.walking(sim)
+			and WardenRules.can_stand(sim.warden.position, sim), str(sim.warden.position))
+	var before: int = sim.checksum()
+	ConsequenceRules.settle(sim)
+	_check("open beside: a second settle changes nothing", sim.checksum() == before)
+	# On section 2 at along 9.9, facing the town (the aim lands at 10.522): back to along 9.7.
+	start = StartState.new()
+	start.planks = {3: 1}
+	start.warden_along = 9.9
+	sim = _sim_with(_def_with(start), 1)
+	sim.set_view(PI, -1.2)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	_until(sim, FALL_TICK)
+	strip = sim.advance()
+	_check("open beside far: tick 120: the strip and nothing else", _names(strip) == str(["PLANK_STRIPPED s3"]), _names(strip))
+	_check("open beside far: stepped back to along 9.7: (0, 0, -20.3)",
+			sim.warden.position.distance_to(Vector3(0.0, 0.0, -20.3)) < TOL and WardenRules.walking(sim), str(sim.warden.position))
+	# The negative: at along 14.9 the feet are on section 3 itself, so GD-68's edging begins (5 ticks)
+	# from where they stand, and there is no step back to section 4.
+	sim = _strip_underfoot(14.9)
+	_until(sim, FALL_TICK + 1)
+	_check("open under: at 14.9 no step back: the edging begins from (0, 0, -15.1)", sim.warden.move == WardenState.Move.EDGING
+			and sim.warden.position.distance_to(Vector3(0.0, 0.0, -15.1)) < TOL, str(sim.warden.position))
+	before = sim.checksum()
+	ConsequenceRules.settle(sim)
+	_check("open under: a second settle changes nothing", sim.checksum() == before)
+	_check("open: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
 ## The D2 night: section 4 (3 planks, 4 weights) falls on tick 120; the warden starts at along 20.1

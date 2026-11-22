@@ -341,7 +341,8 @@ owner: story 1.6, which replaces D3 with edging toward the town (GD-68)
 severity: low
 reason: D3 (Sonlm, 2026-11-21) lets every bare section under the feet or a clearance probe count as floor while the warden cannot stand. If the section next to the one that just went bare was already bare, a warden held near their shared edge may step onto that older bare section too. The rule does what D3 says; whether it should is left to story 1.6, which replaces D3. The bot paths never reach the case (no two neighbouring sections are bare in them), and test_bot_nights.gd's own arithmetic would flag it.
 note (story 1.5, 2026-11-22): `held_by_bare()` now skips fallen sections (a fallen section has 0 planks too but is no floor), so D3 can never hand the warden on to a gap; a test in test_warden.gd checks it. The case above, an older bare section that has not fallen, is unchanged.
-status: open
+status: done 2026-11-22
+resolution: story 1.6 removed D3 (`held_by_bare()` and its use in `walk()`), so the case can no longer happen. A warden whose last plank goes is on its side beam at once and edges toward the town (GD-68, `ConsequenceRules.warden_on_beams`); a warden beside a section that goes open steps back to 0.3 m from it (story 1.6 D3, `WardenRules.step_back()`); a run of open and fallen sections is crossed one section at a time.
 
 ## Deferred from: code review of 1-4-the-warden-strips-re-lays-carries-and-reads-the-forearm.md (2026-11-21)
 
@@ -420,7 +421,8 @@ owner: story 1.6 (open sections and gaps)
 severity: low
 reason: In story 1.5 a section's strength is its planks only, so a section with no planks and a load of 1 groans and falls after 2 s (a test checks it). GDD Game Mechanics 2 gives an open section's side beams a load of 2: story 1.6 replaces this by adding the beams to `strength()` for an open section, and that test changes with it. Story 1.5's decision D2 (a warden beside a fallen section within 0.3 m steps straight back to 0.3 m from the gap, in the same tick) is the precedent for a warden beside a section that goes open, if 1.6 needs one; 1.6's edging replaces story 1.4's D3, which `step_back()` deliberately leaves alone (it moves the feet only when a probe is over a fallen section).
 note (code review of story 1.5, 2026-11-22): in `game/tests/watch/test_bot_nights.gd`, `_each_tick` drops a held bare section once it has fallen. No bot path yet bares a section that later falls, so removing that clause changes no run: it is a guard, not a proven check. When story 1.6's paths bare sections that can then fall, undo it once to see a run fail.
-status: open
+status: done 2026-11-22
+resolution: story 1.6. `SpanRules.strength()` is `SpanConstants.SIDE_BEAM_LOAD` (2) for an open section (decision D4); test_span.gd's L4 (1 weight: nothing; 2: a creak; 3: a groan and a fall on tick 120) replaces the old "bare section with a weight falls" test, and L5 pins that taking the last plank can stop a groan. The step back now covers open sections too (D3). The note's `_held` clause is gone with `_held` itself: test_bot_nights.gd no longer keeps D3's held sections, and its own arithmetic instead records each edging and crossing from its `_STARTED` event (the beams path bares a section that then falls under an edging warden, AC 10).
 
 ### DW-44: The creak's bow has not been judged on its own
 

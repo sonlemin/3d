@@ -22,9 +22,9 @@ func _test_span_counts_def() -> void:
 
 func _test_debug_tools_list() -> void:
 	var tools: DebugTools = DebugTools.new()
-	_check("show: the debug tools list span_counts, walk, walk_close, strip, forearm, overload and fall_under",
+	_check("show: the debug tools list span_counts, walk, walk_close, strip, forearm, overload, fall_under, gaps, last_plank",
 			tools.show_names() == PackedStringArray(["span_counts", "walk", "walk_close", "strip", "forearm", "overload",
-			"fall_under"]),
+			"fall_under", "gaps", "last_plank"]),
 			str(tools.show_names()))
 	_check("show: the debug tools give its def", tools.show_def(&"span_counts") is NightDef)
 	_check("show: and null for an unknown name", tools.show_def(&"nope") == null)
@@ -138,3 +138,61 @@ func _test_overload_and_fall_under_setups() -> void:
 				and kinds.has(NightEvent.Kind.SECTION_FELL), str(kinds))
 		_check("show: %s: %s" % [show_name, "the warden is caught" if show_name == &"fall_under" else "nobody is caught"],
 				kinds.has(NightEvent.Kind.WARDEN_CAUGHT) == (show_name == &"fall_under"), str(kinds))
+
+
+func _test_gaps_and_last_plank_setups() -> void:
+	# Story 1.6 Dev Notes, "Show-me setups". gaps (M1): section 4 fallen, section 2 open, the warden mid
+	# section 5 (along 22.5: z -7.5) facing the far pier; section 2's 8 planks in hand, section 4's 8
+	# planks and 2 ropes lost.
+	var gaps: NightDef = ShowSetups.def_of(&"gaps")
+	_check("show: gaps is a show-me setup", gaps != null)
+	if gaps == null:
+		return
+	var sim: NightSim = _sim_with(gaps, 1)
+	_check("show: gaps has sections at 8 0 8 0 8 8, section 4 fallen", _counts(sim) == [8, 0, 8, 0, 8, 8]
+			and sim.span.fallen(4) and not sim.span.fallen(2), str(_counts(sim)))
+	_check("show: gaps has 8 planks in hand, 8 planks and 2 ropes lost", sim.span.in_hand(NightTypes.Part.PLANK) == 8
+			and sim.span.count_at(NightTypes.Part.PLANK, PartPlace.lost()) == 8
+			and sim.span.count_at(NightTypes.Part.ROPE, PartPlace.lost()) == 2)
+	_check("show: gaps starts mid section 5, facing the far pier", sim.warden.position.is_equal_approx(Vector3(0.0, 0.0, -7.5))
+			and sim.yaw == 0.0 and sim.pitch == 0.0, str(sim.warden.position))
+	var events: Array[NightEvent] = _advance(sim, 120)
+	_check("show: gaps, 120 ticks untouched: only NIGHT_STARTED, no fault", _kinds(events) == [NightEvent.Kind.NIGHT_STARTED]
+			and _faults.total() == 0, "%s %s" % [_kinds(events), _faults.codes()])
+	# M1's first move: walk toward the far pier and keep pushing: the gap of section 4 is crossed (8 s)
+	# onto section 3, then open section 2 is edged (4 s) onto section 1.
+	sim = _sim_with(ShowSetups.def_of(&"gaps"), 1)
+	var kinds: Array[NightEvent.Kind] = []
+	for i: int in 1200:
+		sim.set_move(Vector2(0.0, -1.0))
+		kinds.append_array(_kinds(sim.advance()))
+	_check("show: gaps: pushing on crosses 4 and edges 2, then section 1 is reached", kinds.count(NightEvent.Kind.CROSSING_ENDED) == 1
+			and kinds.count(NightEvent.Kind.EDGING_ENDED) == 1 and sim.warden.position.z + 30.0 < 5.0
+			and WardenRules.walking(sim), "%s %s" % [kinds, sim.warden.position])
+	# last_plank (M2): section 3 at 1 plank, the warden at along 11.0 (z -19.0) facing the far pier, 7
+	# planks in hand; the deck ahead (pitch -1.2 lands at 10.378) is section 3's, in reach.
+	var last: NightDef = ShowSetups.def_of(&"last_plank")
+	_check("show: last_plank is a show-me setup", last != null)
+	if last == null:
+		return
+	sim = _sim_with(last, 1)
+	_check("show: last_plank has sections at 8 8 1 8 8 8", _counts(sim) == [8, 8, 1, 8, 8, 8], str(_counts(sim)))
+	_check("show: last_plank has 7 planks in hand", sim.span.in_hand(NightTypes.Part.PLANK) == 7)
+	_check("show: last_plank starts at along 11.0, facing the far pier",
+			sim.warden.position.is_equal_approx(Vector3(0.0, 0.0, -19.0)) and sim.yaw == 0.0, str(sim.warden.position))
+	events = _advance(sim, 120)
+	_check("show: last_plank, 120 ticks untouched: only NIGHT_STARTED, no fault", _kinds(events) == [NightEvent.Kind.NIGHT_STARTED]
+			and _faults.total() == 0, "%s %s" % [_kinds(events), _faults.codes()])
+	# M2: strip the deck ahead: GD-68 from along 11.0, 4 m left: 192 ticks (3.2 s) onto section 4.
+	sim = _sim_with(ShowSetups.def_of(&"last_plank"), 1)
+	sim.set_view(0.0, -1.2)
+	sim.command(NightCommand.press(NightTypes.HandInput.HAMMER))
+	var story: Array[NightEvent] = _advance(sim, 121 + 192)
+	var edges: Array[int] = []
+	for event: NightEvent in story:
+		if event.kind == NightEvent.Kind.EDGING_STARTED or event.kind == NightEvent.Kind.EDGING_ENDED:
+			edges.append(roundi(event.t * 60.0))
+	_check("show: last_plank: the strip on 120 begins an edging that ends on 312 (3.2 s)", edges == [120, 312], str(edges))
+	_check("show: last_plank: on section 4 after it", sim.warden.position.z + 30.0 > 15.0 and WardenRules.walking(sim),
+			str(sim.warden.position))
+

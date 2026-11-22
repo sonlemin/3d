@@ -1,6 +1,7 @@
 ## The warden's hands (story 1.4 AC 1 to 10; AD-50, AD-67, UX-11, UX-39): strip, re-lay, refuse,
-## cancel, Press once, the forearm, no carry limit, and decision D3 (a section that went bare
-## under the warden still holds them). Spec values written literally with their sources:
+## cancel, Press once, the forearm, no carry limit; story 1.6's last plank underfoot (GD-68), the
+## step back from a section that goes open (D3), holds cancelled by an edging or a crossing, and the
+## re-lay onto an open section (GD-69). Spec values written literally with their sources:
 ## GD-19: strip a plank 2 s = 120 ticks, strip a rail 3 s = 180, re-lay 3 s = 180; the town
 ## section keeps 4 planks. GDD Controls: reach 2 m, a hold cancels past 0.5 m.
 ## Story 1.4 code review (Sonlm, 2026-11-21): Press once ignores a hold's own button for 0.25 s =
@@ -673,74 +674,193 @@ func _test_no_carry_limit() -> void:
 	_check("ac9: no limit and no fault", _faults.total() == 0, str(_faults.codes()))
 
 
-# --- AC 10 and D3: the last plank underfoot ---------------------------------------------------
+# --- Story 1.6: the last plank underfoot (GD-68) and beside it (D3) -----------------------------
+# Replaces story 1.4's AC 10 and D3. GD-68: on the side beam at once, then toward the town in the
+# share of 4 s (240 ticks) that the distance left is of 5 m. D3: a warden beside the section, within
+# 0.3 m, steps back to 0.3 m from it in the same tick. D1: 30 ticks of pushing at the stop do not
+# begin an edging (the 31st does).
 
 func _test_last_plank_underfoot() -> void:
-	# Section 3 at 1 plank; the warden at along 14.0 strips it from where they stand.
+	# Section 3 at 1 plank; the warden at along 14.0 strips it from where they stand: 1 m left, so
+	# roundi(240 x 1 / 5) = 48 ticks along the right beam's line onto section 4.
 	var sim: NightSim = _ready_at(14.0, {3: 1})
-	var at: Vector3 = sim.warden.position
 	var events: Array[NightEvent] = _hold(sim, HAMMER, STRIP_PLANK_TICKS)
-	_check("ac10: the strip completes", _of_kind(events, NightEvent.Kind.PLANK_STRIPPED).size() == 1
-			and sim.span.planks(3) == 0, _names(events))
-	_check("ac10: the warden stays in place", sim.warden.position.is_equal_approx(at), str(sim.warden.position))
-	_check("ac10: where they stand can no longer be stood on", not WardenRules.can_stand(sim.warden.position, sim))
-	# D3: walking toward the town moves them on every tick, through 15.0 to 15.3, into section 4.
-	var moved_every_tick: bool = true
-	var in_band: bool = false
-	var last: float = _along(sim)
-	for i: int in 40:
-		sim.set_move(Vector2(0.0, 1.0))
-		sim.advance()
-		moved_every_tick = moved_every_tick and _along(sim) > last + STEP - TOL
-		in_band = in_band or (_along(sim) > 15.0 and _along(sim) < 15.3)
-		last = _along(sim)
-	_check("d3: walking off the bare section moves on every tick", moved_every_tick, str(_along(sim)))
-	_check("d3: through the 15.0 to 15.3 band", in_band)
-	_check("d3: and on into section 4 (along 14.0 + 40 steps = 16.333)", absf(_along(sim) - (14.0 + 40 * STEP)) < TOL,
-			str(_along(sim)))
-	# Story 1.3 D1: once standing again, the bare section blocks at section_end(3) + 0.3 = 15.3.
-	for i: int in 40:
+	var done: int = _tick_of(_of_kind(events, NightEvent.Kind.PLANK_STRIPPED)[0])
+	_check("gd68: the strip completes and the edging begins on its tick", _names(events.slice(-2))
+			== str(["PLANK_STRIPPED", "EDGING_STARTED"]) and sim.span.planks(3) == 0 and not WardenRules.walking(sim),
+			_names(events))
+	_check("gd68: the forearm and the hand are idle", not sim.hands.holding() and not sim.hands.forearm_raised)
+	var on: Array[NightEvent] = _advance(sim, done + 48 + 1 - sim.tick)
+	_check("gd68: EDGING_ENDED 48 ticks later", _only(on, NightEvent.Kind.EDGING_ENDED) and _tick_of(on[0]) == done + 48,
+			_names(on))
+	_check("gd68: on section 4 at (2.2, 0, -14.7)", sim.warden.position.distance_to(Vector3(2.2, 0.0, -14.7)) < TOL,
+			str(sim.warden.position))
+	# Back toward the open section: under 31 ticks of pushing the stop at 15.3 holds.
+	for i: int in 30:
 		sim.set_move(Vector2(0.0, -1.0))
 		sim.advance()
-	_check("d3: walking back stops at 15.3", absf(_along(sim) - 15.3) < TOL, str(_along(sim)))
-	_check("d3: no fault", _faults.total() == 0, str(_faults.codes()))
+	_check("gd68: walking back stops at 15.3", absf(_along(sim) - 15.3) < TOL and WardenRules.walking(sim), str(_along(sim)))
+	_check("gd68: 8 planks in hand (7 from the start, 1 stripped), no fault", sim.span.in_hand(PLANK) == 8
+			and _faults.total() == 0, str(_faults.codes()))
 
 
 func _test_last_plank_from_the_next_section() -> void:
-	# On section 4 at along 15.1 (0.1 m in), stripping section 3's last plank (looking back, down).
+	# AC 8 (D3): on section 4 at along 15.1, stripping section 3's last plank (looking ahead, down).
 	var sim: NightSim = _ready_at(15.1, {3: 1})
 	var events: Array[NightEvent] = _hold(sim, HAMMER, STRIP_PLANK_TICKS)
-	_check("d3: the strip from section 4 takes section 3's last plank",
-			_of_kind(events, NightEvent.Kind.PLANK_STRIPPED).size() == 1 and events[events.size() - 1].section == 3
-			and sim.span.planks(3) == 0, _names(events))
-	_check("d3: at 15.1 the warden cannot stand by the rule", not WardenRules.can_stand(sim.warden.position, sim))
-	for i: int in 10:
-		sim.set_move(Vector2(0.0, -1.0))
-		sim.advance()
-	_check("d3: section 3 holds them: they can walk onto it (15.1 - 10 steps = 14.517)",
-			absf(_along(sim) - (15.1 - 10 * STEP)) < TOL, str(_along(sim)))
-	for i: int in 30:
-		sim.set_move(Vector2(0.0, 1.0))
-		sim.advance()
-	_check("d3: and off it toward the town (15.1 + 20 steps = 16.267)", absf(_along(sim) - (15.1 + 20 * STEP)) < TOL,
-			str(_along(sim)))
+	_check("d3: the strip from section 4 takes section 3's last plank, and nothing else happens",
+			_names(events) == str(["HOLD_STARTED", "PLANK_STRIPPED"]) and events[1].section == 3 and sim.span.planks(3) == 0,
+			_names(events))
+	_check("d3: the feet stepped back to 15.3 on the strip's tick, walking", absf(_along(sim) - 15.3) < TOL
+			and WardenRules.walking(sim) and WardenRules.can_stand(sim.warden.position, sim), str(_along(sim)))
 	for i: int in 30:
 		sim.set_move(Vector2(0.0, -1.0))
 		sim.advance()
-	_check("d3: once past 15.3, the bare section blocks again at 15.3", absf(_along(sim) - 15.3) < TOL, str(_along(sim)))
+	_check("d3: walking toward it stops at 15.3", absf(_along(sim) - 15.3) < TOL, str(_along(sim)))
 	_check("d3: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
 func _test_bare_from_the_start_blocks() -> void:
-	# D3's negative: section 3 bare in the StartState, the warden at 15.5: never into 15.0 to 15.3.
+	# Section 3 open in the StartState, the warden at 15.5 pushing for 30 ticks: never into 15.0 to 15.3.
 	var sim: NightSim = _ready_at(15.5, {3: 0})
 	var lowest: float = _along(sim)
 	for i: int in 30:
 		sim.set_move(Vector2(0.0, -1.0))
 		sim.advance()
 		lowest = minf(lowest, _along(sim))
-	_check("d3: a section bare from the start stops the warden at 15.3", absf(_along(sim) - 15.3) < TOL
-			and lowest > 15.3 - TOL, "%f %f" % [_along(sim), lowest])
+	_check("d1: an open section from the start stops the warden at 15.3", absf(_along(sim) - 15.3) < TOL
+			and lowest > 15.3 - TOL and WardenRules.walking(sim), "%f %f" % [_along(sim), lowest])
+
+
+# --- Story 1.6 AC 6: holds and the moves; AC 4: re-lay onto an open section --------------------
+
+## The night of L11: the warden at along 15.3 by section 3 (open, or fallen when `gap`), looking back
+## at section 4's own deck (yaw pi: the aim lands at 15.922), the hammer pressed before tick 0.
+func _holding_by(gap: bool) -> NightSim:
+	var start: StartState = StartState.new()
+	start.warden_along = 15.3
+	if gap:
+		start.fallen = [3]
+	else:
+		start.planks = {3: 0}
+	var sim: NightSim = _sim_with(_def_with(start), 1)
+	sim.set_view(PI, DOWN)
+	_press(sim, HAMMER)
+	return sim
+
+
+func _test_a_hold_is_cancelled_by_an_edging_or_a_crossing() -> void:
+	# AC 6, L11: the hold begins on tick 0; pushing toward the far pier from tick 0, the move begins in
+	# step 1 of tick 30 (D1) and HoldRules cancels the hold in step 2 of the same tick. Nothing moves.
+	for gap: bool in [false, true]:
+		var what: String = "a crossing" if gap else "an edging"
+		var sim: NightSim = _holding_by(gap)
+		var in_hand: int = sim.span.in_hand(PLANK)
+		var events: Array[NightEvent] = []
+		for i: int in 31:
+			sim.set_move(Vector2(0.0, -1.0))
+			events.append_array(sim.advance())
+		var started: NightEvent.Kind = NightEvent.Kind.CROSSING_STARTED if gap else NightEvent.Kind.EDGING_STARTED
+		_check("ac6 %s: HOLD_STARTED s4 on 0; on 30 the move begins, then HOLD_CANCELLED s4" % what,
+				_kinds(events) == [NightEvent.Kind.HOLD_STARTED, NightEvent.Kind.NIGHT_STARTED, started,
+				NightEvent.Kind.HOLD_CANCELLED] and events[0].section == 4 and events[3].section == 4
+				and _tick_of(events[2]) == 30 and _tick_of(events[3]) == 30, _names(events))
+		_check("ac6 %s: the hold is gone and section 4 kept its 8 planks" % what, not sim.hands.holding()
+				and sim.span.planks(4) == 8)
+		_advance(sim, 600)
+		_check("ac6 %s: after the move, the parts in hand are the same as before (%d planks)" % [what, in_hand],
+				WardenRules.walking(sim) and sim.span.in_hand(PLANK) == in_hand, str(sim.span.in_hand(PLANK)))
+		_check("ac6 %s: no fault" % what, _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_the_forearm_is_lowered_by_an_edging_or_a_crossing() -> void:
+	# AC 6: HoldRules lowers the forearm in step 2 of the tick a move begins in step 1. Tab pressed and
+	# held (Hold mode) at the stop by section 3 (open, or fallen), pushing toward the far pier from
+	# tick 0: up from tick 0, walking allowed; on tick 30 the move begins and the forearm is down, with
+	# no event of its own; still down (Tab still held) when the move has ended.
+	for gap: bool in [false, true]:
+		var what: String = "a crossing" if gap else "an edging"
+		var start: StartState = StartState.new()
+		start.warden_along = 15.3
+		if gap:
+			start.fallen = [3]
+		else:
+			start.planks = {3: 0}
+		var sim: NightSim = _sim_with(_def_with(start), 1)
+		_press(sim, FOREARM)
+		var events: Array[NightEvent] = []
+		for i: int in 30:
+			sim.set_move(Vector2(0.0, -1.0))
+			events.append_array(sim.advance())
+		_check("forearm %s: up while pushing, ticks 0 to 29" % what, sim.hands.forearm_raised and WardenRules.walking(sim)
+				and _kinds(events) == [NightEvent.Kind.NIGHT_STARTED], _names(events))
+		sim.set_move(Vector2(0.0, -1.0))
+		events = sim.advance()
+		var started: NightEvent.Kind = NightEvent.Kind.CROSSING_STARTED if gap else NightEvent.Kind.EDGING_STARTED
+		_check("forearm %s: on tick 30 the move begins and the forearm is down, no other event" % what,
+				_kinds(events) == [started] and not sim.hands.forearm_raised, _names(events))
+		_advance(sim, 600)
+		_check("forearm %s: after the move, Tab still held, it stays down" % what, WardenRules.walking(sim)
+				and not sim.hands.forearm_raised)
+		_check("forearm %s: no fault" % what, _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_presses_are_ignored_while_edging_and_crossing() -> void:
+	# AC 1 and AC 5: no input but look. Mid move (tick 100), every button, Tab too, pressed and released
+	# while looking down at a deck: no event, no hold, no forearm. In Press once too.
+	for gap: bool in [false, true]:
+		for mode: NightTypes.Holds in [NightTypes.Holds.HOLD, NightTypes.Holds.PRESS_ONCE]:
+			var what: String = "%s, %s" % ["crossing" if gap else "edging", NightTypes.Holds.find_key(mode)]
+			var start: StartState = StartState.new()
+			start.warden_along = 15.3
+			if gap:
+				start.fallen = [3]
+			else:
+				start.planks = {3: 0}
+			var sim: NightSim = _sim_with(_def_with(start), 1)
+			_set_holds(sim, mode)
+			for i: int in 100:
+				sim.set_move(Vector2(0.0, -1.0))
+				sim.advance()
+			sim.set_move(Vector2.ZERO)
+			sim.set_view(PI, DOWN)
+			sim.advance()
+			var quiet: bool = not WardenRules.walking(sim)
+			for input: int in NightTypes.HandInput.size():
+				_press(sim, input as NightTypes.HandInput)
+				quiet = quiet and sim.advance().is_empty() and not sim.hands.holding() and not sim.hands.forearm_raised
+				_release(sim, input as NightTypes.HandInput)
+				quiet = quiet and sim.advance().is_empty()
+			_check("moves %s: every press and release: no event, no hold, no forearm" % what, quiet
+					and not WardenRules.walking(sim))
+			_check("moves %s: no fault" % what, _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_relay_onto_an_open_section() -> void:
+	# AC 4 (GD-69): section 3 open, its 8 planks in hand. From section 4 at the stop (along 15.3),
+	# looking down at section 3's deck (lands at 14.678), E held 3 s: one plank on it; then it can be
+	# walked over its whole length (no edging), on to section 2. From section 2 (along 9.7, facing the
+	# town: lands at 10.322) the same, walked onto section 4.
+	for from_town: bool in [true, false]:
+		var along: float = 15.3 if from_town else 9.7
+		var yaw: float = 0.0 if from_town else PI
+		var sim: NightSim = _ready_at(along, {3: 0}, yaw)
+		_check("ac4: looking at section 3's open deck within reach", sim.look.kind == LookTarget.Kind.DECK
+				and sim.look.section == 3, str(sim.look.section))
+		var events: Array[NightEvent] = _hold(sim, USE, RELAY_TICKS)
+		_check("ac4 from %s: PLANK_RELAID s3, 1 plank on it, 7 in hand" % ("4" if from_town else "2"),
+				_of_kind(events, NightEvent.Kind.PLANK_RELAID).size() == 1 and sim.span.planks(3) == 1
+				and sim.span.in_hand(PLANK) == 7, _names(events))
+		_release(sim, USE)
+		var wish: Vector2 = Vector2(0.0, -1.0) if from_town else Vector2(0.0, 1.0)
+		var walked: Array[NightEvent] = []
+		for i: int in 120:
+			sim.set_move(wish)
+			walked.append_array(sim.advance())
+		var want: float = along - 7.0 if from_town else along + 7.0
+		_check("ac4 from %s: 120 ticks walk 7 m over it with no move: along %.1f" % ["4" if from_town else "2", want],
+				walked.is_empty() and absf(_along(sim) - want) < TOL and WardenRules.walking(sim), "%s %f" % [_names(walked), _along(sim)])
+		_check("ac4: no fault", _faults.total() == 0, str(_faults.codes()))
 
 
 func _test_last_plank_town_section() -> void:

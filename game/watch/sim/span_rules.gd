@@ -34,10 +34,21 @@ static func move_parts(kind: NightTypes.Part, count: int,
 	sim.span.add_at(kind, to, count)
 
 
-## Pure (AD-35): a section's strength is its planks, 0 to the planks per section; never stored.
-## Story 1.6 adds an open section's side beams.
+## Pure (AD-35): a section's strength, never stored: its planks while it has any (0 to the planks
+## per section), and SpanConstants.SIDE_BEAM_LOAD (2) once it is open: its side beams still carry
+## that much (story 1.6, GDD Game Mechanics 2). Decision D4, as the GDD is written: a section at 1
+## plank is weaker than an open one, so taking its last plank can stop a groan. A fallen section
+## has none (0); nothing asks.
 static func strength(section: int, span: SpanState) -> int:
+	if open(section, span):
+		return SpanConstants.SIDE_BEAM_LOAD
 	return span.planks(section)
+
+
+## Pure (AD-35, story 1.6): a section is open when it has no planks and has not fallen. Computed,
+## never stored; epic 4 adds a trapdoor that is down.
+static func open(section: int, span: SpanState) -> bool:
+	return span.planks(section) == 0 and not span.fallen(section)
 
 
 ## Pure (AD-35): the load on a section, worked out each time: its test weights, each

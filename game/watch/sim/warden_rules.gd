@@ -1,13 +1,14 @@
 ## The warden's walking (AD-52, story 1.3): the feet move inside what can be walked on, and stop
 ## at its edges. No physics body, collider or ray decides anything: what can be walked on is the
 ## floor rectangle of every section that has at least one plank and has not fallen, and the
-## landing, all asked of SpanGeometry (plus, until story 1.6, a bare section that still holds the
-## warden: D3 in walk()). Every rectangle is axis-aligned, so an edge is found from the rectangles'
-## sides, never by searching in small steps.
+## landing, all asked of SpanGeometry. Every rectangle is axis-aligned, so an edge is found from the
+## rectangles' sides, never by searching in small steps.
 ##
 ## The timed moves (AD-52) are this file's too, counted in whole ticks: story 1.5's climb back after
-## a fall (decision D3). While one runs the warden is not walking: the move wish is ignored, and
-## HoldRules ignores every press and lowers the hands.
+## a fall (decision D3), and story 1.6's edging round an open section along its side beam (4 s) and
+## crossing a gap hand over hand (8 s), one move per section, begun by pushing into it (D1) or, for
+## an edging, by the last plank going underfoot (GD-68). While one runs the warden is not walking:
+## the move wish is ignored, and HoldRules ignores every press and lowers the hands.
 class_name WardenRules
 extends RefCounted
 
@@ -41,7 +42,7 @@ static func stands_on(position: Vector3, floors: Array[Rect2]) -> bool:
 static func walkable(sim: NightSim) -> Array[Rect2]:
 	var floors: Array[Rect2] = []
 	for n: int in range(1, sim.def.section_count + 1):
-		if sim.span.planks(n) > 0 and not sim.span.fallen(n):
+		if _floor_section(n, sim):
 			floors.append(_floor_of(sim.geometry.deck_box(n)))
 	floors.append(_floor_of(sim.geometry.landing_box()))
 	return floors
@@ -51,31 +52,130 @@ static func walkable(sim: NightSim) -> Array[Rect2]:
 ## part from the new X; each takes its whole share if the end can be stood on, otherwise stops at
 ## the farthest point on that axis that can (the clearance limit). The other axis keeps its share,
 ## so a diagonal into a rail slides along it. A zero wish moves nothing. Pushing into an edge is not
-## a mistake: nothing is emitted and nothing faults.
+## a mistake: nothing is emitted and nothing faults. Then the push of story 1.6 (push()).
 ##
-## Story 1.4 decision D3, until story 1.6's edging: a section that went bare under the warden, or
-## within CLEARANCE of the feet, still holds them. When the feet cannot be stood on, this tick's
-## floors also take every section with no plank that holds the feet or one of the four clearance
-## probes (held_by_bare()), so the warden walks out through the 0.3 m band. Once can_stand() is
-## true again nothing is added and the bare section blocks as before (story 1.3 D1). Normal
-## walking never reaches a spot that cannot be stood on, so "cannot stand here" already means
-## "was here when it went bare": nothing is stored.
-##
-## A warden who is not walking (a timed move, story 1.5) does not walk: the wish is ignored.
+## A warden who is not walking (a timed move) does not walk: the wish is ignored. (Story 1.4's D3,
+## a bare section holding the warden until they step off it, is gone: a walking warden is never on
+## a section that cannot be stood on, since GD-68 puts them on its beam and D3 steps them back.)
 static func walk(sim: NightSim) -> void:
-	var step: Vector2 = sim.move_wish * sim.walk_step
-	if step == Vector2.ZERO or not walking(sim):
+	if not walking(sim):
 		return
-	var floors: Array[Rect2] = walkable(sim)
-	var at: Vector3 = sim.warden.position
-	if not stands_on(at, floors):
-		floors.append_array(held_by_bare(at, sim))
-	if step.x != 0.0:
-		at = reach(at, Vector3(step.x, 0.0, 0.0), floors)
-	if step.y != 0.0:
-		at = reach(at, Vector3(0.0, 0.0, step.y), floors)
-	at.y = 0.0
-	sim.warden.position = at
+	var step: Vector2 = sim.move_wish * sim.walk_step
+	if step != Vector2.ZERO:
+		var floors: Array[Rect2] = walkable(sim)
+		var at: Vector3 = sim.warden.position
+		if step.x != 0.0:
+			at = reach(at, Vector3(step.x, 0.0, 0.0), floors)
+		if step.y != 0.0:
+			at = reach(at, Vector3(0.0, 0.0, step.y), floors)
+		at.y = 0.0
+		sim.warden.position = at
+	push(sim)
+
+
+## Step 1, after the walk (story 1.6 decision D1): the push that begins an edging or a crossing. A
+## tick counts when the wish's along part is not 0 and at least as large as its across part (within
+## 45 degrees of straight in), the section just ahead of the feet that way cannot be stood on (open
+## or fallen), the feet are at its stop (CLEARANCE from its near edge), and the run from it that way
+## ends on a floor (way_on()). Any other walking tick starts the count again. On the tick the count
+## passes sim.ticks.push_to_cross (pushing from tick T: in step 1 of T + 30) the move begins.
+static func push(sim: NightSim) -> void:
+	var warden: WardenState = sim.warden
+	var ahead: int = 0
+	var toward: int = 0
+	var wish: Vector2 = sim.move_wish
+	if wish.y != 0.0 and absf(wish.y) >= absf(wish.x):
+		toward = 1 if wish.y > 0.0 else -1
+		ahead = _blocked_ahead(toward, sim)
+	if ahead == 0 or not way_on(ahead, toward, sim):
+		warden.pushed = 0
+		return
+	warden.pushed += 1
+	if warden.pushed > sim.ticks.push_to_cross:
+		begin_move(ahead, toward, sim.ticks.edge, sim)
+
+
+## Pure: the section the feet stand at the stop of, heading `toward`: one that cannot be stood on
+## (open or fallen) whose near edge is CLEARANCE ahead of the feet; 0 for none.
+static func _blocked_ahead(toward: int, sim: NightSim) -> int:
+	var along: float = sim.warden.position.z - sim.geometry.world_z(0.0)
+	for n: int in range(1, sim.def.section_count + 1):
+		if _floor_section(n, sim):
+			continue
+		var ahead: float = (sim.geometry.near_edge(n, toward) - along) * toward
+		if ahead >= -EDGE_SLACK and ahead <= WardenConstants.CLEARANCE + EDGE_SLACK:
+			return n
+	return 0
+
+
+## Pure (story 1.6 AC 9): true when the run of sections that cannot be stood on, starting at
+## `section` and heading `toward`, ends on a floor: a section with planks that has not fallen, or
+## the landing past the town section. Toward the far pier it can end at the pier: false.
+static func way_on(section: int, toward: int, sim: NightSim) -> bool:
+	var n: int = section
+	while n >= 1 and n <= sim.def.section_count:
+		if _floor_section(n, sim):
+			return true
+		n += toward
+	return n > sim.def.section_count
+
+
+## Begins the edging (an open section) or crossing (a fallen one) of `section` heading `toward`,
+## from where the feet are now (decision D2). An edging lasts `edge_ticks` (sim.ticks.edge, or GD-68's
+## share of it) and keeps the feet where they stand on its first tick, then drifts them onto the
+## nearer side beam's line (right when x >= 0) at deck height. A crossing lasts sim.ticks.cross_gap,
+## whatever `edge_ticks` says: the feet cut down to hang at the gap's near edge, x kept. The push
+## starts again from 0. Emits EDGING_STARTED or CROSSING_STARTED.
+static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim) -> void:
+	var warden: WardenState = sim.warden
+	var g: SpanGeometry = sim.geometry
+	var x: float = warden.position.x
+	var event: NightEvent
+	warden.move_section = section
+	warden.move_toward = toward
+	warden.pushed = 0
+	if sim.span.fallen(section):
+		warden.move = WardenState.Move.CROSSING
+		warden.move_from = g.crossing_point(g.near_edge(section, toward), x)
+		warden.move_to = g.crossing_point(g.far_edge(section, toward), x)
+		warden.move_ticks_total = sim.ticks.cross_gap
+		event = NightEvent.make(NightEvent.Kind.CROSSING_STARTED)
+	else:
+		var side: NightTypes.Side = NightTypes.Side.RIGHT if x >= 0.0 else NightTypes.Side.LEFT
+		warden.move = WardenState.Move.EDGING
+		warden.move_from = Vector3(x, 0.0, warden.position.z)
+		warden.move_to = g.edging_point(side, g.far_edge(section, toward))
+		warden.move_ticks_total = maxi(edge_ticks, 1)
+		event = NightEvent.make(NightEvent.Kind.EDGING_STARTED)
+		event.side = side
+	warden.move_ticks_left = warden.move_ticks_total
+	warden.position = warden.move_from
+	event.section = section
+	sim.emit(event)
+
+
+## Step 4 or 8 (ConsequenceRules.warden_on_beams), GD-68: the warden's section `section` went open
+## under them. They are on its side beam at once and finish the crossing toward the town from where
+## they stand, in the share of sim.ticks.edge that the distance left to its town-side edge is of a
+## section's length: rounded to whole ticks, at least 1.
+static func begin_beams(section: int, sim: NightSim) -> void:
+	var along: float = sim.warden.position.z - sim.geometry.world_z(0.0)
+	var left: float = sim.geometry.section_end(section) - along
+	var ticks: int = maxi(roundi(sim.ticks.edge * left / SpanConstants.SECTION_LENGTH), 1)
+	begin_move(section, 1, ticks, sim)
+
+
+## Pure: the section the feet (the point itself) stand on that has gone open, on no floor that can
+## be walked on; 0 when there is none (GD-68: "on a section when its last plank is taken"). Feet on
+## a shared edge with a section that has planks are on that one.
+static func on_open(sim: NightSim) -> int:
+	var feet: Vector2 = Vector2(sim.warden.position.x, sim.warden.position.z)
+	if _on_floor(feet, walkable(sim)):
+		return 0
+	for n: int in range(1, sim.def.section_count + 1):
+		if SpanRules.open(n, sim.span) and _on_floor(feet, [_floor_of(sim.geometry.deck_box(n))]):
+			return n
+	return 0
 
 
 ## Pure: where the feet at `from` end after `move` along one axis (x or z) on `floors`:
@@ -114,24 +214,6 @@ static func reach(from: Vector3, move: Vector3, floors: Array[Rect2]) -> Vector3
 	return from
 
 
-## Pure: story 1.4 D3. The floor of every section with no plank that holds the feet at
-## `position` or one of its four clearance probes. A fallen section has no plank too, and is never
-## one: it is no floor at all (story 1.5).
-static func held_by_bare(position: Vector3, sim: NightSim) -> Array[Rect2]:
-	var c: float = WardenConstants.CLEARANCE
-	var feet: Vector2 = Vector2(position.x, position.z)
-	var out: Array[Rect2] = []
-	for n: int in range(1, sim.def.section_count + 1):
-		if sim.span.planks(n) > 0 or sim.span.fallen(n):
-			continue
-		var rect: Rect2 = _floor_of(sim.geometry.deck_box(n))
-		for offset: Vector2 in [Vector2.ZERO, Vector2(c, 0.0), Vector2(-c, 0.0), Vector2(0.0, c), Vector2(0.0, -c)]:
-			if _on_floor(feet + offset, [rect]):
-				out.append(rect)
-				break
-	return out
-
-
 ## Pure: true while the warden walks: no timed move is running (AD-52). HoldRules and the aim aid
 ## ask it.
 static func walking(sim: NightSim) -> bool:
@@ -152,10 +234,10 @@ static func fell_from(sim: NightSim) -> int:
 
 
 ## Pure: where a climb from the fallen section `from_section` ends: the first section after it
-## toward the town that has planks and has not fallen, else the landing (0). A bare section that
-## still stands is passed: there is no deck to climb onto. Worked out when the climb begins, at
+## toward the town that has planks and has not fallen, else the landing (0). An open section is
+## passed: there is no deck to climb onto. Worked out when the climb begins, at
 ## every settle while it runs (hang_on()) and again when it ends, so a section that falls or goes
-## bare meanwhile is passed.
+## open meanwhile is passed.
 static func climb_target(from_section: int, sim: NightSim) -> int:
 	for n: int in range(from_section + 1, sim.def.section_count + 1):
 		if sim.span.planks(n) > 0 and not sim.span.fallen(n):
@@ -163,11 +245,13 @@ static func climb_target(from_section: int, sim: NightSim) -> int:
 	return 0
 
 
-## Step 8 (ConsequenceRules.warden_footing): the warden's section `section` fell. They catch the
-## edge (decision D3): the feet go at once to the hang point of the section (or landing) they will
-## climb onto, and the climb back runs sim.ticks.climb_back ticks (WARDEN_CAUGHT).
+## Step 8 (ConsequenceRules.warden_footing): the warden's section `section` fell, under their feet
+## or (story 1.6 AC 10) under the side beam they were edging along. They catch the edge (decision
+## D3): the feet go at once to the hang point of the section (or landing) they will climb onto, and
+## the climb back runs sim.ticks.climb_back ticks (WARDEN_CAUGHT). An edging's facts are cleared.
 static func start_climb(section: int, sim: NightSim) -> void:
 	var warden: WardenState = sim.warden
+	_clear_move(warden)
 	warden.move = WardenState.Move.CLIMBING
 	warden.move_ticks_left = sim.ticks.climb_back
 	warden.fell_from = section
@@ -178,7 +262,7 @@ static func start_climb(section: int, sim: NightSim) -> void:
 
 
 ## Step 8 (ConsequenceRules.warden_footing), while climbing: the feet hang from the edge of what
-## the climb would end on now. When that section fell (or went bare) since the catch, they cut to
+## the climb would end on now. When that section fell (or went open) since the catch, they cut to
 ## the next edge toward the town in the same tick (code review 2026-11-22, Sonlm). It is the same
 ## catch: no event, and the climb's ticks keep running. With nothing changed it moves nothing.
 static func hang_on(sim: NightSim) -> void:
@@ -189,12 +273,21 @@ static func hang_on(sim: NightSim) -> void:
 ## Step 1, before the walk: the running timed move counts down. Begun on tick F (WARDEN_CAUGHT),
 ## the climb ends on F + sim.ticks.climb_back (AD-33): the feet go onto the deck of the section it
 ## ends on, worked out now, CLEARANCE in from its edge (WARDEN_CLIMBED, section 0 for the landing),
-## and the warden walks again from this same tick on.
+## and the warden walks again from this same tick on. An edging or a crossing (story 1.6) moves the
+## feet one tick along its line, worked out from the ticks left; on its last tick it ends
+## (end_move()).
 static func tick_moves(sim: NightSim) -> void:
 	var warden: WardenState = sim.warden
 	if warden.move == WardenState.Move.WALKING:
 		return
 	warden.move_ticks_left -= 1
+	if warden.move == WardenState.Move.EDGING or warden.move == WardenState.Move.CROSSING:
+		if warden.move_ticks_left > 0:
+			var done: float = float(warden.move_ticks_total - warden.move_ticks_left) / warden.move_ticks_total
+			warden.position = warden.move_from.lerp(warden.move_to, done)
+		else:
+			end_move(sim)
+		return
 	if warden.move_ticks_left > 0:
 		return
 	var onto: int = climb_target(warden.fell_from, sim)
@@ -207,21 +300,52 @@ static func tick_moves(sim: NightSim) -> void:
 	sim.emit(event)
 
 
-## Step 8 (ConsequenceRules.warden_footing), story 1.5 decision D2: feet beside a gap, with a
-## clearance probe along the span over a fallen section and on no standing floor, move straight
-## away from the gap until they are CLEARANCE from its edge: at most CLEARANCE, in the same tick.
-## The x is kept. Anything else (a probe over a bare section, story 1.4's D3) is left alone.
+## Step 1 (tick_moves()), story 1.6: the edging or crossing of `move_section` is done (EDGING_ENDED
+## or CROSSING_ENDED). The next section the same way decides what follows, worked out now: a floor
+## (planks, or the landing) and the feet step onto it, CLEARANCE in, x kept, walking from this tick;
+## open or fallen and the move over it begins on this same tick. Toward the far pier a run that no
+## longer ends on a floor (the section beyond fell meanwhile) turns the warden back: the move over
+## the section just crossed begins again, toward the town. Nothing leaves the warden nowhere to go.
+static func end_move(sim: NightSim) -> void:
+	var warden: WardenState = sim.warden
+	var section: int = warden.move_section
+	var toward: int = warden.move_toward
+	var event: NightEvent
+	if warden.move == WardenState.Move.EDGING:
+		event = NightEvent.make(NightEvent.Kind.EDGING_ENDED)
+		event.side = NightTypes.Side.RIGHT if warden.move_to.x >= 0.0 else NightTypes.Side.LEFT
+	else:
+		event = NightEvent.make(NightEvent.Kind.CROSSING_ENDED)
+	event.section = section
+	warden.position = Vector3(warden.move_to.x, 0.0, warden.move_to.z)
+	_clear_move(warden)
+	warden.move = WardenState.Move.WALKING
+	sim.emit(event)
+	var next: int = section + toward
+	if next > sim.def.section_count or (next >= 1 and _floor_section(next, sim)):
+		warden.position = sim.geometry.move_end(section, toward, warden.position.x)
+	elif toward < 0 and (next < 1 or not way_on(next, toward, sim)):
+		begin_move(section, 1, sim.ticks.edge, sim)
+	else:
+		begin_move(next, toward, sim.ticks.edge, sim)
+
+
+## Step 8 (ConsequenceRules.warden_footing), story 1.5 decision D2 and story 1.6 decision D3: feet
+## beside a section that cannot be stood on (fallen, or open), with a clearance probe along the span
+## over it and on no floor that can be walked on, move straight away from it until they are
+## CLEARANCE from its edge: at most CLEARANCE, in the same tick. The x is kept. Asked only while the
+## feet themselves are on a floor that can be walked on (a warden on an open section is GD-68's).
 static func step_back(sim: NightSim) -> void:
 	var c: float = WardenConstants.CLEARANCE
 	var at: Vector3 = sim.warden.position
-	var standing: Array[Rect2] = _standing_floors(sim)
+	var floors: Array[Rect2] = walkable(sim)
 	for n: int in range(1, sim.def.section_count + 1):
-		if not sim.span.fallen(n):
+		if _floor_section(n, sim):
 			continue
 		var gap: Rect2 = _floor_of(sim.geometry.deck_box(n))
 		for toward: float in [-c, c]:
 			var probe: Vector2 = Vector2(at.x, at.z + toward)
-			if not _on_floor(probe, [gap]) or _on_floor(probe, standing):
+			if not _on_floor(probe, [gap]) or _on_floor(probe, floors):
 				continue
 			# The gap's edge on the feet's side, and the spot CLEARANCE beyond it.
 			var edge: float = gap.end.y if toward < 0.0 else gap.position.y
@@ -229,8 +353,29 @@ static func step_back(sim: NightSim) -> void:
 	sim.warden.position = at
 
 
-## The floors that stand this tick: every section that has not fallen (planked or bare), and the
-## landing. What "on no standing floor" is measured against.
+## Pure: true when the feet (the point itself, not the probes) are on a floor that can be walked on.
+static func feet_on_floor(sim: NightSim) -> bool:
+	return _on_floor(Vector2(sim.warden.position.x, sim.warden.position.z), walkable(sim))
+
+
+## True when section `n` can be walked on: it has a plank and has not fallen.
+static func _floor_section(n: int, sim: NightSim) -> bool:
+	return sim.span.planks(n) > 0 and not sim.span.fallen(n)
+
+
+## Clears an edging's or crossing's facts (the move itself is set by the caller).
+static func _clear_move(warden: WardenState) -> void:
+	warden.move_ticks_left = 0
+	warden.move_ticks_total = 0
+	warden.move_section = 0
+	warden.move_toward = 0
+	warden.move_from = Vector3.ZERO
+	warden.move_to = Vector3.ZERO
+	warden.pushed = 0
+
+
+## The floors that stand this tick: every section that has not fallen (planked or open), and the
+## landing. What "on no standing floor" is measured against (who falls with a section).
 static func _standing_floors(sim: NightSim) -> Array[Rect2]:
 	var floors: Array[Rect2] = []
 	for n: int in range(1, sim.def.section_count + 1):
