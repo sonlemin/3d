@@ -81,7 +81,8 @@ box around it. The aid is not part of the game: it is removed with epic 4's hand
 fallen one is a gap. Neither can be stood on, but neither traps you. Walk up to one and keep
 pushing straight into it (within 45 degrees of straight) for half a second: you edge round an open
 section along its side beam in 4 s (a sidestep onto the beam, then straight along it), or cross a
-gap hand over hand, hanging under the deck, in 8 s (ten pulls of half a metre).
+gap hand over hand in 8 s, hanging under the one rope left strung across it (ten pulls of half a
+metre).
 Meanwhile you can look around but not walk or act, and a hold you had running is cancelled (what
 you carry stays in hand). Several in a row are crossed one after another, each at its own time.
 Toward the far pier a run only begins if there is something to stand on at its end; if the section
@@ -99,7 +100,7 @@ each, placed by the show-me setups and the tests (never in a plain `--start=nigh
 load yourself. When the load equals the strength the section creaks (its planks bow a little);
 when it is more, it groans (the bow deepens) and falls for good 2 s later, unless the load drops
 back first. Strip planks from under weights to overload a section. When it falls, everything on it
-drops out of sight and the gap reads black; it can never be re-laid, and aiming into it reaches
+drops out of sight but one rope strung across it, and the gap reads black; it can never be re-laid, and aiming into it reaches
 nothing. If you stand on it, you catch the edge of the next section toward the town that still
 has planks (or the landing; an open section is passed) and hang there for 5 s. At the catch your
 view is turned to face that edge, so you look along its deck; after that you can look around but

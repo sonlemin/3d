@@ -55,6 +55,15 @@ const WEIGHT_ACROSS: Array[float] = [0.0, -1.5, 1.5]
 ## Along, in metres from the section's far-pier end: the middle 2.5 m, so no weight stands within
 ## 1.25 m of either end, where the deck is aimed at from the next section.
 const WEIGHT_ALONG: Array[float] = [2.5, 1.75, 3.25]
+## Sonlm's play of M1 of story 1.6 (2026-11-22; gray box, not a rule): one rope stays strung across a
+## fallen section, along its centre line (this x), for the warden to cross hand over hand under it.
+const GAP_ROPE_X: float = 0.0
+## Gray box: how far under the deck top the rope is tied at each end of the gap, in metres.
+const GAP_ROPE_DROP: float = 0.1
+## Gray box: how far the rope sags at mid-gap below its ends, in metres (a parabola).
+const GAP_ROPE_SAG: float = 0.4
+## Gray box: the rope is drawn as this many straight pieces.
+const GAP_ROPE_PIECES: int = 10
 
 var _sections: int
 var _places: int
@@ -243,11 +252,22 @@ func edging_point(side: NightTypes.Side, along: float) -> Vector3:
 	return Vector3(beam_line_x(side), 0.0, world_z(along))
 
 
-## Story 1.6 D2: a point of a crossing at `along`: hanging WardenConstants.HANG_DROP below the deck
-## top (as story 1.5's hang), `x` kept within the beam lines.
-func crossing_point(along: float, x: float) -> Vector3:
-	var limit: float = beam_line_x(NightTypes.Side.RIGHT)
-	return Vector3(clampf(x, -limit, limit), -WardenConstants.HANG_DROP, world_z(along))
+## Story 1.6: a point of a crossing at `along`: hanging under the gap's rope (Sonlm's play of M1,
+## 2026-11-22), on its line (GAP_ROPE_X), WardenConstants.CROSS_HANG_DROP below the deck top.
+func crossing_point(along: float) -> Vector3:
+	return Vector3(GAP_ROPE_X, -WardenConstants.CROSS_HANG_DROP, world_z(along))
+
+
+## Sonlm's play of M1 of story 1.6: the rope left across fallen section `section`, as
+## GAP_ROPE_PIECES + 1 points from its far-pier end to its town end: tied GAP_ROPE_DROP under the deck
+## top at each end, sagging GAP_ROPE_SAG at mid-gap. Gray box: drawn by SectionView; no rule reads it.
+func gap_rope_points(section: int) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for i: int in GAP_ROPE_PIECES + 1:
+		var u: float = float(i) / GAP_ROPE_PIECES
+		var along: float = section_start(section) + u * SpanConstants.SECTION_LENGTH
+		out.append(Vector3(GAP_ROPE_X, -GAP_ROPE_DROP - GAP_ROPE_SAG * 4.0 * u * (1.0 - u), world_z(along)))
+	return out
 
 
 ## Story 1.6: where the feet step onto the next floor when a move over `section` heading `toward`

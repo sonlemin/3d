@@ -452,3 +452,12 @@ owner: epic 7 (the look); checked at gate 2
 severity: low
 reason: By the GDD a section can be stood on over its whole length while it has any plank, but the gray box draws only the planks left (one plank sits mid-section), so walking over a 1-plank section looks like walking on air. Sonlm: "i am at 1 plank and can still walk through still look rather strange like i am walking on air." Sonlm chose (2026-11-22) to keep the rule and leave it to the look (epic 7) to show what holds the warden up on a sparse section; no gray-box change now. If gate 2 newcomers are confused by it, put a gray-box frame (joists between the side beams) back to Sonlm as an option.
 status: open
+
+### DW-47: Write the rope left across a gap into the GDD
+
+origin: Sonlm's replay of M1 of story 1.6, 2026-11-22
+location: GDD Game Mechanics 2 ("A fallen section is a 5 m gap ... The warden crosses hand over hand in 8 s"); game/watch/sim/span_geometry.gd (`gap_rope_points()`, `GAP_ROPE_*`), game/watch/sim/warden_constants.gd (`CROSS_HANG_DROP`)
+owner: the next gds-gdd update run
+severity: low
+reason: The GDD says the warden crosses a gap hand over hand but not what along: everything on a fallen section falls. In play the crossing felt like "walking midair". Sonlm chose (2026-11-22) that one rope stays strung across a fallen section, on its centre line, and the warden hangs under it (feet 2.4 m down) and pulls along it. It is gray box and view only (no rule but the warden's crossing line reads it; the dead do not use it), but the GDD should say it, and say whether it is a rail rope or the bridge's own line, before epic 3 (Grapplers' hooks) and epic 7 (the look).
+status: open

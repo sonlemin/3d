@@ -11,17 +11,20 @@
 ## from every section with none; or a timed move runs and the feet are at its place, by this file's
 ## own record of it, kept from its _STARTED event (_moves_ok()): an edging (GDD Game Mechanics 2: 4 s,
 ## 240 ticks; GD-68: roundi(240 x left / 5), at least 1, when it began with the feet on the section)
-## at deck height, drifting steadily onto x +-2.2 (decision D2), toward the section's far edge; a
-## crossing (8 s, 480 ticks) 1.4 m below the deck, x kept, within the gap. An edging may end in
+## at deck height, onto x +-2.2 (decision D2, sidestepping in its first 0.5 s since Sonlm's play),
+## toward the section's far edge; a crossing (8 s, 480 ticks) 2.4 m below the deck under the gap's
+## rope (x 0, Sonlm's play), within the gap. An edging may end in
 ## WARDEN_CAUGHT instead (AC 10). Any path can start a move (the wanders can), so this runs on all.
 extends WatchTest
 
 ## GDD Game Mechanics 2: the edging and the crossing, in ticks.
 const EDGE_TICKS: int = 240
 const CROSS_TICKS: int = 480
-## Story 1.6 D2: the beam lines (5 m deck less 0.3 m clearance); story 1.5 D3: the hang.
+## Story 1.6 D2: the beam lines (5 m deck less 0.3 m clearance); story 1.5 D3: the hang of a climb;
+## Sonlm's play of story 1.6's M1: a crossing hangs 2.4 m down under the gap's rope, on the centre line.
 const BEAM_X: float = 2.2
 const HANG: float = 1.4
+const CROSS_HANG: float = 2.4
 ## GD-19: one tick's walk, 3.5 m/s at 60 ticks a second.
 const STEP: float = 3.5 / 60.0
 const TOL: float = 0.001
@@ -137,7 +140,8 @@ func _move_began_here(event: NightEvent, sim: NightSim, tick: int) -> PackedStri
 		_move = "cross"
 		_move_length = CROSS_TICKS
 		_move_toward = -1 if absf(along - end) < TOL else 1
-		if absf(feet.y + HANG) > TOL or (absf(along - end) > TOL and absf(along - start) > TOL) or not sim.span.fallen(n):
+		if absf(feet.y + CROSS_HANG) > TOL or absf(feet.x) > TOL or (absf(along - end) > TOL and absf(along - start) > TOL) \
+				or not sim.span.fallen(n):
 			problems.append("a crossing of s%d begun away from a gap's edge" % n)
 		return problems
 	_move = "edge"
@@ -163,8 +167,8 @@ func _move_began_here(event: NightEvent, sim: NightSim, tick: int) -> PackedStri
 
 
 ## While a move runs: the feet at its place, moving one way. An edging at deck height, x drifting
-## steadily from where it began onto its beam line, along from where it began toward the far edge;
-## a crossing 1.4 m down, x kept, within the gap.
+## from where it began onto its beam line, along from where it began toward the far edge; a crossing
+## 2.4 m down, under the rope (x 0), within the gap.
 func _moves_ok(sim: NightSim) -> PackedStringArray:
 	var problems: PackedStringArray = []
 	var feet: Vector3 = sim.warden.position
@@ -175,7 +179,7 @@ func _moves_ok(sim: NightSim) -> PackedStringArray:
 	if WardenRules.walking(sim):
 		problems.append("walking during a %s with no end" % _move)
 	if _move == "cross":
-		if absf(feet.y + HANG) > TOL or absf(feet.x - _move_from.x) > TOL or along < (_move_section - 1) * 5.0 - TOL \
+		if absf(feet.y + CROSS_HANG) > TOL or absf(feet.x - _move_from.x) > TOL or along < (_move_section - 1) * 5.0 - TOL \
 				or along > _move_section * 5.0 + TOL:
 			problems.append("crossing off its line")
 	else:

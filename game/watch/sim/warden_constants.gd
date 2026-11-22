@@ -42,3 +42,8 @@ const CROSS_REACH: float = 0.5
 ## Sonlm's play of M1 of story 1.6: the share of each reach's time spent pulling (eased in and out);
 ## the rest is still, hanging, before the next reach. Forward only: no up-down bob (EXPERIENCE.md).
 const CROSS_PULL_SHARE: float = 0.6
+## Sonlm's play of M1 of story 1.6 (2026-11-22): crossing a gap, the warden hangs from the one rope
+## left strung across it (SpanGeometry.gap_rope_points()), the feet this far below the deck top: the
+## eye (EYE_HEIGHT above them) is 0.8 m below deck level, 0.3 m under the rope's lowest point. Not
+## a GDD value: a gray-box size. (The climb after a fall keeps HANG_DROP.)
+const CROSS_HANG_DROP: float = 2.4

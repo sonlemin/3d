@@ -6,7 +6,9 @@
 ## Story 1.5 decision D4 (gray box; no sound until epic 2): a creaking deck bows a little, a
 ## groaning one bows deeper as its groan runs out (read from state each tick, not a timer), and on
 ## SECTION_FELL every piece of the section drops out of sight over FALL_S and is freed. A fallen
-## section draws nothing, so the gap reads black. No shake, no flash, nothing flickers.
+## section draws only the one rope left strung across it (Sonlm's play of M1 of story 1.6: the
+## warden crosses hand over hand under it), so the gap still reads black. No shake, no flash,
+## nothing flickers.
 class_name SectionView
 extends Node3D
 
@@ -35,6 +37,8 @@ var _gone: bool = false
 ## The pieces dropping after SECTION_FELL, and for how long they have dropped (view time).
 var _falling: Node3D = null
 var _fall_time: float = 0.0
+## The rope across the gap, once the section has fallen (made once, never freed).
+var _gap_rope: Node3D = null
 
 
 func _init(geometry: SpanGeometry, section: int, materials: Dictionary[StringName, StandardMaterial3D]) -> void:
@@ -63,6 +67,7 @@ func _ready() -> void:
 func show_state(sim: NightSim, n: int) -> void:
 	if sim.span.fallen(n):
 		_clear()
+		_show_gap_rope()
 		return
 	_show_planks(sim.span.planks(n))
 	for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
@@ -199,6 +204,24 @@ func _bow(depth: float) -> void:
 ## geometry, so the bow needs no count of plank places.
 func _along(point: Vector3) -> float:
 	return (point.z - _geometry.world_z(_geometry.section_start(_section))) / SpanConstants.SECTION_LENGTH
+
+
+## The rope across the gap (SpanGeometry.gap_rope_points()): one thin box per piece, from point to
+## point. Made once.
+func _show_gap_rope() -> void:
+	if _gap_rope != null:
+		return
+	_gap_rope = Node3D.new()
+	_gap_rope.name = "GapRope"
+	var points: Array[Vector3] = _geometry.gap_rope_points(_section)
+	var thick: float = SpanGeometry.RAIL_THICKNESS
+	for i: int in points.size() - 1:
+		var piece: Vector3 = points[i + 1] - points[i]
+		var node: MeshInstance3D = SpanView.box("Piece%d" % (i + 1), AABB(-Vector3(thick, thick, piece.length()) / 2.0,
+				Vector3(thick, thick, piece.length())), _materials[&"rail"])
+		node.transform = Transform3D(Basis.looking_at(piece, Vector3.UP), (points[i] + points[i + 1]) / 2.0)
+		_gap_rope.add_child(node)
+	add_child(_gap_rope)
 
 
 ## A fallen section whose fall was not seen (no SECTION_FELL handled): everything goes at once.

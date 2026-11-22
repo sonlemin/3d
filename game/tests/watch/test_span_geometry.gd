@@ -114,11 +114,12 @@ func _test_the_moves_of_story_1_6() -> void:
 			g.edging_point(RIGHT, 10.0).is_equal_approx(Vector3(2.2, 0.0, -20.0)), str(g.edging_point(RIGHT, 10.0)))
 	_check("moves: on the left beam at along 15: (-2.2, 0, -15)",
 			g.edging_point(LEFT, 15.0).is_equal_approx(Vector3(-2.2, 0.0, -15.0)), str(g.edging_point(LEFT, 15.0)))
-	# L3: a crossing hangs at (x, -1.4, z), x kept within the band.
-	_check("moves: a crossing point at along 15, x 0: (0, -1.4, -15)",
-			g.crossing_point(15.0, 0.0).is_equal_approx(Vector3(0.0, -1.4, -15.0)), str(g.crossing_point(15.0, 0.0)))
-	_check("moves: x kept within +-2.2", g.crossing_point(12.5, 2.4).is_equal_approx(Vector3(2.2, -1.4, -17.5))
-			and g.crossing_point(12.5, -3.0).is_equal_approx(Vector3(-2.2, -1.4, -17.5)), str(g.crossing_point(12.5, 2.4)))
+	# Sonlm's play of M1 (2026-11-22): a crossing hangs under the gap's one rope, on the centre line,
+	# the feet 2.4 m below deck level.
+	_check("moves: a crossing point at along 15: (0, -2.4, -15)",
+			g.crossing_point(15.0).is_equal_approx(Vector3(0.0, -2.4, -15.0)), str(g.crossing_point(15.0)))
+	_check("moves: at along 12.5: (0, -2.4, -17.5)", g.crossing_point(12.5).is_equal_approx(Vector3(0.0, -2.4, -17.5)),
+			str(g.crossing_point(12.5)))
 	var ends: Dictionary[String, Array] = {
 		"section 3 toward the far pier, x 2.2": [g.move_end(3, -1, 2.2), Vector3(2.2, 0.0, -20.3)],
 		"section 3 toward the town, x 2.2": [g.move_end(3, 1, 2.2), Vector3(2.2, 0.0, -14.7)],
@@ -131,4 +132,23 @@ func _test_the_moves_of_story_1_6() -> void:
 		var got: Vector3 = ends[what][0]
 		_check("moves: a move over %s ends at %s" % [what, ends[what][1]], got.is_equal_approx(ends[what][1]), str(got))
 		_check("moves: which can be stood on (%s)" % what, WardenRules.can_stand(got, sim))
+
+
+func _test_the_rope_across_a_gap() -> void:
+	# Sonlm's play of M1 (2026-11-22): one rope stays strung across a fallen section, on its centre
+	# line, from 0.1 m under the deck top at each end, sagging 0.4 m at mid-gap (a parabola), drawn as
+	# 10 straight pieces (11 points). Gray box; no rule but the crossing uses it.
+	var g: SpanGeometry = _geometry()
+	var points: Array[Vector3] = g.gap_rope_points(3)
+	_check("rope: 11 points", points.size() == 11, str(points.size()))
+	if points.size() != 11:
+		return
+	_check("rope: from (0, -0.1, -20) to (0, -0.1, -15)", points[0].is_equal_approx(Vector3(0.0, -0.1, -20.0))
+			and points[10].is_equal_approx(Vector3(0.0, -0.1, -15.0)), "%s %s" % [points[0], points[10]])
+	_check("rope: lowest at mid-gap, (0, -0.5, -17.5)", points[5].is_equal_approx(Vector3(0.0, -0.5, -17.5)), str(points[5]))
+	# u = 0.2: -0.1 - 0.4 x 4 x 0.2 x 0.8 = -0.356.
+	_check("rope: a fifth of the way, (0, -0.356, -19)", points[2].is_equal_approx(Vector3(0.0, -0.356, -19.0)), str(points[2]))
+	# The crossing's eye (1.6 m above the feet) is always under the rope.
+	_check("rope: the crossing eye (-0.8) is 0.3 m under its lowest point", is_equal_approx(g.crossing_point(17.5).y + 1.6,
+			points[5].y - 0.3), str(g.crossing_point(17.5)))
 

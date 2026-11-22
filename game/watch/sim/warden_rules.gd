@@ -124,7 +124,8 @@ static func way_on(section: int, toward: int, sim: NightSim) -> bool:
 ## from where the feet are now (decision D2). An edging lasts `edge_ticks` (sim.ticks.edge, or GD-68's
 ## share of it) and keeps the feet where they stand on its first tick, then sidesteps them onto the
 ## nearer side beam's line (right when x >= 0) at deck height and along it (move_point()). A crossing lasts sim.ticks.cross_gap,
-## whatever `edge_ticks` says: the feet cut down to hang at the gap's near edge, x kept. The push
+## whatever `edge_ticks` says: the feet cut down to hang under the gap's rope at its near edge (on the
+## rope's line: Sonlm's play of M1). The push
 ## starts again from 0. Emits EDGING_STARTED or CROSSING_STARTED.
 static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim) -> void:
 	var warden: WardenState = sim.warden
@@ -136,8 +137,8 @@ static func begin_move(section: int, toward: int, edge_ticks: int, sim: NightSim
 	warden.pushed = 0
 	if sim.span.fallen(section):
 		warden.move = WardenState.Move.CROSSING
-		warden.move_from = g.crossing_point(g.near_edge(section, toward), x)
-		warden.move_to = g.crossing_point(g.far_edge(section, toward), x)
+		warden.move_from = g.crossing_point(g.near_edge(section, toward))
+		warden.move_to = g.crossing_point(g.far_edge(section, toward))
 		warden.move_ticks_total = sim.ticks.cross_gap
 		event = NightEvent.make(NightEvent.Kind.CROSSING_STARTED)
 	else:
@@ -305,7 +306,7 @@ static func tick_moves(sim: NightSim) -> void:
 ## onto the beam line within sim.ticks.edge_sidestep (or the whole move, if shorter), so it goes
 ## straight along the beam after that; a crossing goes hand over hand in reaches of
 ## WardenConstants.CROSS_REACH, each a pull eased over WardenConstants.CROSS_PULL_SHARE of its time
-## and then still, x and height kept.
+## and then still, under the rope.
 static func move_point(warden: WardenState, done: int, ticks: NightTicks) -> Vector3:
 	var total: int = maxi(warden.move_ticks_total, 1)
 	var share: float = clampf(float(done) / total, 0.0, 1.0)

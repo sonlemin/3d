@@ -526,24 +526,27 @@ func _test_crossing_a_gap() -> void:
 	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), 31)
 	_check("gap: CROSSING_STARTED s3 on tick 30", _story_of(events) == PackedStringArray(["30 CROSSING_STARTED s3"]),
 			str(_story_of(events)))
-	_check("gap: cut down to hang at the near edge: (0, -1.4, -15.0)", _at(sim, Vector3(0.0, -1.4, -15.0))
+	# Sonlm's play of M1 (2026-11-22): the warden hangs from the one rope left across the gap, on its
+	# centre line (x 0), the feet 2.4 m below deck level (the eye 0.8 m below it, 0.3 m under the
+	# rope's lowest point).
+	_check("gap: cut down to hang under the rope at the near edge: (0, -2.4, -15.0)", _at(sim, Vector3(0.0, -2.4, -15.0))
 			and sim.warden.move == WardenState.Move.CROSSING, str(sim.warden.position))
 	# Sonlm's play of M1 (2026-11-22): hand over hand, in reaches of 0.5 m (10 over the 5 m gap, 48
 	# ticks each): each a pull eased over its first 60 % (smoothstep), then still until the next.
 	# From tick 30: tick 54 (24 in, half a reach): 0.925926 of the first reach, z -15.462963; ticks 59
 	# to 78 (29 to 48 in): still at the end of the first reach, z -15.5; tick 79 moving again.
 	_push_until(sim, Vector2(0.0, -1.0), 55)
-	_check("gap: tick 54, half way through the first reach's time: (0, -1.4, -15.462963)",
-			_at(sim, Vector3(0.0, -1.4, -15.462963)), str(sim.warden.position))
+	_check("gap: tick 54, half way through the first reach's time: (0, -2.4, -15.462963)",
+			_at(sim, Vector3(0.0, -2.4, -15.462963)), str(sim.warden.position))
 	var still: bool = true
 	for i: int in 20:
 		_push_until(sim, Vector2(0.0, -1.0), 60 + i)
-		still = still and _at(sim, Vector3(0.0, -1.4, -15.5))
-	_check("gap: ticks 59 to 78: still at the first reach's end, (0, -1.4, -15.5)", still, str(sim.warden.position))
+		still = still and _at(sim, Vector3(0.0, -2.4, -15.5))
+	_check("gap: ticks 59 to 78: still at the first reach's end, (0, -2.4, -15.5)", still, str(sim.warden.position))
 	_push_until(sim, Vector2(0.0, -1.0), 80)
 	_check("gap: tick 79: the next reach has begun", sim.warden.position.z < -15.5 - 0.0005, str(sim.warden.position))
 	_push_until(sim, Vector2(0.0, -1.0), 271)
-	_check("gap: tick 270, half way (5 reaches): (0, -1.4, -17.5)", _at(sim, Vector3(0.0, -1.4, -17.5)), str(sim.warden.position))
+	_check("gap: tick 270, half way (5 reaches): (0, -2.4, -17.5)", _at(sim, Vector3(0.0, -2.4, -17.5)), str(sim.warden.position))
 	events = _push_until(sim, Vector2(0.0, -1.0), 510)
 	events.append_array(_push_until(sim, Vector2.ZERO, 511))
 	_check("gap: CROSSING_ENDED s3 on tick 510 (30 + 480)", _story_of(events) == PackedStringArray(["510 CROSSING_ENDED s3"]),
@@ -571,6 +574,21 @@ func _test_crossing_a_gap() -> void:
 			"30 CROSSING_STARTED s3", "510 CROSSING_ENDED s3", "510 CROSSING_STARTED s4", "990 CROSSING_ENDED s4"])
 			and _at(sim, Vector3(0.0, 0.0, -9.7)), "%s %s" % [_story_of(events), sim.warden.position])
 	_check("gap: no fault", _faults.total() == 0, str(_faults.codes()))
+
+
+func _test_a_crossing_goes_onto_the_rope() -> void:
+	# Sonlm's play of M1: off the centre line (20 ticks to the right: x 1.1667, a sideways walk, no
+	# push), the crossing's start cut puts the feet under the rope at x 0, and they come up at x 0.
+	var sim: NightSim = _broken(15.3, {}, [3])
+	_push(sim, Vector2(1.0, 0.0), 20)
+	var began: int = sim.tick
+	var events: Array[NightEvent] = _push_until(sim, Vector2(0.0, -1.0), began + 31)
+	_check("rope: CROSSING_STARTED s3 on the 31st pushing tick, the feet at (0, -2.4, -15.0)",
+			_story_of(events) == PackedStringArray(["%d CROSSING_STARTED s3" % (began + 30)]) and _at(sim, Vector3(0.0, -2.4, -15.0)),
+			"%s %s" % [_story_of(events), sim.warden.position])
+	_push_until(sim, Vector2.ZERO, began + 30 + 481)
+	_check("rope: up on section 2 at (0, 0, -20.3)", _at(sim, Vector3(0.0, 0.0, -20.3)) and WardenRules.walking(sim),
+			str(sim.warden.position))
 
 
 func _test_a_run_is_crossed_one_section_at_a_time() -> void:

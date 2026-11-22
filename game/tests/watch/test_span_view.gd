@@ -266,17 +266,21 @@ func _test_the_section_drops_and_is_gone() -> void:
 	var fell: Array[NightEvent] = sim.advance()
 	view.on_tick(fell, sim)
 	var falling: Node3D = section4.falling()
-	_check("view: on SECTION_FELL every piece moves into one dropping group, nothing else is left",
-			falling != null and falling.get_child_count() == 15 and section4.get_child_count() == 1, str(section4.get_children()))
+	_check("view: on SECTION_FELL every piece moves into one dropping group; the gap's rope is the only other node",
+			falling != null and falling.get_child_count() == 15 and section4.get_child_count() == 2
+			and section4.get_node_or_null("GapRope") != null and falling.get_node_or_null("GapRope") == null,
+			str(section4.get_children()))
 	section4.fall_step(0.5)
 	_check("view: half a second on, it has dropped (y = -1/2 g t^2)", is_equal_approx(falling.position.y, -0.5 * 9.8 * 0.25),
 			str(falling.position.y))
 	for i: int in 30:
 		view.on_tick(sim.advance(), sim)
-	_check("view: reconciling meanwhile draws nothing new for it", section4.get_child_count() == 1)
+	# Sonlm's play of story 1.6's M1: a gap shows only the one rope strung across it.
+	_check("view: reconciling meanwhile draws only the gap's rope for it", section4.get_child_count() == 2
+			and section4.get_node_or_null("GapRope") != null)
 	section4.fall_step(1.0)
-	_check("view: after 1.5 s the group is freed: the section draws nothing", section4.falling() == null
-			and section4.get_child_count() == 0)
+	_check("view: after 1.5 s the group is freed: the section draws only its rope", section4.falling() == null
+			and section4.get_child_count() == 1 and section4.get_node("GapRope").get_child_count() == 10)
 	_check("view: its neighbours keep their beams and posts", view.get_node_or_null("Section3/BeamL") != null
 			and view.get_node_or_null("Section5/PostR1") != null)
 	view.free()
@@ -374,6 +378,13 @@ func _test_a_fall_not_seen_still_clears() -> void:
 	_advance(sim, 130)
 	var view: SpanView = _view_of(sim)
 	var section4: SectionView = view.get_node("Section4")
-	_check("view: a section that fell before the view was made shows nothing",
-			section4.get_child_count() == 0 and section4.falling() == null, str(section4.get_children()))
+	_check("view: a section that fell before the view was made shows only the gap's rope",
+			section4.get_child_count() == 1 and section4.get_node_or_null("GapRope") != null and section4.falling() == null,
+			str(section4.get_children()))
+	_check("view: a section that stands has no gap rope", view.get_node("Section3").get_node_or_null("GapRope") == null)
+	# The rope's 10 pieces follow SpanGeometry.gap_rope_points(): the middle of the first piece.
+	var pts: Array[Vector3] = sim.geometry.gap_rope_points(4)
+	var first: Node3D = section4.get_node("GapRope").get_child(0) as Node3D
+	_check("view: its first piece sits between the rope's first two points", first.position.is_equal_approx((pts[0] + pts[1]) / 2.0),
+			"%s %s" % [first.position, (pts[0] + pts[1]) / 2.0])
 	view.free()

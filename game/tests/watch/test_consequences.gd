@@ -379,18 +379,19 @@ func _test_the_last_plank_underfoot_half_way() -> void:
 
 func _test_the_last_plank_underfoot_into_a_gap() -> void:
 	# L9: section 4 fallen from the start. The GD-68 edging of section 3 from 12.5 ends on 240 and the
-	# gap of section 4 is crossed from there: cut down to (2.2, -1.4, -15.0), 480 ticks, onto section 5.
+	# gap of section 4 is crossed from there: cut down under its rope (Sonlm's play of M1: centre line,
+	# feet 2.4 m down) to (0, -2.4, -15.0), 480 ticks, onto section 5 at x 0.
 	var sim: NightSim = _strip_underfoot(12.5, 0.0, [4])
 	_until(sim, 240)
 	var ended: Array[NightEvent] = sim.advance()
 	_check("gd68 gap: tick 240: EDGING_ENDED s3 then CROSSING_STARTED s4", _names(ended)
 			== str(["EDGING_ENDED s3", "CROSSING_STARTED s4"]), _names(ended))
-	_check("gd68 gap: cut down to (2.2, -1.4, -15.0)", sim.warden.position.distance_to(Vector3(2.2, -1.4, -15.0)) < TOL,
+	_check("gd68 gap: cut down to (0, -2.4, -15.0)", sim.warden.position.distance_to(Vector3(0.0, -2.4, -15.0)) < TOL,
 			str(sim.warden.position))
 	var events: Array[NightEvent] = _until(sim, 721)
 	_check("gd68 gap: CROSSING_ENDED s4 on tick 720 (240 + 480)", _names(events) == str(["CROSSING_ENDED s4"])
 			and roundi(events[0].t * 60.0) == 720, _names(events))
-	_check("gd68 gap: up on section 5 at (2.2, 0, -9.7)", sim.warden.position.distance_to(Vector3(2.2, 0.0, -9.7)) < TOL
+	_check("gd68 gap: up on section 5 at (0, 0, -9.7)", sim.warden.position.distance_to(Vector3(0.0, 0.0, -9.7)) < TOL
 			and WardenRules.walking(sim), str(sim.warden.position))
 	_check("gd68 gap: no fault", _faults.total() == 0, str(_faults.codes()))
 
