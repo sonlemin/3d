@@ -461,3 +461,12 @@ owner: the next gds-gdd update run
 severity: low
 reason: The GDD says the warden crosses a gap hand over hand but not what along: everything on a fallen section falls. In play the crossing felt like "walking midair". Sonlm chose (2026-11-22) that one rope stays strung across a fallen section, on its centre line, and the warden hangs under it (feet 2.4 m down) and pulls along it. It is gray box and view only (no rule but the warden's crossing line reads it; the dead do not use it), but the GDD should say it, and say whether it is a rail rope or the bridge's own line, before epic 3 (Grapplers' hooks) and epic 7 (the look).
 status: open
+
+### DW-48: Idea: the warden strings a rope across a gap
+
+origin: Sonlm, after the second replay of M1 of story 1.6, 2026-11-22
+location: GDD Game Mechanics 2 (a fallen section) and Economy and Resources (rope); GD-19, GD-20
+owner: a gds-gdd run after gate 2
+severity: low
+reason: Sonlm asked whether the warden should be able to attach a rope across a gap. It would be a new action spending rope, the scarcest resource ("Rope runs out first", GDD worked night), and a strung rope could become something Grapplers hook (GD-20). Since one rope already stays across every gap for free (DW-47), an attached rope must give something to be worth its cost (a faster crossing than 8 s, for example); the other way, removing the free rope so stringing one is the only way across, brings back the stranding the GDD ruled out. Sonlm chose (2026-11-22) to log it and decide after gate 2 shows whether rope and crossing time matter in play. Nothing is built for it.
+status: open
