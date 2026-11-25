@@ -13,4 +13,4 @@
 - [End-of-story chores are automatic](end-of-story-chores-automatic.md) — after a story: Xvfb screen checks, agent time, commit (never main/--no-verify/push); in _bmad/custom/gds-dev-story.toml
 - [Explain purpose before options](explain-purpose-before-options.md) — before options on a mechanic, say what it is for (GDD/decision log) and name any document gap
 - [Fast test runs and the undo pass](fast-test-runs-and-undo-pass.md) — CI and a game/ commit take 10 min (bot nights 8); run named test files from a scratch runner, undo rules in copies of game/
-- [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin is private GitHub repo, push only on request
+- [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin sonlemin/3d is PUBLIC on GitHub (checked 2026-11-25); push only on request; token in ~/.config/git/credentials-3d
