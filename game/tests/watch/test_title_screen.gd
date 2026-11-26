@@ -55,7 +55,8 @@ func _test_lists_every_problem() -> void:
 
 
 func _test_no_pixel_sizes() -> void:
-	# AD-69: only watch_theme.gd (epic 5) turns a size into canvas pixels.
+	# AD-69: only watch_theme.gd turns a size into canvas pixels (it exists since story 1.7; the
+	# title takes its styles from it in epic 5, and until then sets no size at all).
 	var text: String = FileAccess.get_file_as_string("res://watch/screens/title_screen.tscn")
 	_check("title: the scene sets no font size override", not text.contains("theme_override_font_sizes"))
 	var title: TitleScreen = TitleScene.instantiate() as TitleScreen

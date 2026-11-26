@@ -39,17 +39,25 @@ func _test_bad_seed() -> void:
 
 
 func _test_start_values_so_far() -> void:
-	# Story 1.2: `night` is the one --start value (planning in 1.7; lesson and round in epic 2).
-	_check("launch: the --start values are night", LaunchOptions.START_VALUES == [&"night"],
+	# Story 1.2: `night`; story 1.7: `planning` (lesson and round in epic 2).
+	_check("launch: the --start values are night and planning", LaunchOptions.START_VALUES == [&"night", &"planning"],
 			str(LaunchOptions.START_VALUES))
 	var options: LaunchOptions = _parse(["--start=night"])
 	_check("launch: --start=night is accepted", options.problems.is_empty() and options.start == &"night",
 			str(options.problems))
+	options = _parse(["--start=planning"])
+	_check("launch: --start=planning is accepted", options.problems.is_empty() and options.start == &"planning",
+			str(options.problems))
+	# --seed is accepted beside it (CI starts every value with --seed=1); planning does not use it.
+	options = _parse(["--start=planning", "--seed=1"])
+	_check("launch: --start=planning --seed=1 is accepted", options.problems.is_empty() and options.start == &"planning"
+			and options.seed_given and options.seed == 1, str(options.problems))
 
 
 func _test_bad_start() -> void:
 	# An unknown value never starts anything.
-	for arg: String in ["--start=nowhere", "--start=", "--start", "--start=NIGHT", "--start=night2"]:
+	for arg: String in ["--start=nowhere", "--start=", "--start", "--start=NIGHT", "--start=night2", "--start=Planning",
+			"--start=plan"]:
 		var options: LaunchOptions = _parse([arg])
 		_check("launch: %s is one launch.start problem and the start page" % arg,
 				_one_problem(options, "launch.start:") and options.start == &"", str(options.problems))

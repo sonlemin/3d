@@ -91,3 +91,50 @@ func _test_tools_present_but_not_allowed() -> void:
 	choice = _choose(["--show=list"], DebugTools.new(), false)
 	_check("main: and --show=list opens the title, not the list", choice.open == MainScript.OPEN_TITLE
 			and _starting(choice.problems, "launch.no_debug") == 1, str(choice.problems))
+
+
+# --- Story 1.7: planning is a screen a launch can open -------------------------------------------
+
+func _test_start_planning() -> void:
+	var choice: MainScript.Choice = _choose(["--start=planning"], DebugTools.new())
+	_check("main: --start=planning opens planning on the one night's span", choice.open == MainScript.OPEN_PLANNING
+			and choice.def != null and choice.def.name == &"one_night" and choice.problems.is_empty(),
+			"%s %s" % [choice.open, choice.problems])
+	# --seed is accepted and unused.
+	choice = _choose(["--start=planning", "--seed=1"], DebugTools.new())
+	_check("main: with --seed=1 too, and no problem", choice.open == MainScript.OPEN_PLANNING and choice.problems.is_empty(),
+			str(choice.problems))
+	# Planning is not a debug screen: it opens without the debug tools.
+	choice = _choose(["--start=planning"], null, false)
+	_check("main: --start=planning opens planning without the debug tools", choice.open == MainScript.OPEN_PLANNING
+			and choice.def != null and choice.def.name == &"one_night" and choice.problems.is_empty(), str(choice.problems))
+
+
+func _test_a_show_names_its_screen() -> void:
+	# AC 8: `readout` opens the planning screen on its own state; every other setup opens the night.
+	var choice: MainScript.Choice = _choose(["--show=readout"], DebugTools.new())
+	_check("main: --show=readout opens planning with the setup's def", choice.open == MainScript.OPEN_PLANNING
+			and choice.def != null and choice.def.name == &"readout" and choice.problems.is_empty(),
+			"%s %s" % [choice.open, choice.problems])
+	# AC 12: the same state on foot.
+	choice = _choose(["--show=readout_walk"], DebugTools.new())
+	_check("main: --show=readout_walk opens the night with the setup's def", choice.open == MainScript.OPEN_NIGHT
+			and choice.def != null and choice.def.name == &"readout_walk" and choice.problems.is_empty(),
+			"%s %s" % [choice.open, choice.problems])
+	choice = _choose(["--show=walk"], DebugTools.new())
+	_check("main: --show=walk still opens the night", choice.open == MainScript.OPEN_NIGHT and choice.def != null
+			and choice.def.name == &"walk")
+	# --show wins over --start, also across screens.
+	choice = _choose(["--show=readout", "--start=night"], DebugTools.new())
+	_check("main: --show=readout --start=night: the show wins, planning opens", choice.open == MainScript.OPEN_PLANNING
+			and choice.def != null and choice.def.name == &"readout", str(choice.open))
+	_check("main: with exactly one launch.conflict line", choice.problems.size() == 1
+			and _starting(choice.problems, "launch.conflict: --show=readout and --start=night") == 1, str(choice.problems))
+	choice = _choose(["--show=walk", "--start=planning"], DebugTools.new())
+	_check("main: --show=walk --start=planning: the show wins, the night opens", choice.open == MainScript.OPEN_NIGHT
+			and choice.def != null and choice.def.name == &"walk" and choice.problems.size() == 1, str(choice.problems))
+	# Without the tools the show is refused and --start stands.
+	choice = _choose(["--show=readout", "--start=night"], null, false)
+	_check("main: --show=readout without the tools: --start=night stands", choice.open == MainScript.OPEN_NIGHT
+			and choice.def != null and choice.def.name == &"one_night"
+			and _starting(choice.problems, "launch.no_debug") == 1, str(choice.problems))

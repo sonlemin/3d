@@ -15,9 +15,10 @@ enum Kind {
 	NAME,   ## A non-empty lower-snake name ([a-z0-9_]+), e.g. --show=span_counts.
 }
 
-## The values `--start` accepts. Still to come: planning (story 1.7), lesson and round
-## (epic 2). tools/ci.sh starts the game once with each of them.
-const START_VALUES: Array[StringName] = [&"night"]
+## The values `--start` accepts: the night (story 1.2) and planning (story 1.7: the overhead
+## read-out). Still to come: lesson and round (epic 2). tools/ci.sh starts the game once with
+## each of them.
+const START_VALUES: Array[StringName] = [&"night", &"planning"]
 ## The characters a NAME value may hold.
 const NAME_CHARS: String = "abcdefghijklmnopqrstuvwxyz0123456789_"
 ## Any whole number of up to 18 digits fits a 64-bit int.

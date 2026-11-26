@@ -1,28 +1,38 @@
 ## Show-me setups (AD-56): `--show=<name>` puts Sonlm in exactly the situation a manual check
-## needs. One row per setup: a name, what it shows, and the builder of its NightDef.
+## needs. One row per setup: a name, what it shows, the builder of its NightDef and, since story
+## 1.7, the screen it opens (the night or planning).
 ##     godot --path game -- --show=span_counts
 ##     godot --path game -- --show=list
 class_name ShowSetups
 extends RefCounted
 
 
-## name -> [description, builder () -> NightDef]. A new setup is one more row. `list` is taken:
-## `--show=list` lists the setups (a test checks no row uses it).
+## The screens a setup can open. Main has the same two names (OPEN_NIGHT, OPEN_PLANNING).
+const NIGHT: StringName = &"night"
+const PLANNING: StringName = &"planning"
+
+
+## name -> [description, builder () -> NightDef, screen]. A new setup is one more row. `list` is
+## taken: `--show=list` lists the setups (a test checks no row uses it).
 static func _table() -> Dictionary[StringName, Array]:
 	return {
-		&"span_counts": ["sections at 8, 5, 4, 1 and 0 planks, seen from the landing", ShowSetups.span_counts],
-		&"walk": ["walk the span and back from the landing (M1 of story 1.3)", ShowSetups.walk],
-		&"walk_close": ["the span from mid-span: sections ahead at 5, 4 and 1 planks (M2, DW-31)", ShowSetups.walk_close],
-		&"strip": ["strip planks and a rail, re-lay one, read the forearm (M1 of story 1.4)", ShowSetups.strip],
-		&"forearm": ["12 planks and 3 ropes in hand; hold Tab on the landing (M2 of story 1.4)", ShowSetups.forearm],
+		&"span_counts": ["sections at 8, 5, 4, 1 and 0 planks, seen from the landing", ShowSetups.span_counts, NIGHT],
+		&"walk": ["walk the span and back from the landing (M1 of story 1.3)", ShowSetups.walk, NIGHT],
+		&"walk_close": ["the span from mid-span: sections ahead at 5, 4 and 1 planks (M2, DW-31)", ShowSetups.walk_close,
+				NIGHT],
+		&"strip": ["strip planks and a rail, re-lay one, read the forearm (M1 of story 1.4)", ShowSetups.strip, NIGHT],
+		&"forearm": ["12 planks and 3 ropes in hand; hold Tab on the landing (M2 of story 1.4)", ShowSetups.forearm, NIGHT],
 		&"overload": ["section 4 at 4 planks with 3 weights; strip it from section 5 until it falls (M1 of story 1.5)",
-				ShowSetups.overload],
+				ShowSetups.overload, NIGHT],
 		&"fall_under": ["stand on section 4 (4 planks, 3 weights) and strip it under you (M2 of story 1.5)",
-				ShowSetups.fall_under],
+				ShowSetups.fall_under, NIGHT],
 		&"gaps": ["section 4 fallen, section 2 open; from section 5, cross the gap and edge round the open section, both ways (M1 of story 1.6)",
-				ShowSetups.gaps],
+				ShowSetups.gaps, NIGHT],
 		&"last_plank": ["on section 3 at 1 plank; strip it under you and edge toward the town, then re-lay it (M2 of story 1.6)",
-				ShowSetups.last_plank],
+				ShowSetups.last_plank, NIGHT],
+		&"readout": ["the overhead read-out: sections at 8, 5, 0, fallen, 1 and 4 planks, section 2's left rail stripped (M1 of story 1.7)",
+				ShowSetups.readout, PLANNING],
+		&"readout_walk": ["the read-out's span on foot, from the landing (M2 of story 1.7)", ShowSetups.readout_walk, NIGHT],
 	}
 
 
@@ -40,6 +50,12 @@ static func def_of(show_name: StringName) -> NightDef:
 	var def: NightDef = builder.call()
 	def.name = show_name
 	return def
+
+
+## The screen the setup opens: NIGHT or PLANNING; empty when there is no setup of that name.
+static func screen_of(show_name: StringName) -> StringName:
+	var table: Dictionary[StringName, Array] = _table()
+	return table[show_name][2] if table.has(show_name) else &""
 
 
 ## `show: <name>  <description>`, as `--show=list` prints it and tools/ci.sh reads it.
@@ -152,3 +168,33 @@ static func last_plank() -> NightDef:
 	def.start.planks = {3: 1}
 	def.start.warden_along = 11.0
 	return def
+
+
+## M1 of story 1.7, on the planning screen: mixed counts, an open section, a gap and a stripped
+## rail, so every mark of the read-out is on screen at once. Strengths read 8, 5, 2, none, 1, 4.
+static func readout() -> NightDef:
+	var def: NightDef = NightDefs.one_night()
+	def.start = readout_start(def.section_count)
+	return def
+
+
+## M2 of story 1.7: readout's span as a night, the warden on the landing, so the read-out can be
+## compared with the bridge on foot (left and right included).
+static func readout_walk() -> NightDef:
+	return readout()
+
+
+## readout's StartState, without the sections a shorter night does not have: sections 2, 3, 5 and
+## 6 at 5, 0, 1 and 4 planks (22 in hand), section 2's left rail stripped (1 rope in hand), section
+## 4 fallen (its 8 planks and 2 ropes lost).
+static func readout_start(section_count: int) -> StartState:
+	var all: Dictionary[int, int] = {2: 5, 3: 0, 5: 1, 6: 4}
+	var start: StartState = StartState.new()
+	for section: int in all:
+		if section <= section_count:
+			start.planks[section] = all[section]
+	if section_count >= 2:
+		start.stripped_rails = [Vector2i(2, NightTypes.Side.LEFT)]
+	if section_count >= 4:
+		start.fallen = [4]
+	return start

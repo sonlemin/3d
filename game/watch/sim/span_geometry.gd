@@ -1,6 +1,7 @@
 ## The only source of positions and shapes on the span (AD-42, AD-62). Pure: built from a
-## NightDef and holding nothing but its numbers. Views, and later the warden's and look rules,
-## ask here; no coordinate of the span is typed anywhere else.
+## NightDef and holding nothing but its numbers. Views and the warden's and look rules ask here;
+## no coordinate of the span is typed anywhere else. Since story 1.7 it also gives the shapes of
+## the plan look (the span from straight above, for the planning screen): `plan_*`.
 ##
 ## Coordinates: `along` is metres from the far pier. The span runs along Z with the town at
 ## +Z: world_z = along - length, so the town pier's edge is z 0. X is across, LEFT = -X. Y is
@@ -65,6 +66,22 @@ const GAP_ROPE_DROP: float = 0.1
 const GAP_ROPE_SAG: float = 0.4
 ## Gray box: the rope is drawn as this many straight pieces.
 const GAP_ROPE_PIECES: int = 10
+
+## Story 1.7, the plan look (the span seen from straight above by the planning screen). Each is a
+## plan-view size, in metres so that it scales with the span; not a rule. Expect Sonlm's look at
+## the read-out (M1 of story 1.7) to change them: each is in this one place.
+## Plan-view size; not a rule. A standing rail's line, across.
+const PLAN_RAIL_WIDTH: float = 0.12
+## Plan-view size; not a rule. A dashed line (a stripped rail, a fallen section's outline), across:
+## the night rope's own thickness.
+const PLAN_DASH_WIDTH: float = 0.05
+## Plan-view size; not a rule. One dash, along its line.
+const PLAN_DASH_LENGTH: float = 0.25
+## Plan-view size; not a rule. From one dash's start to the next; each dash is centred in its step.
+const PLAN_DASH_STEP: float = 0.5
+## Plan-view size; not a rule. Story 1.7 decision D3: how far short of each end of its section a
+## standing rail's line stops, so every joint between two sections shows as a break in both lines.
+const PLAN_JOINT_INSET: float = 0.15
 
 var _sections: int
 var _places: int
@@ -279,6 +296,70 @@ func move_end(section: int, toward: int, x: float) -> Vector3:
 	if toward > 0:
 		return climb_end(section + 1 if section < _sections else 0, x)
 	return Vector3(_climb_x(section - 1, x), 0.0, world_z(section_start(section) - WardenConstants.CLEARANCE))
+
+
+## Story 1.7, plan look: the black under a standing section's planks, so a missing plank reads as
+## the abyss on the planning ground: the deck's footprint, lying wholly under the planks (its top
+## at their underside). Heights in the plan look only decide what covers what from above.
+func plan_backing_box(section: int) -> AABB:
+	var deck: AABB = deck_box(section)
+	return AABB(Vector3(deck.position.x, deck.position.y - PLANK_THICKNESS, deck.position.z),
+			Vector3(deck.size.x, PLANK_THICKNESS, deck.size.z))
+
+
+## Story 1.7, plan look: a standing rail's line. PLAN_RAIL_WIDTH across, its inner edge on the
+## deck's edge and the rest outside it, on the ground (a line over the plank ends cannot be told
+## from them); along, PLAN_JOINT_INSET short of each end of the section (D3); at the rope's height,
+## so it lies over everything else seen from above.
+func plan_rail_box(section: int, side: NightTypes.Side) -> AABB:
+	var along: float = section_start(section) + PLAN_JOINT_INSET
+	return AABB(Vector3(_outside_x(side, PLAN_RAIL_WIDTH), RAIL_HEIGHT - RAIL_THICKNESS / 2.0, world_z(along)),
+			Vector3(PLAN_RAIL_WIDTH, RAIL_THICKNESS, SpanConstants.SECTION_LENGTH - 2.0 * PLAN_JOINT_INSET))
+
+
+## Story 1.7, plan look: a stripped rail's line, as dashes from the section's far-pier end to its
+## town end: PLAN_DASH_WIDTH across, the inner edge on the deck's edge, where the standing line
+## was; at the rope's height. "Missing things are drawn dashed" (DESIGN.md, Shapes).
+func plan_rail_dashes(section: int, side: NightTypes.Side) -> Array[AABB]:
+	var out: Array[AABB] = []
+	var x: float = _outside_x(side, PLAN_DASH_WIDTH)
+	for along: float in _dash_starts(section_start(section), SpanConstants.SECTION_LENGTH):
+		out.append(AABB(Vector3(x, RAIL_HEIGHT - RAIL_THICKNESS / 2.0, world_z(along)),
+				Vector3(PLAN_DASH_WIDTH, RAIL_THICKNESS, PLAN_DASH_LENGTH)))
+	return out
+
+
+## Story 1.7, plan look: a fallen section's outline (decision D2: it is all that is drawn of it):
+## the four edges of the deck's footprint, each dashed, the line PLAN_DASH_WIDTH across and centred
+## on the edge, its top at the deck's top. In order: the right (+X) edge, the left edge, the
+## far-pier end, the town end.
+func plan_outline_dashes(section: int) -> Array[AABB]:
+	var out: Array[AABB] = []
+	var half: float = PLAN_DASH_WIDTH / 2.0
+	for side: NightTypes.Side in [NightTypes.Side.RIGHT, NightTypes.Side.LEFT]:
+		for along: float in _dash_starts(section_start(section), SpanConstants.SECTION_LENGTH):
+			out.append(AABB(Vector3(_edge_x(side) - half, -PLAN_DASH_WIDTH, world_z(along)),
+					Vector3(PLAN_DASH_WIDTH, PLAN_DASH_WIDTH, PLAN_DASH_LENGTH)))
+	for end: float in [section_start(section), section_end(section)]:
+		for x: float in _dash_starts(_edge_x(NightTypes.Side.LEFT), SpanConstants.SECTION_WIDTH):
+			out.append(AABB(Vector3(x, -PLAN_DASH_WIDTH, world_z(end) - half),
+					Vector3(PLAN_DASH_LENGTH, PLAN_DASH_WIDTH, PLAN_DASH_WIDTH)))
+	return out
+
+
+## Where each dash of a dashed line `length` long starts, measured from `from`: one dash per
+## PLAN_DASH_STEP, centred in its step, so the line begins and ends with half a gap.
+func _dash_starts(from: float, length: float) -> Array[float]:
+	var out: Array[float] = []
+	var lead: float = (PLAN_DASH_STEP - PLAN_DASH_LENGTH) / 2.0
+	for i: int in roundi(length / PLAN_DASH_STEP):
+		out.append(from + lead + i * PLAN_DASH_STEP)
+	return out
+
+
+## The low x of a line `width` across that lies just outside the deck on `side`, touching its edge.
+func _outside_x(side: NightTypes.Side, width: float) -> float:
+	return _edge_x(side) - width if side == NightTypes.Side.LEFT else _edge_x(side)
 
 
 ## The x of a section's side edge.

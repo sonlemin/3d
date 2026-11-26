@@ -1,7 +1,8 @@
 ## The game's main scene: the flow between screens and nothing else (AD-59). It parses the
 ## launch switches, registers the input actions, collects the setup problems found at start,
 ## makes the one WatchSession (there are no autoloads, AD-10) and opens the first screen: the
-## title, the night (`--start=night`) or a show-me setup (`--show=<name>`).
+## title, the night (`--start=night`), planning (`--start=planning`) or a show-me setup
+## (`--show=<name>`), which opens the night or planning as the setup says.
 ## It holds no rule of play and draws nothing; screens report back to it with signals.
 ##
 ## The debug tools are loaded by path, never named (boundary 4), and only when run from source
@@ -12,6 +13,8 @@ const TitleScreen := preload("res://watch/screens/title_screen.gd")
 const TitleScene := preload("res://watch/screens/title_screen.tscn")
 const NightScreen := preload("res://watch/night/night.gd")
 const NightScene := preload("res://watch/night/night.tscn")
+const PlanningScreen := preload("res://watch/planning/planning.gd")
+const PlanningScene := preload("res://watch/planning/planning.tscn")
 const DEBUG_TOOLS_PATH: String = "res://watch/debug/debug_tools.gd"
 ## `--show=list` lists the show-me setups and quits.
 const SHOW_LIST: StringName = &"list"
@@ -19,6 +22,7 @@ const SHOW_LIST: StringName = &"list"
 ## What a launch opens (choose()).
 const OPEN_TITLE: StringName = &"title"
 const OPEN_NIGHT: StringName = &"night"
+const OPEN_PLANNING: StringName = &"planning"
 const OPEN_LIST: StringName = &"list"
 
 
@@ -64,6 +68,9 @@ func _ready() -> void:
 	# Screen changes happen at the end of the frame (AD-51).
 	if choice.open == OPEN_NIGHT:
 		_show_night.call_deferred(choice.def, options.seed if options.seed_given else _fresh_seed())
+	elif choice.open == OPEN_PLANNING:
+		# --seed is accepted and unused: nothing in planning is random.
+		_show_planning.call_deferred(choice.def)
 	else:
 		_show_title.call_deferred()
 
@@ -71,7 +78,9 @@ func _ready() -> void:
 ## Which screen the launch opens (DW-30: a test can call this). `debug` is the loaded debug
 ## tools or null; `debug_allowed` is whether this run may have them (from source or a playtest
 ## build). --show wins over --start; without the debug tools --show is only a problem and
-## --start still stands; an unknown show opens the title. Logs nothing; Main reports the problems.
+## --start still stands; an unknown show opens the title. A show-me setup names its screen
+## (story 1.7): the debug tools say whether it opens the night or planning. Logs nothing; Main
+## reports the problems.
 static func choose(options: LaunchOptions, debug: Object, debug_allowed: bool) -> Choice:
 	var choice: Choice = Choice.new()
 	if not debug_allowed and (not options.show.is_empty() or options.trace):
@@ -86,13 +95,16 @@ static func choose(options: LaunchOptions, debug: Object, debug_allowed: bool) -
 		var found: Variant = debug.call(&"show_def", show_name)
 		if found is NightDef:
 			choice.def = found
-			choice.open = OPEN_NIGHT
+			choice.open = OPEN_PLANNING if debug.call(&"show_screen", show_name) == OPEN_PLANNING else OPEN_NIGHT
 		else:
 			choice.problems.append("launch.show: '%s' is not a show-me setup (known: %s)"
 					% [show_name, ", ".join(debug.call(&"show_names") as PackedStringArray)])
 	elif options.start == &"night":
 		choice.def = NightDefs.one_night()
 		choice.open = OPEN_NIGHT
+	elif options.start == &"planning":
+		choice.def = NightDefs.one_night()
+		choice.open = OPEN_PLANNING
 	return choice
 
 
@@ -117,6 +129,15 @@ func _show_night(def: NightDef, night_seed: int) -> void:
 	night.setup(_session, def, night_seed)
 	add_debug_parts(night, _debug, _session.options)
 	add_child(night)
+
+
+## The planning screen (story 1.7: the overhead read-out of `def`'s span). A menu screen: the
+## mouse is visible. It has no debug parts: no trace (nothing ticks) and no aim aid.
+func _show_planning(def: NightDef) -> void:
+	EngineGlobals.enter_screen(get_tree(), EngineGlobals.ScreenKind.MENU)
+	var planning: PlanningScreen = PlanningScene.instantiate() as PlanningScreen
+	planning.setup(_session, def)
+	add_child(planning)
 
 
 ## The debug tools' parts of a night, asked for by call and never by name (boundary 4): the

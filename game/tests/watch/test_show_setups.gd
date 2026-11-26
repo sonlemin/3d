@@ -22,9 +22,9 @@ func _test_span_counts_def() -> void:
 
 func _test_debug_tools_list() -> void:
 	var tools: DebugTools = DebugTools.new()
-	_check("show: the debug tools list span_counts, walk, walk_close, strip, forearm, overload, fall_under, gaps, last_plank",
+	_check("show: the debug tools list span_counts, walk, walk_close, strip, forearm, overload, fall_under, gaps, last_plank, readout, readout_walk",
 			tools.show_names() == PackedStringArray(["span_counts", "walk", "walk_close", "strip", "forearm", "overload",
-			"fall_under", "gaps", "last_plank"]),
+			"fall_under", "gaps", "last_plank", "readout", "readout_walk"]),
 			str(tools.show_names()))
 	_check("show: the debug tools give its def", tools.show_def(&"span_counts") is NightDef)
 	_check("show: and null for an unknown name", tools.show_def(&"nope") == null)
@@ -205,3 +205,82 @@ func _test_gaps_and_last_plank_setups() -> void:
 	_check("show: last_plank: on section 4 after it", sim.warden.position.z + 30.0 > 15.0 and WardenRules.walking(sim),
 			str(sim.warden.position))
 
+
+func _test_readout_setups() -> void:
+	# Story 1.7 Dev Notes, "Launch and shows": sections at 8, 5, 0 (open), fallen, 1 and 4 planks,
+	# section 2's left rail stripped. In hand: 3 + 8 + 7 + 4 = 22 planks and 1 rope; lost with
+	# section 4: 8 planks and 2 ropes (48 planks and 12 ropes in all).
+	for show_name: StringName in [&"readout", &"readout_walk"]:
+		var def: NightDef = ShowSetups.def_of(show_name)
+		_check("show: %s is a show-me setup" % show_name, def != null)
+		if def == null:
+			continue
+		var sim: NightSim = _sim_with(def, 1)
+		_check("show: %s has sections at 8 5 0 0 1 4, section 4 fallen and section 3 open" % show_name,
+				_counts(sim) == [8, 5, 0, 0, 1, 4] and sim.span.fallen(4) and not sim.span.fallen(3)
+				and SpanRules.open(3, sim.span), str(_counts(sim)))
+		var standing: int = 0
+		for n: int in [1, 2, 3, 5, 6]:
+			for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
+				standing += 1 if sim.span.rail_standing(n, side) else 0
+		_check("show: %s has section 2's left rail stripped and the other 9 standing" % show_name,
+				not sim.span.rail_standing(2, NightTypes.Side.LEFT) and standing == 9, str(standing))
+		_check("show: %s has 22 planks and 1 rope in hand, 8 planks and 2 ropes lost" % show_name,
+				sim.span.in_hand(NightTypes.Part.PLANK) == 22 and sim.span.in_hand(NightTypes.Part.ROPE) == 1
+				and sim.span.count_at(NightTypes.Part.PLANK, PartPlace.lost()) == 8
+				and sim.span.count_at(NightTypes.Part.ROPE, PartPlace.lost()) == 2)
+		# What the read-out shows under each standing section: 8, 5, 2 (open), 1, 4.
+		var strengths: Array[int] = []
+		for n: int in [1, 2, 3, 5, 6]:
+			strengths.append(SpanRules.strength(n, sim.span))
+		_check("show: %s's strengths read 8 5 2 1 4" % show_name, strengths == [8, 5, 2, 1, 4], str(strengths))
+		_check("show: %s starts on the landing" % show_name, sim.warden.position.is_equal_approx(Vector3(0.0, 0.0, 2.0)),
+				str(sim.warden.position))
+		var events: Array[NightEvent] = _advance(sim, 120)
+		_check("show: %s, 120 ticks untouched: only NIGHT_STARTED, no fault" % show_name,
+				_kinds(events) == [NightEvent.Kind.NIGHT_STARTED] and _faults.total() == 0,
+				"%s %s" % [_kinds(events), _faults.codes()])
+	# On a shorter night only the sections it has (as span_counts_start()).
+	var four: StartState = ShowSetups.readout_start(4)
+	_check("show: readout on 4 sections keeps sections 2 and 3, the stripped rail and the fallen section 4",
+			four.planks == {2: 5, 3: 0} and four.stripped_rails == [Vector2i(2, NightTypes.Side.LEFT)] and four.fallen == [4],
+			"%s %s %s" % [four.planks, four.stripped_rails, four.fallen])
+	var one: StartState = ShowSetups.readout_start(1)
+	_check("show: readout on 1 section changes nothing", one.planks.is_empty() and one.stripped_rails.is_empty()
+			and one.fallen.is_empty(), "%s %s %s" % [one.planks, one.stripped_rails, one.fallen])
+	var sim4: NightSim = _sim_with(_def_with(four, 4), 1)
+	_check("show: and builds with no fault", _faults.total() == 0 and _counts(sim4) == [8, 5, 0, 0], str(_faults.codes()))
+
+
+func _test_readout_walk_is_what_the_read_out_shows() -> void:
+	# AC 12 / M2: the two setups open on the same span, so the read-out can be compared with the
+	# bridge on foot.
+	var readout: NightSim = _sim_with(ShowSetups.def_of(&"readout"), 1)
+	var walk: NightSim = _sim_with(ShowSetups.def_of(&"readout_walk"), 1)
+	_check("show: readout and readout_walk start on the same span", readout.span.values() == walk.span.values())
+	# M2's walk: push toward the far pier from the landing. Sections 6 (4 planks) and 5 (1 plank) are
+	# walked, the gap of section 4 is crossed, the open section 3 is edged, and section 2 is reached.
+	var kinds: Array[NightEvent.Kind] = []
+	for i: int in 1500:
+		walk.set_move(Vector2(0.0, -1.0))
+		kinds.append_array(_kinds(walk.advance()))
+	_check("show: readout_walk: pushing on crosses section 4, edges section 3 and reaches the far pier's stop",
+			kinds.count(NightEvent.Kind.CROSSING_ENDED) == 1 and kinds.count(NightEvent.Kind.EDGING_ENDED) == 1
+			and walk.warden.position.z + 30.0 < 5.0 and WardenRules.walking(walk) and _faults.total() == 0,
+			"%s %s" % [kinds, walk.warden.position])
+
+
+func _test_a_setup_names_its_screen() -> void:
+	# Story 1.7: a show-me setup opens the night or planning (AD-56). `readout` is the one that opens
+	# planning; an unknown name has no screen.
+	var tools: DebugTools = DebugTools.new()
+	for show_name: String in ShowSetups.names():
+		var want: StringName = &"planning" if show_name == "readout" else &"night"
+		_check("show: %s opens %s" % [show_name, want], ShowSetups.screen_of(StringName(show_name)) == want
+				and tools.show_screen(StringName(show_name)) == want, str(ShowSetups.screen_of(StringName(show_name))))
+	_check("show: an unknown name has no screen", ShowSetups.screen_of(&"no_such_show") == &""
+			and tools.show_screen(&"no_such_show") == &"")
+	_check("show: readout's list line says what it shows", ShowSetups.list_line(&"readout").begins_with("show: readout  the overhead read-out"),
+			ShowSetups.list_line(&"readout"))
+	_check("show: readout_walk's list line", ShowSetups.list_line(&"readout_walk").begins_with("show: readout_walk  the read-out's span on foot"),
+			ShowSetups.list_line(&"readout_walk"))

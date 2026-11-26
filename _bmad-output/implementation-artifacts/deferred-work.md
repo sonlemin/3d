@@ -490,3 +490,33 @@ owner: gate 2 tuning (story 6.5), with the dead on the bridge (epic 3)
 severity: low
 reason: Sonlm on M1: "Also feels quite slow." Sonlm did not say which move. Walking a 5 m section takes 1.4 s, edging an open section 4 s, crossing a gap 8 s. The 4 s and 8 s come from the validator's fix that let the warden cross at all (the dead take 12 s); no reason for those exact values is written down. Nothing races the warden until epic 3, so "slow" cannot be judged against a threat yet. Sonlm chose (2026-11-26) to keep all three as starting values and judge them at gate 2. Changing them touches the GDD, the epics' 240 and 480 tick criteria and the tests.
 status: open
+
+## Deferred from: dev-story of 1-7-the-overhead-read-out.md (2026-11-26)
+
+### DW-51: The typeface's licence must ship with every build that carries the font
+
+origin: story 1.7 (the typeface is bundled), 2026-11-26
+location: game/fonts/ (`cormorant_garamond.ttf`, `OFL.txt`, `CREDITS.md`); game/export_presets.cfg; epic 2 (the playtest presets), epic 8 (the public presets; story 8.6, credits and disclosure)
+owner: the story that adds the playtest presets (epic 2), then story 8.6
+severity: medium
+reason: Cormorant Garamond is under the SIL Open Font License 1.1, which asks that the copyright notice and the licence go with every copy of the font. `OFL.txt` is not a Godot resource, so no preset exports it unless it is in the preset's `include_filter`. The game has no presets of its own yet. When the playtest presets are made (epic 2) and the public ones (epic 8), add `fonts/OFL.txt` to each one's include filter, and name the typeface, its designer and its licence in the credits (story 8.6). The ear test's two presets export all resources and so carry the `.ttf` from now on; they are closed and were not edited (one of the ear test's tests counts their filter line). The font file's own metadata holds the copyright and the licence text, and the ear test builds are private. Decide at epic 2 whether that is enough for them or whether they are rebuilt with the licence beside them.
+status: open
+
+### DW-52: `DESIGN.md`'s span-section does not say what story 1.7 settled
+
+origin: story 1.7 decisions D2, D3 and D4 (Sonlm, 2026-11-26)
+location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/DESIGN.md (Components, span-section; Typography); EXPERIENCE.md (span-section, UX-8)
+owner: the `gds-ux` update of DW-5
+severity: low
+reason: Four things the read-out does are in the story and the code but not in the UX documents. (1) D2: a fallen section in the planning view is a dashed `dim` outline that keeps its section number and has no strength (`DESIGN.md` says "a dashed outline only", and only of the dawn view). (2) D3: a rail's line stops 0.15 m short of each end of its section, so each joint shows as a break in both rail lines; the mock draws six squares apart, which the real geometry does not allow. (3) D4: the words FAR PIER and TOWN stand at the two ends in the `label` style, `muted`, turned to read upward; `DESIGN.md` names no mark for the ends. (4) The section number's type style is `label`, and both `label` and `number` use lining figures (`number` tabular as well): `DESIGN.md` gives the number's colour but no style, and asks for lining figures only "wherever numbers stack or change". Also not written there: an open section reads 2 (story 1.6 D4, DW-49), and a rail's line lies just outside the deck's edge, since a dashed `dim` line over `plank` cannot be seen.
+status: open
+
+### DW-53: Text is on whole screen pixels only at 720p, 1080p, 1440p and 4K windows
+
+origin: dev-story of story 1.7, measured on the read-out's frames; Sonlm's choice, 2026-11-26
+location: game/watch/screens/watch_theme.gd (`even_px()`), game/watch/planning/planning.gd (`_fit()`); architecture AD-69 (the 1280×720 canvas, `canvas_items` stretch)
+owner: epic 5 (the title, the settings and the window join the theme), with the look test of epic 7
+severity: low
+reason: Godot draws each control from a whole canvas pixel. The canvas is 1280×720, so in a 1920×1080 window (1.5 times) a label on an odd canvas pixel is drawn from half a screen pixel and its glyphs are blurred by that half pixel: in the read-out's 1080p frame the steepest step between neighbouring pixels of the strength digits was about 105 of 214, against about 200 at 720p. Sonlm chose to place every hand-placed label on an even canvas pixel (`WatchTheme.even_px()`), which is a whole screen pixel at 1.5, 2 and 3 times the canvas; after it the 1080p digits measure about 200. It does not help a window that is not one of those sizes (1366×768 is 1.067 times), and it does not reach labels placed by containers (the title today, most of epic 5's screens). When epic 5 builds those screens, check their text in a 1080p window the same way, and decide whether a general answer is wanted (for example a fractional-scale-aware snap, or turning the viewport's control snapping off and snapping to screen pixels in one place).
+status: open
+

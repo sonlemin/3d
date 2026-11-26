@@ -15,6 +15,46 @@ Or open `game/` in the editor and press **F5**. Today the game opens on a bare s
 lists every setup problem found at start (a bad launch switch, an input action already defined
 elsewhere), or says "No setup problems."
 
+The import is not optional on a fresh checkout: the game's typeface (`fonts/cormorant_garamond.ttf`,
+Cormorant Garamond, SIL Open Font License; see `fonts/CREDITS.md`) is usable only once imported,
+and the planning screen's scripts do not load without it. Opening the project in the editor
+imports it too.
+
+## Planning (the overhead read-out)
+
+```
+godot --path game -- --start=planning             # the one-night span from above, full
+godot --path game -- --show=readout               # the same view on a span with every mark in it
+godot --path game -- --show=readout_walk          # that span as a night, to compare on foot
+```
+
+`--start=planning` shows the whole span from straight above (story 1.7). It is the first form of
+the planning view: it shows, and does nothing yet. No key or click does anything, Esc included;
+close the window to leave. Building by click, the tray and the bell come in epic 5.
+
+How to read it:
+
+- The **far pier is at the left** and the **town at the right** (the two words at the ends).
+  Section 1 is at the far pier.
+- The view is not mirrored: **your left rail, walking toward the far pier, is the bottom edge**,
+  and your right rail the top edge.
+- Each section is drawn with its planks where the night has them. Where a plank is missing the
+  deck is black.
+- A **standing rail** is a solid line along that edge; a **stripped rail** is a thin dashed line
+  in the same place. Each line stops a little short of its section's ends, so every joint between
+  two sections shows as a break in both lines.
+- **Above** each section is its number; **below** it is its strength: its planks while it has
+  any. An **open section** (no planks, not fallen) is an all-black deck with its rails, and reads
+  **2**: its side beams still carry that much.
+- A **fallen section** (a gap) is a dashed outline with nothing in it. It keeps its number and
+  has no strength.
+
+`--show=readout` opens it on sections at 8, 5, 0 (open), fallen, 1 and 4 planks with section 2's
+left rail stripped, so the strengths read 8, 5, 2, none, 1, 4. `--show=readout_walk` opens the
+night on the same span, from the landing: walking toward the far pier, section 6 has 4 planks,
+section 5 has 1, section 4 is a gap, section 3 is open, section 2 has 5 planks and no rail on your
+left, and section 1 is full.
+
 ## The night
 
 ```
@@ -28,6 +68,7 @@ godot --path game -- --show=overload              # strip section 4 from section
 godot --path game -- --show=fall_under            # stand on section 4 and strip it under you
 godot --path game -- --show=gaps                  # cross a gap and edge round an open section
 godot --path game -- --show=last_plank            # strip your last plank and edge off it, then re-lay it
+godot --path game -- --show=readout_walk          # the read-out's span on foot (see Planning)
 godot --path game -- --show=list                  # list the show-me setups, then quit
 godot --path game -- --start=night --trace        # print every event of the night
 ```
@@ -129,7 +170,8 @@ along it after each strip to see the bow) and
 `fall_under` (the same section 4, standing on it near its town end: strip your own deck twice).
 For story 1.6: `gaps` (section 4 fallen and section 2 open, standing mid section 5 facing the far
 pier: walk on and keep pushing, then come back) and `last_plank` (on section 3 at its last plank,
-1 m from section 2: strip the deck ahead, then re-lay it from section 4).
+1 m from section 2: strip the deck ahead, then re-lay it from section 4). For story 1.7: `readout`
+(the planning screen, not a night) and `readout_walk` (its span on foot); see Planning above.
 
 With `--trace`, story 1.5 adds lines like these (one of each kind, not one run):
 
@@ -206,9 +248,9 @@ than once, the first good value stands.
 | Switch | What it does |
 |---|---|
 | `--seed=N` | The seed for the night's randomness, a whole number. Without it a night gets a fresh random seed, which `NIGHT_STARTED` carries and `--trace` prints, so the night can be run again with `--seed=N` |
-| `--start=<value>` | Start on that screen instead of the title. Today the one value is `night`; `planning` (story 1.7), `lesson` and `round` (epic 2) follow |
+| `--start=<value>` | Start on that screen instead of the title. Today the values are `night` and `planning` (the overhead read-out; `--seed` is accepted with it and not used); `lesson` and `round` (epic 2) follow |
 | `--trace` | Debug. Print every night event as one line: time, kind, who, where (`  0.000 NIGHT_STARTED     one_night seed=7`, `  4.000 RAIL_STRIPPED     warden s5 L`); a refusal ends with its reason. No value |
-| `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. `--show=list` lists them and quits (with exit code 1 when the launch had a setup problem). Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
+| `--show=<name>` | Debug. Open a show-me setup: the exact situation of a manual check. Each setup opens the night, or planning (`readout`). `--show=list` lists them and quits (with exit code 1 when the launch had a setup problem). Wins over `--start` (a setup problem says so); an unknown name is a setup problem and the title opens |
 
 The debug switches (`--trace`, `--show`) work when run from source and in playtest builds only;
 anywhere else they are a setup problem (`launch.no_debug`).

@@ -1,14 +1,21 @@
-## One section of the span, drawn to its count (AD-49): side beams and posts always, one plank
-## per kept place, one rope per standing rail and, since story 1.5, one box per test weight. Each
-## tick it reconciles with state: it makes what is missing and frees what is gone. It never counts
-## events, so a missed event cannot leave a ghost plank. Every box is placed by SpanGeometry.
+## One section of the span, drawn to its count (AD-49), in the look its SpanView was given. Each
+## time it is shown it reconciles with state: it makes what is missing and frees what is gone. It
+## never counts events, so a missed event cannot leave a ghost plank. Every shape is placed by
+## SpanGeometry.
 ##
-## Story 1.5 decision D4 (gray box; no sound until epic 2): a creaking deck bows a little, a
-## groaning one bows deeper as its groan runs out (read from state each tick, not a timer), and on
-## SECTION_FELL every piece of the section drops out of sight over FALL_S and is freed. A fallen
-## section draws only the one rope left strung across it (Sonlm's play of M1 of story 1.6: the
-## warden crosses hand over hand under it), so the gap still reads black. No shake, no flash,
-## nothing flickers.
+## The night look: side beams and posts always, one plank per kept place, one rope per standing
+## rail and, since story 1.5, one box per test weight. Story 1.5 decision D4 (gray box; no sound
+## until epic 2): a creaking deck bows a little, a groaning one bows deeper as its groan runs out
+## (read from state each tick, not a timer), and on SECTION_FELL every piece of the section drops
+## out of sight over FALL_S and is freed. A fallen section draws only the one rope left strung
+## across it (Sonlm's play of M1 of story 1.6: the warden crosses hand over hand under it), so the
+## gap still reads black. No shake, no flash, nothing flickers.
+##
+## The plan look (story 1.7; seen from straight above): a black backing under the deck, the same
+## planks at the same places, and per side a line for a standing rail or dashes for a stripped
+## one. A fallen section is a dashed outline of its deck and nothing else (decision D2). Not drawn:
+## beams and posts (the view does not show what lies under the planks), weights, the gap's rope, a
+## bow (it moves planks down only, which cannot be seen from above).
 class_name SectionView
 extends Node3D
 
@@ -24,6 +31,7 @@ const FALL_GRAVITY: float = 9.8
 var _geometry: SpanGeometry
 var _materials: Dictionary[StringName, StandardMaterial3D]
 var _section: int = 0
+var _look: SpanView.Look = SpanView.Look.NIGHT
 ## Place (1 to 8) -> its plank.
 var _planks: Dictionary[int, MeshInstance3D] = {}
 ## NightTypes.Side -> its rope.
@@ -39,12 +47,24 @@ var _falling: Node3D = null
 var _fall_time: float = 0.0
 ## The rope across the gap, once the section has fallen (made once, never freed).
 var _gap_rope: Node3D = null
+## Plan look: the black under the planks of a standing section.
+var _backing: MeshInstance3D = null
+## Plan look: NightTypes.Side -> the dashes of its stripped rail.
+var _rail_dashes: Dictionary[NightTypes.Side, Node3D] = {}
+## Plan look: the dashed outline, once the section has fallen (made once, never freed).
+var _outline: Node3D = null
 
 
-func _init(geometry: SpanGeometry, section: int, materials: Dictionary[StringName, StandardMaterial3D]) -> void:
+## `materials` holds the look's own kinds: the night's `plank`, `beam`, `rail` and `weight`; the
+## plan's `plank`, `rail`, `dim` and `abyss`.
+func _init(geometry: SpanGeometry, section: int, materials: Dictionary[StringName, StandardMaterial3D],
+		look: SpanView.Look = SpanView.Look.NIGHT) -> void:
 	_geometry = geometry
 	_materials = materials
 	_section = section
+	_look = look
+	if _look == SpanView.Look.PLAN:
+		return
 	for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
 		var tag: String = _tag(side)
 		_frame.append(SpanView.box("Beam" + tag, geometry.side_beam_box(section, side), materials[&"beam"]))
@@ -62,19 +82,67 @@ func _ready() -> void:
 	set_process(false)
 
 
-## Makes the planks, rails and weights match `sim`'s state for section `n`, the planks bowed by its
-## creak or groan. A fallen section shows only the one rope left strung across its gap (what fall()
-## took is dropping on its own).
-func show_state(sim: NightSim, n: int) -> void:
-	if sim.span.fallen(n):
+## Makes the section match `span`'s state for section `n`. Night look: the planks, rails and
+## weights, the planks bowed by its creak or groan (`groan_ticks` is a groan's whole length); a
+## fallen section shows only the one rope left strung across its gap (what fall() took is dropping
+## on its own). Plan look: _show_plan().
+func show_state(span: SpanState, n: int, groan_ticks: int) -> void:
+	if _look == SpanView.Look.PLAN:
+		_show_plan(span, n)
+		return
+	if span.fallen(n):
 		_clear()
 		_show_gap_rope()
 		return
-	_show_planks(sim.span.planks(n))
+	_show_planks(span.planks(n))
 	for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
-		_show_rail(side, sim.span.rail_standing(n, side))
-	_show_weights(sim.span.weights(n))
-	_bow(bow_depth(sim.span.creaking(n), sim.span.groan_left(n), sim.ticks.groan))
+		_show_rail(side, span.rail_standing(n, side))
+	_show_weights(span.weights(n))
+	_bow(bow_depth(span.creaking(n), span.groan_left(n), groan_ticks))
+
+
+## The plan look of section `n`: standing, its backing, its planks where the night has them, and a
+## line or dashes for each rail; fallen, everything is dropped and its dashed outline is all there
+## is (story 1.7 decision D2).
+func _show_plan(span: SpanState, n: int) -> void:
+	if span.fallen(n):
+		_clear()
+		if _outline == null:
+			_outline = _dashes("Outline", _geometry.plan_outline_dashes(_section))
+		return
+	if _backing == null:
+		_backing = SpanView.box("Backing", _geometry.plan_backing_box(_section), _materials[&"abyss"])
+		add_child(_backing)
+	_show_planks(span.planks(n))
+	for side: NightTypes.Side in [NightTypes.Side.LEFT, NightTypes.Side.RIGHT]:
+		_show_plan_rail(side, span.rail_standing(n, side))
+
+
+## Plan look: a solid line while the rail stands, a row of dashes in its place once it is stripped.
+func _show_plan_rail(side: NightTypes.Side, standing: bool) -> void:
+	if standing and not _rails.has(side):
+		var rail: MeshInstance3D = SpanView.box("Rail" + _tag(side), _geometry.plan_rail_box(_section, side), _materials[&"rail"])
+		add_child(rail)
+		_rails[side] = rail
+	elif not standing and _rails.has(side):
+		_drop(_rails[side])
+		_rails.erase(side)
+	if not standing and not _rail_dashes.has(side):
+		_rail_dashes[side] = _dashes("RailDashes" + _tag(side), _geometry.plan_rail_dashes(_section, side))
+	elif standing and _rail_dashes.has(side):
+		_drop(_rail_dashes[side])
+		_rail_dashes.erase(side)
+
+
+## Plan look: a dashed line as one group named `node_name`, one box per dash (`Dash1`, ...), added
+## to the section.
+func _dashes(node_name: String, boxes: Array[AABB]) -> Node3D:
+	var group: Node3D = Node3D.new()
+	group.name = node_name
+	for i: int in boxes.size():
+		group.add_child(SpanView.box("Dash%d" % (i + 1), boxes[i], _materials[&"dim"]))
+	add_child(group)
+	return group
 
 
 ## D4: SECTION_FELL, with the events of the tick it fell on. Every piece the section has (planks,
@@ -241,6 +309,8 @@ func _forget() -> void:
 	_rails.clear()
 	_weights.clear()
 	_frame.clear()
+	_backing = null
+	_rail_dashes.clear()
 
 
 ## Takes `node` out at once (so its name is free for a part laid back) and frees it at frame end.

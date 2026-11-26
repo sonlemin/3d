@@ -11,6 +11,11 @@ const NO_SETUP_PROBLEMS: String = "No setup problems."
 ## Above the list when something was (AD-28: setup problems are shown on the title).
 const SETUP_PROBLEMS_HEADING: String = "Setup problems found at start:"
 
+## The planning view's two ends (story 1.7 decision D4; the mock's words). The label style shows
+## them in capitals.
+const FAR_PIER: String = "Far pier"
+const TOWN: String = "Town"
+
 ## Printed names of the two mouse buttons the game binds (InputActions.key_name).
 const MOUSE_LEFT: String = "Left mouse"
 const MOUSE_RIGHT: String = "Right mouse"

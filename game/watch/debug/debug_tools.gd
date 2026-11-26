@@ -17,6 +17,12 @@ func show_def(show_name: StringName) -> NightDef:
 	return ShowSetups.def_of(show_name)
 
 
+## The screen the show-me setup opens (story 1.7): `night` or `planning`; empty when there is no
+## setup of that name. Main compares it with its own screen names.
+func show_screen(show_name: StringName) -> StringName:
+	return ShowSetups.screen_of(show_name)
+
+
 ## `--show=list`: one line per setup, then `shows: <how many>` for tools/ci.sh to check.
 func print_show_list() -> void:
 	for show_name: String in ShowSetups.names():

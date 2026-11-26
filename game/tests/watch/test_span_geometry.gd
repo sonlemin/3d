@@ -152,3 +152,86 @@ func _test_the_rope_across_a_gap() -> void:
 	_check("rope: the crossing eye (-0.8) is 0.3 m under its lowest point", is_equal_approx(g.crossing_point(17.5).y + 1.6,
 			points[5].y - 0.3), str(g.crossing_point(17.5)))
 
+
+
+# --- Story 1.7: the plan look's shapes (Dev Notes "Plan shapes"; plan-view sizes, not rules) ------
+# A standing rail's line is 0.12 m across, its inner edge on the deck's edge (x 2.5 or -2.5) and the
+# rest outside it, and stops 0.15 m short of each end of its section (decision D3: a joint shows as
+# a break). A dashed line is 0.05 m across, in dashes of 0.25 m every 0.5 m, centred in each step
+# (the first starts 0.125 m in). Section 2 of 6 is along 5 to 10: z -25 to -20.
+
+func _test_plan_backing() -> void:
+	var g: SpanGeometry = _geometry()
+	var backing: AABB = g.plan_backing_box(2)
+	_check("plan: section 2's backing is the deck's footprint (x -2.5 to 2.5, z -25 to -20)",
+			is_equal_approx(backing.position.x, -2.5) and is_equal_approx(backing.end.x, 2.5)
+			and is_equal_approx(backing.position.z, -25.0) and is_equal_approx(backing.end.z, -20.0), str(backing))
+	# A plank is 0.08 m thick under the deck top (y 0): the backing lies wholly under the planks.
+	_check("plan: its top is the planks' underside (y -0.08), and it has some thickness",
+			is_equal_approx(backing.end.y, -0.08) and backing.size.y > 0.0, str(backing))
+
+
+func _test_plan_rail_line() -> void:
+	var g: SpanGeometry = _geometry()
+	# At the rope's height (1.0 m, 0.05 thick), so it lies over the planks seen from above.
+	_check("plan: section 2's right rail line is x 2.5 to 2.62, z -24.85 to -20.15, at the rope's height",
+			_aabb_is(g.plan_rail_box(2, RIGHT), Vector3(2.5, 0.975, -24.85), Vector3(2.62, 1.025, -20.15)),
+			str(g.plan_rail_box(2, RIGHT)))
+	_check("plan: its left rail line is x -2.62 to -2.5",
+			_aabb_is(g.plan_rail_box(2, LEFT), Vector3(-2.62, 0.975, -24.85), Vector3(-2.5, 1.025, -20.15)),
+			str(g.plan_rail_box(2, LEFT)))
+	# D3: two neighbours' lines are 0.3 m apart at their joint.
+	_check("plan: section 3's line starts 0.3 m after section 2's ends",
+			is_equal_approx(g.plan_rail_box(3, RIGHT).position.z - g.plan_rail_box(2, RIGHT).end.z, 0.3))
+	var short: SpanGeometry = _geometry(4)
+	_check("plan: section 1 of 4's right rail line is z -19.85 to -15.15",
+			_aabb_is(short.plan_rail_box(1, RIGHT), Vector3(2.5, 0.975, -19.85), Vector3(2.62, 1.025, -15.15)),
+			str(short.plan_rail_box(1, RIGHT)))
+
+
+func _test_plan_rail_dashes() -> void:
+	var g: SpanGeometry = _geometry()
+	var dashes: Array[AABB] = g.plan_rail_dashes(2, LEFT)
+	_check("plan: a stripped rail is 10 dashes on a 5 m section", dashes.size() == 10, str(dashes.size()))
+	if dashes.size() != 10:
+		return
+	_check("plan: section 2's left dashes: the first is x -2.55 to -2.5, z -24.875 to -24.625, at the rope's height",
+			_aabb_is(dashes[0], Vector3(-2.55, 0.975, -24.875), Vector3(-2.5, 1.025, -24.625)), str(dashes[0]))
+	_check("plan: the last is z -20.375 to -20.125", _aabb_is(dashes[9], Vector3(-2.55, 0.975, -20.375),
+			Vector3(-2.5, 1.025, -20.125)), str(dashes[9]))
+	var ok: bool = true
+	for i: int in dashes.size():
+		ok = ok and is_equal_approx(dashes[i].size.z, 0.25) and is_equal_approx(dashes[i].size.x, 0.05) \
+				and is_equal_approx(dashes[i].position.z, -24.875 + 0.5 * i)
+	_check("plan: every dash is 0.25 m long and 0.05 m across, one every 0.5 m", ok, str(dashes))
+	var right: Array[AABB] = g.plan_rail_dashes(2, RIGHT)
+	_check("plan: the right rail's dashes are x 2.5 to 2.55, outside the deck's edge", right.size() == 10
+			and _aabb_is(right[0], Vector3(2.5, 0.975, -24.875), Vector3(2.55, 1.025, -24.625)), str(right))
+
+
+func _test_plan_outline() -> void:
+	# A fallen section's outline: the four edges of the deck's footprint, each dashed as above, the
+	# line centred on the edge, its top at the deck's top (y 0). Section 4 is along 15 to 20: z -15
+	# to -10. Order: the right (+X) edge, the left edge, the far-pier end, the town end.
+	var g: SpanGeometry = _geometry()
+	var dashes: Array[AABB] = g.plan_outline_dashes(4)
+	_check("plan: a fallen section's outline is 40 dashes (10 an edge)", dashes.size() == 40, str(dashes.size()))
+	if dashes.size() != 40:
+		return
+	var ok: bool = true
+	for i: int in 10:
+		ok = ok and _aabb_is(dashes[i], Vector3(2.475, -0.05, -14.875 + 0.5 * i), Vector3(2.525, 0.0, -14.625 + 0.5 * i))
+	_check("plan: the +X edge's dashes are x 2.475 to 2.525, from z -14.875, top at y 0", ok, str(dashes.slice(0, 10)))
+	ok = true
+	for i: int in 10:
+		ok = ok and _aabb_is(dashes[10 + i], Vector3(-2.525, -0.05, -14.875 + 0.5 * i), Vector3(-2.475, 0.0, -14.625 + 0.5 * i))
+	_check("plan: the -X edge's are x -2.525 to -2.475", ok, str(dashes.slice(10, 20)))
+	ok = true
+	for i: int in 10:
+		ok = ok and _aabb_is(dashes[20 + i], Vector3(-2.375 + 0.5 * i, -0.05, -15.025), Vector3(-2.125 + 0.5 * i, 0.0, -14.975))
+	_check("plan: the far-pier end's are z -15.025 to -14.975, from x -2.375", ok, str(dashes.slice(20, 30)))
+	ok = true
+	for i: int in 10:
+		ok = ok and _aabb_is(dashes[30 + i], Vector3(-2.375 + 0.5 * i, -0.05, -10.025), Vector3(-2.125 + 0.5 * i, 0.0, -9.975))
+	_check("plan: the town end's are z -10.025 to -9.975", ok, str(dashes.slice(30, 40)))
+	_check("plan: the plan shapes report no fault", _faults.total() == 0, str(_faults.codes()))
