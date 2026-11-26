@@ -10,7 +10,7 @@
 - [UX for the one-night game](ux-one-night-game.md) — spines final 2026-11-19 and in step with GDD draft 0.6; architecture is next
 - [Architecture for the one-night game](architecture-one-night-game.md) — complete 2026-11-20, AD-1 to AD-70 in _bmad-output/game-architecture.md; read summary + validation first; project-context.md refreshed the same day; readiness check done, DW-19 closed
 - [Readiness check result](readiness-check-one-night-game.md) — 2026-11-20 NEEDS WORK, blockers fixed the same day (AD-69, AD-70, epic 1 stories in epics.md draft 0.8); epic 1 can start; owed items are DW-5, DW-18, DW-20 to DW-23
-- [End-of-story chores are automatic](end-of-story-chores-automatic.md) — after a story: Xvfb screen checks, agent time, commit (never main/--no-verify/push); in _bmad/custom/gds-dev-story.toml
+- [End-of-story chores are automatic](end-of-story-chores-automatic.md) — after a story: Xvfb screen checks, agent time, commit (never main/--no-verify), then push the branch; in _bmad/custom/gds-dev-story.toml
 - [Explain purpose before options](explain-purpose-before-options.md) — before options on a mechanic, say what it is for (GDD/decision log) and name any document gap
 - [Fast test runs and the undo pass](fast-test-runs-and-undo-pass.md) — CI and a game/ commit take 10 min (bot nights 8); run named test files from a scratch runner, undo rules in copies of game/
-- [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin sonlemin/3d is PUBLIC on GitHub (checked 2026-11-25); push only on request; token in ~/.config/git/credentials-3d
+- [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin sonlemin/3d is PUBLIC on GitHub (checked 2026-11-25); push the working branch after each commit (since 2026-11-26); token in ~/.config/git/credentials-3d

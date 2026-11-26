@@ -1,6 +1,7 @@
 # Team override for gds-dev-story (Sonlm, 2026-11-20).
 # At the end of every story: run the manual checks that can be judged from the screen on a
-# virtual display, record the agent's time, and commit the story on the current branch.
+# virtual display, record the agent's time, commit the story on the current branch and push it
+# (Sonlm, 2026-11-26: "push next time since i clone it to my laptop").
 
 [workflow]
 
@@ -9,7 +10,7 @@ activation_steps_append = [
 ]
 
 on_complete = """
-Before the final message to Sonlm, do these three steps in this order.
+Before the final message to Sonlm, do these four steps in this order.
 
 1. Manual checks, automatically where possible. For each manual check the story lists (M1, M2, ...):
    - If it can be judged from what is on screen, run it on a virtual display and write frames:
@@ -21,5 +22,7 @@ Before the final message to Sonlm, do these three steps in this order.
 
 2. Hours. Run `date '+%Y-%m-%d %H:%M %z'` again. In Completion Notes, write "Agent time: <start> to <end> (<h> h <m> min), measured by the agent." Keep a separate line for Sonlm's own hours, left for Sonlm to fill in.
 
-3. Commit. Stage exactly the files in the story's File List (with their .uid files), plus the story file and sprint-status.yaml, and nothing else. Commit on the current branch with the message "Story <id>: <title>", ending with the attribution lines the session gives. If the current branch is main, create a branch first. The pre-commit hook runs tools/ci.sh: if it fails, fix the cause, rerun, and commit again. Never use --no-verify, never amend an earlier commit, and never push. Tell Sonlm the commit hash.
+3. Commit. Stage exactly the files in the story's File List (with their .uid files), plus the story file and sprint-status.yaml, and nothing else. Commit on the current branch with the message "Story <id>: <title>", ending with the attribution lines the session gives. If the current branch is main, create a branch first. The pre-commit hook runs tools/ci.sh: if it fails, fix the cause, rerun, and commit again. Never use --no-verify and never amend an earlier commit.
+
+4. Push. Sonlm gets the work onto the laptop by git, so a commit that is not pushed cannot be tested there. Run `git push origin <current branch>` (the branch only: never main, never a force push, never tags). If the push fails (the stored token expires 2026-12-25), say so plainly and ask Sonlm for a new token; do not work around it. The repository is public: if the commit holds anything Sonlm may want private, say so and ask before pushing. Tell Sonlm the commit hash and that it is pushed.
 """
