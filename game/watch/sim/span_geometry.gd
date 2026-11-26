@@ -68,13 +68,14 @@ const GAP_ROPE_SAG: float = 0.4
 const GAP_ROPE_PIECES: int = 10
 
 ## Story 1.7, the plan look (the span seen from straight above by the planning screen). Each is a
-## plan-view size, in metres so that it scales with the span; not a rule. Expect Sonlm's look at
-## the read-out (M1 of story 1.7) to change them: each is in this one place.
-## Plan-view size; not a rule. A standing rail's line, across.
-const PLAN_RAIL_WIDTH: float = 0.12
-## Plan-view size; not a rule. A dashed line (a stripped rail, a fallen section's outline), across:
-## the night rope's own thickness.
-const PLAN_DASH_WIDTH: float = 0.05
+## plan-view size, in metres so that it scales with the span; not a rule. Sonlm's look at the
+## read-out (M1 of story 1.7, 2026-11-27) made the two widths heavier; each size is in this one
+## place.
+## Plan-view size; not a rule. A standing rail's line, across (0.12 until Sonlm's M1: too thin).
+const PLAN_RAIL_WIDTH: float = 0.2
+## Plan-view size; not a rule. A dashed line (a stripped rail, a fallen section's outline), across
+## (0.05, the night rope's own thickness, until Sonlm's M1: too thin).
+const PLAN_DASH_WIDTH: float = 0.1
 ## Plan-view size; not a rule. One dash, along its line.
 const PLAN_DASH_LENGTH: float = 0.25
 ## Plan-view size; not a rule. From one dash's start to the next; each dash is centred in its step.

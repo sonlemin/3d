@@ -56,7 +56,7 @@ var _outline: Node3D = null
 
 
 ## `materials` holds the look's own kinds: the night's `plank`, `beam`, `rail` and `weight`; the
-## plan's `plank`, `rail`, `dim` and `abyss`.
+## plan's `plank`, `rail`, `dash` and `abyss`.
 func _init(geometry: SpanGeometry, section: int, materials: Dictionary[StringName, StandardMaterial3D],
 		look: SpanView.Look = SpanView.Look.NIGHT) -> void:
 	_geometry = geometry
@@ -140,7 +140,7 @@ func _dashes(node_name: String, boxes: Array[AABB]) -> Node3D:
 	var group: Node3D = Node3D.new()
 	group.name = node_name
 	for i: int in boxes.size():
-		group.add_child(SpanView.box("Dash%d" % (i + 1), boxes[i], _materials[&"dim"]))
+		group.add_child(SpanView.box("Dash%d" % (i + 1), boxes[i], _materials[&"dash"]))
 	add_child(group)
 	return group
 

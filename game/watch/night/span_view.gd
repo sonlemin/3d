@@ -47,12 +47,12 @@ var _built: bool = false
 ## dashed lines (a stripped rail, a fallen section's outline) and the black under a standing
 ## section's planks. The screen hands them in, so this folder names no screen script. Called before
 ## the first show; later it is a setup problem and the look stays as it is.
-func use_plan_look(plank: Color, rail: Color, dim: Color, abyss: Color) -> void:
+func use_plan_look(plank: Color, rail: Color, dash: Color, abyss: Color) -> void:
 	if _built:
 		push_warning("span_view.late_look: the plan look was asked for after the span was first shown; the look is kept")
 		return
 	_look = Look.PLAN
-	_plan_colors = {&"plank": plank, &"rail": rail, &"dim": dim, &"abyss": abyss}
+	_plan_colors = {&"plank": plank, &"rail": rail, &"dash": dash, &"abyss": abyss}
 
 
 ## A consumer of the night screen: build once, then the tick's events, then state (AD-49).

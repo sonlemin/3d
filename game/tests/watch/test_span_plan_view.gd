@@ -6,17 +6,20 @@ extends WatchTest
 
 const LEFT: NightTypes.Side = NightTypes.Side.LEFT
 const RIGHT: NightTypes.Side = NightTypes.Side.RIGHT
-# DESIGN.md, Colors: plank #55534f, rail #8d8982, dim #5f5d59 (stripped rails), abyss #000000.
-const PLANK: Color = Color("#55534f")
-const RAIL: Color = Color("#8d8982")
-const DIM: Color = Color("#5f5d59")
+# The four colours the planning screen hands in (Sonlm's M1, 2026-11-27, option C): planks #8d8982,
+# standing rails #ddd6c8, dashed lines #8d8982, and DESIGN.md's abyss #000000 under the planks.
+# Planks and dashes share a colour, so the test hands the dashes a colour of its own (#7a7670) to
+# tell which one a shape was given.
+const PLANK: Color = Color("#8d8982")
+const RAIL: Color = Color("#ddd6c8")
+const DASH: Color = Color("#7a7670")
 const ABYSS: Color = Color("#000000")
 
 
 ## A plan-look view of `sim`'s span, shown once, with no tick and no event.
 func _plan_view_of(sim: NightSim) -> SpanView:
 	var view: SpanView = SpanView.new()
-	view.use_plan_look(PLANK, RAIL, DIM, ABYSS)
+	view.use_plan_look(PLANK, RAIL, DASH, ABYSS)
 	root.add_child(view)
 	view.show_span(sim.geometry, sim.span, sim.ticks.groan)
 	return view
@@ -124,21 +127,21 @@ func _test_the_read_out_s_span() -> void:
 
 
 func _test_literal_places() -> void:
-	# Story 1.7 L5, section 2 of 6 (z -25 to -20), written out: the right rail's line is x 2.5 to
-	# 2.62, z -24.85 to -20.15 (centre (2.56, 1.0, -22.5), 0.12 x 0.05 x 4.7); the left rail's first
-	# dash is x -2.55 to -2.5, z -24.875 to -24.625 (centre (-2.525, 1.0, -24.75)); the backing is 5 m
-	# by 5 m with its top at y -0.08.
+	# Story 1.7 L5 with the widths of Sonlm's M1 (0.2 and 0.1 m), section 2 of 6 (z -25 to -20),
+	# written out: the right rail's line is x 2.5 to 2.7, z -24.85 to -20.15 (centre (2.6, 1.0,
+	# -22.5), 0.2 x 0.05 x 4.7); the left rail's first dash is x -2.6 to -2.5, z -24.875 to -24.625
+	# (centre (-2.55, 1.0, -24.75)); the backing is 5 m by 5 m with its top at y -0.08.
 	var sim: NightSim = _sim_with(_def_with(_readout_start()), 1)
 	var view: SpanView = _plan_view_of(sim)
 	var rail: MeshInstance3D = view.get_node_or_null("Section2/RailR") as MeshInstance3D
-	_check("plan: section 2's right rail line is centred at (2.56, 1.0, -22.5), 0.12 x 0.05 x 4.7", rail != null
-			and rail.position.is_equal_approx(Vector3(2.56, 1.0, -22.5))
-			and (rail.mesh as BoxMesh).size.is_equal_approx(Vector3(0.12, 0.05, 4.7)),
+	_check("plan: section 2's right rail line is centred at (2.6, 1.0, -22.5), 0.2 x 0.05 x 4.7", rail != null
+			and rail.position.is_equal_approx(Vector3(2.6, 1.0, -22.5))
+			and (rail.mesh as BoxMesh).size.is_equal_approx(Vector3(0.2, 0.05, 4.7)),
 			"%s" % [rail.position if rail != null else Vector3.ZERO])
 	var dash: MeshInstance3D = view.get_node_or_null("Section2/RailDashesL/Dash1") as MeshInstance3D
-	_check("plan: its left rail's first dash is centred at (-2.525, 1.0, -24.75), 0.05 x 0.05 x 0.25", dash != null
-			and dash.position.is_equal_approx(Vector3(-2.525, 1.0, -24.75))
-			and (dash.mesh as BoxMesh).size.is_equal_approx(Vector3(0.05, 0.05, 0.25)),
+	_check("plan: its left rail's first dash is centred at (-2.55, 1.0, -24.75), 0.1 x 0.05 x 0.25", dash != null
+			and dash.position.is_equal_approx(Vector3(-2.55, 1.0, -24.75))
+			and (dash.mesh as BoxMesh).size.is_equal_approx(Vector3(0.1, 0.05, 0.25)),
 			"%s" % [dash.position if dash != null else Vector3.ZERO])
 	_check("plan: 10 dashes on that rail", view.get_node("Section2/RailDashesL").get_child_count() == 10)
 	var backing: MeshInstance3D = view.get_node_or_null("Section2/Backing") as MeshInstance3D
@@ -147,8 +150,8 @@ func _test_literal_places() -> void:
 			and is_equal_approx(size.x, 5.0) and is_equal_approx(size.z, 5.0) and is_equal_approx(backing.position.x, 0.0)
 			and is_equal_approx(backing.position.z, -22.5) and is_equal_approx(backing.position.y + size.y / 2.0, -0.08),
 			"%s %s" % [backing.position if backing != null else Vector3.ZERO, size])
-	# The rail's line lies outside the deck's edge, on the ground: a dashed dim line on plank colour
-	# cannot be seen (trial result).
+	# The rail's line lies outside the deck's edge, on the ground: a dashed line over the plank ends
+	# cannot be told from them (trial result).
 	_check("plan: both of section 2's rail marks lie outside the deck (beyond x 2.5 and -2.5)", rail != null and dash != null
 			and rail.position.x - (rail.mesh as BoxMesh).size.x / 2.0 >= 2.5 - 0.0001
 			and dash.position.x + (dash.mesh as BoxMesh).size.x / 2.0 <= -2.5 + 0.0001)
@@ -182,7 +185,7 @@ func _test_flat_colours_and_nothing_of_the_night() -> void:
 		var want: Color = PLANK
 		var kind: String = "Plank"
 		if node_name.begins_with("Dash"):
-			want = DIM
+			want = DASH
 			kind = "Dash"
 		elif node_name.begins_with("Rail"):
 			want = RAIL
@@ -278,8 +281,8 @@ func _test_four_sections() -> void:
 			str(view.get_children()))
 	# Section 1 of 4 is along 0 to 5: z -20 to -15.
 	var rail: MeshInstance3D = view.get_node_or_null("Section1/RailL") as MeshInstance3D
-	_check("plan: section 1 of 4's left rail line is centred at (-2.56, 1.0, -17.5)", rail != null
-			and rail.position.is_equal_approx(Vector3(-2.56, 1.0, -17.5)), str(rail.position) if rail != null else "null")
+	_check("plan: section 1 of 4's left rail line is centred at (-2.6, 1.0, -17.5)", rail != null
+			and rail.position.is_equal_approx(Vector3(-2.6, 1.0, -17.5)), str(rail.position) if rail != null else "null")
 	_check("plan: its fallen section 4 is the outline", view.get_node("Section4").get_child_count() == 1
 			and view.get_node_or_null("Section4/Outline") != null)
 	_check("plan: no fault drawing 4 sections", _faults.total() == 0, str(_faults.codes()))
@@ -322,7 +325,7 @@ func _test_the_look_is_chosen_before_the_first_show() -> void:
 	root.add_child(view)
 	view.show_span(sim.geometry, sim.span, sim.ticks.groan)
 	_expect_begin()
-	view.use_plan_look(PLANK, RAIL, DIM, ABYSS)
+	view.use_plan_look(PLANK, RAIL, DASH, ABYSS)
 	_expect_end("plan: the plan look asked for after the first show is span_view.late_look", [["WARNING", "span_view.late_look", 1]])
 	view.show_span(sim.geometry, sim.span, sim.ticks.groan)
 	_check("plan: and the view stays in the night look", view.get_node_or_null("FarPier") != null

@@ -77,7 +77,8 @@ func _build_plan() -> void:
 	_camera.current = true
 	var span_view: SpanView = SpanView.new()
 	span_view.name = "SpanView"
-	span_view.use_plan_look(WatchTheme.PLANK, WatchTheme.RAIL, WatchTheme.DIM, WatchTheme.ABYSS)
+	# Planks, standing rails, dashed lines, and the black under the planks.
+	span_view.use_plan_look(WatchTheme.PLANK, WatchTheme.RAIL, WatchTheme.MUTED, WatchTheme.ABYSS)
 	plan.add_child(span_view)
 	# Nothing ticks in planning, so no groan is running: the plan look does not read its length.
 	span_view.show_span(geometry, _sim.span, 0)
@@ -119,8 +120,8 @@ func _add_label(node_name: String, style: StringName, text: String) -> Label:
 ## The sections fill the canvas width less `room` at each side: the safe margin, an end word's
 ## line, and a gap. The camera is over the span's middle, so the deck's centre line is at half the
 ## canvas height. A canvas no wider than the two rooms leaves the camera as it is. Each label is
-## then moved to the nearest even canvas pixel (at most 1 px), so its text is sharp in a 1080p
-## window too (WatchTheme.even_px()).
+## then moved, at most 1 px, so that its text starts on an even canvas pixel and is sharp in a
+## 1080p window too (WatchTheme.sharp_px()).
 func _fit() -> void:
 	var geometry: SpanGeometry = _sim.geometry
 	var canvas: Vector2 = get_viewport().get_visible_rect().size
@@ -137,9 +138,11 @@ func _fit() -> void:
 		var top: Vector2 = _camera.unproject_position(Vector3(deck.end.x, 0.0, middle_z))
 		var bottom: Vector2 = _camera.unproject_position(Vector3(deck.position.x, 0.0, middle_z))
 		var number: Label = _numbers[i]
-		number.position = WatchTheme.even_px(Vector2(top.x - number.size.x / 2.0, top.y - gap - number.size.y))
+		number.position = WatchTheme.sharp_px(Vector2(top.x - number.size.x / 2.0, top.y - gap - number.size.y),
+				Vector2(0.0, WatchTheme.text_rise(number)))
 		var strength: Label = _strengths[i]
-		strength.position = WatchTheme.even_px(Vector2(bottom.x - strength.size.x / 2.0, bottom.y + gap))
+		strength.position = WatchTheme.sharp_px(Vector2(bottom.x - strength.size.x / 2.0, bottom.y + gap),
+				Vector2(0.0, WatchTheme.text_rise(strength)))
 	# Each word's line box (as wide as the line is high, once turned) runs from the safe margin to
 	# `gap` short of the span's end; the word is centred on the deck's centre line.
 	var line_middle: float = margin + word_line / 2.0
@@ -147,9 +150,11 @@ func _fit() -> void:
 	_place_word(_town_word, Vector2(canvas.x - line_middle, canvas.y / 2.0))
 
 
-## Puts a turned end word's middle at `middle`, less the little it takes to draw it from an even
-## pixel. Turned a quarter turn about its middle, the word is drawn from the corner that is its
-## lower left on the canvas; that corner is what must be on an even pixel (WatchTheme.even_px()).
+## Puts a turned end word's middle at `middle`, less the little it takes for its text to start on
+## an even pixel (WatchTheme.sharp_px()). Turned a quarter turn about its middle, the word is drawn
+## from the corner that is its lower left on the canvas, and its baseline lies across from that
+## corner, not below it.
 func _place_word(word: Label, middle: Vector2) -> void:
 	var corner: Vector2 = Vector2(middle.x - word.size.y / 2.0, middle.y + word.size.x / 2.0)
-	word.position = middle - word.size / 2.0 + WatchTheme.even_px(corner) - corner
+	var sharp: Vector2 = WatchTheme.sharp_px(corner, Vector2(WatchTheme.text_rise(word), 0.0))
+	word.position = middle - word.size / 2.0 + sharp - corner

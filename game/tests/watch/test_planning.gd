@@ -3,8 +3,11 @@
 ## typeface. It reads and never writes.
 ##
 ## Every case opens the screen in a SubViewport of the canvas size the case is about: headless,
-## `root`'s own canvas is not 1280 x 720. Canvas positions are written out from the story's
-## literal cases (L2, L3, L4, L6), never worked out from the screen's own numbers.
+## `root`'s own canvas is not 1280 x 720. Canvas positions are written out, never worked out from
+## the screen's own numbers. They are the story's literal cases (L2, L3, L4) worked again by hand
+## for the larger text of Sonlm's M1 (2026-11-27, option C): an end word's line is 33 px high
+## (24 before) and a strength is 24 x 59 px (16 x 40), so the room at each end of the span is
+## 32 + 33 + 11 = 76 px (67).
 extends WatchTest
 
 const PlanningScreen := preload("res://watch/planning/planning.gd")
@@ -78,12 +81,22 @@ func _is_even(place: Vector2) -> bool:
 	return absf(fposmod(place.x + 0.001, 2.0)) < 0.002 and absf(fposmod(place.y + 0.001, 2.0)) < 0.002
 
 
-## The names of the labels under `screen` that are not drawn from an even canvas pixel.
+## Where a label's text starts on the canvas: the point it is drawn from, then down its own height
+## above the baseline (across, for a turned label). That height is the font's ascent, measured on
+## the build machine and asserted in test_watch_theme.gd: 45 px for a strength (the number style
+## at 48 px), 25 px for a section number or an end word (the label style at 27 px).
+func _text_start(label: Label) -> Vector2:
+	var rise: float = 45.0 if label.theme_type_variation == &"WatchNumber" else 25.0
+	return _drawn_from(label) + Vector2(0.0, rise).rotated(label.rotation)
+
+
+## The names of the labels under `screen` whose text does not start on an even canvas pixel
+## (Sonlm, 2026-11-26: a whole screen pixel in a 1080p window, so the text is not blurred there).
 func _off_even(screen: PlanningScreen) -> PackedStringArray:
 	var off: PackedStringArray = []
 	for node: Node in screen.find_children("*", "Label", true, false):
-		if not _is_even(_drawn_from(node as Label)):
-			off.append("%s %s" % [node.name, _drawn_from(node as Label)])
+		if not _is_even(_text_start(node as Label)):
+			off.append("%s %s" % [node.name, _text_start(node as Label)])
 	return off
 
 
@@ -137,13 +150,16 @@ func _test_the_tree() -> void:
 	var rail: MeshInstance3D = screen.get_node_or_null("Plan/SpanView/Section1/RailL") as MeshInstance3D
 	var dash: MeshInstance3D = screen.get_node_or_null("Plan/SpanView/Section2/RailDashesL/Dash1") as MeshInstance3D
 	var backing: MeshInstance3D = screen.get_node_or_null("Plan/SpanView/Section1/Backing") as MeshInstance3D
-	# DESIGN.md, span-section: plank #55534f, standing rail #8d8982, stripped rail dim #5f5d59,
-	# missing planks show abyss #000000.
-	_check("planning: planks #55534f, rail lines #8d8982, dashes #5f5d59, backings #000000",
-			plank != null and rail != null and dash != null and backing != null
-			and ((plank.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "55534f"
-			and ((rail.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "8d8982"
-			and ((dash.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "5f5d59"
+	# Sonlm's M1 (2026-11-27, option C; DESIGN.md's span-section colours were too dim): planks
+	# #8d8982, standing rails #ddd6c8, dashed lines (a stripped rail, a fallen section's outline)
+	# #8d8982. Missing planks show DESIGN.md's abyss #000000.
+	var outline_dash: MeshInstance3D = screen.get_node_or_null("Plan/SpanView/Section4/Outline/Dash1") as MeshInstance3D
+	_check("planning: planks #8d8982, rail lines #ddd6c8, dashes #8d8982, backings #000000",
+			plank != null and rail != null and dash != null and backing != null and outline_dash != null
+			and ((plank.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "8d8982"
+			and ((rail.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "ddd6c8"
+			and ((dash.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "8d8982"
+			and ((outline_dash.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "8d8982"
 			and ((backing.mesh as BoxMesh).material as StandardMaterial3D).albedo_color.to_html(false) == "000000")
 	_check("planning: a label for each section's number and strength, and the two end words",
 			screen.find_children("Number*", "Label", false, false).size() == 6
@@ -155,61 +171,64 @@ func _test_the_tree() -> void:
 
 
 func _test_the_fit_at_1280_by_720() -> void:
-	# L2. room = 32 (safe margin) + 24 (the end word's line) + 11 (gap) = 67; the 30 m fill
-	# 1280 - 2 x 67 = 1146 px: 38.2 px per metre; camera.size = 30 x 1280 / 1146.
+	# room = 32 (safe margin) + 33 (the end word's line) + 11 (gap) = 76; the 30 m fill
+	# 1280 - 2 x 76 = 1128 px: 37.6 px per metre; camera.size = 30 x 1280 / 1128 = 34.0426.
 	var screen: PlanningScreen = _open(_readout_def())
 	var camera: Camera3D = _camera(screen)
-	_check("fit 1280x720: the camera sees 33.5079 m across", absf(camera.size - 30.0 * 1280.0 / 1146.0) < 0.0001
-			and absf(camera.size - 33.5079) < 0.0001, str(camera.size))
+	_check("fit 1280x720: the camera sees 34.0426 m across", absf(camera.size - 30.0 * 1280.0 / 1128.0) < 0.0001
+			and absf(camera.size - 34.0426) < 0.0001, str(camera.size))
 	# L4, not mirrored: section 1's LEFT (-X) corner at the far pier is left and low; section 6's
-	# RIGHT corner at the town is right and high.
-	_check("fit 1280x720: section 1's left corner at the far pier is at (67, 455.5)",
-			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(67.0, 455.5)),
+	# RIGHT corner at the town is right and high. The deck is 5 m x 37.6 = 188 px wide: y 266 to 454.
+	_check("fit 1280x720: section 1's left corner at the far pier is at (76, 454)",
+			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(76.0, 454.0)),
 			str(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0))))
-	_check("fit 1280x720: section 6's right corner at the town is at (1213, 264.5)",
-			_near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1213.0, 264.5)),
+	_check("fit 1280x720: section 6's right corner at the town is at (1204, 266)",
+			_near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1204.0, 266.0)),
 			str(_on_canvas(screen, Vector3(2.5, 0.0, 0.0))))
-	# Section n spans x 67 + 191 (n - 1) to 67 + 191 n: its number and its strength are centred on
-	# 67 + 191 (n - 0.5). The number's bottom edge is 11 px above the deck's top edge (y 264.5): 253.5;
-	# the strength's top edge 11 px below its bottom edge (y 455.5): 466.5. Then each is moved to the
-	# nearest even canvas pixel (Sonlm, 2026-11-26: a whole screen pixel at 1080p), at most 1 px.
-	# A strength is 16 x 40, so it would be at x 191 n - 36.5: 154.5, 345.5, 536.5, (727.5), 918.5,
-	# 1109.5, y 466.5. On even pixels: x 154, 346, 536, (728), 918, 1110, y 466. Section 4 has fallen:
-	# its strength is hidden and has no text, so its place is not looked at. A number is 24 px high:
-	# its top would be y 229.5, and is 230.
-	var strength_x: Array[float] = [154.0, 346.0, 536.0, 728.0, 918.0, 1110.0]
+	# Section n spans x 76 + 188 (n - 1) to 76 + 188 n: its number and its strength are centred on
+	# 76 + 188 (n - 0.5): 170, 358, 546, 734, 922, 1110. The number's bottom edge is 11 px above the
+	# deck's top edge (y 266): 255, so its top (33 px high) is y 222. The strength's top edge is 11 px
+	# below the deck's bottom edge (y 454): 465. Then each is moved, at most 1 px, so that its text
+	# starts on an even canvas pixel (Sonlm, 2026-11-26: a whole screen pixel at 1080p): its left
+	# edge, and its baseline. A strength is 24 px wide and its baseline 45 px down: it would be at
+	# x 158, 346, 534, (722), 910, 1098, y 465; 465 + 45 is even, so it stays there. A number's
+	# baseline is 25 px down: 222 + 25 is odd, so its top is y 223.
+	# Section 4 has fallen: its strength is hidden and has no text, so its place is not looked at.
+	var strength_x: Array[float] = [158.0, 346.0, 534.0, 722.0, 910.0, 1098.0]
 	var wrong: PackedStringArray = []
 	for n: int in range(1, 7):
 		var number: Label = _label(screen, "Number%d" % n)
 		var strength: Label = _label(screen, "Strength%d" % n)
-		var x: float = 67.0 + 191.0 * (n - 0.5)
-		if absf(_middle(number).x - x) > 1.0 + NEAR or absf(number.position.y - 230.0) > NEAR or not _is_even(number.position):
+		var x: float = 76.0 + 188.0 * (n - 0.5)
+		if absf(_middle(number).x - x) > 1.0 + NEAR or absf(number.position.y - 223.0) > NEAR:
 			wrong.append("Number%d at %s, %s" % [n, number.position, number.size])
-		if strength.visible and not strength.position.is_equal_approx(Vector2(strength_x[n - 1], 466.0)):
+		if strength.visible and not strength.position.is_equal_approx(Vector2(strength_x[n - 1], 465.0)):
 			wrong.append("Strength%d at %s, %s" % [n, strength.position, strength.size])
-	_check("fit 1280x720: each number is over its section's middle (within 1 px), its top at y 230; the five strengths shown are at x 154 346 536 918 1110, y 466",
+	_check("fit 1280x720: each number is over its section's middle (within 1 px), its top at y 223; the five strengths shown are at x 158 346 534 910 1098, y 465",
 			wrong.is_empty(), " | ".join(wrong))
 	var number1: Label = _label(screen, "Number1")
-	_check("fit 1280x720: Number1 is centred within 1 px of x 162.5", absf(_middle(number1).x - 162.5) <= 1.0 + NEAR,
+	_check("fit 1280x720: Number1 is centred within 1 px of x 170", absf(_middle(number1).x - 170.0) <= 1.0 + NEAR,
 			str(_middle(number1)))
-	_check("fit 1280x720: every label is drawn from an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
-	# The end words: turned a quarter turn to read upward, on the deck's centre line, their 24 px
-	# line box from the safe margin (x 32 to 56, and 1224 to 1248); along their line they may be
-	# 1 px off the centre line, to be drawn from an even pixel.
+	_check("fit 1280x720: every label's text starts on an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
+	# The end words: turned a quarter turn to read upward, on the deck's centre line, their 33 px
+	# line box from the safe margin: x 32 to 65 (middle 48.5), and 1215 to 1248 (middle 1231.5).
+	# Each may be 1 px off for its text to start on an even pixel. Turned, a word's baseline is
+	# 25 px across from the corner it is drawn from: FAR PIER's would be at x 57, so it is drawn from
+	# x 33; TOWN's is at x 1240, so it is drawn from x 1215 as it is.
 	var far: Label = _label(screen, "FarPierWord")
 	var town: Label = _label(screen, "TownWord")
-	_check("fit 1280x720: FAR PIER is centred at (44, 360), TOWN at (1236, 360), within 1 px along the line",
-			absf(_middle(far).x - 44.0) < NEAR and absf(_middle(far).y - 360.0) <= 1.0 + NEAR
-			and absf(_middle(town).x - 1236.0) < NEAR and absf(_middle(town).y - 360.0) <= 1.0 + NEAR,
+	_check("fit 1280x720: FAR PIER is centred at (48.5, 360), TOWN at (1231.5, 360), each within 1 px",
+			absf(_middle(far).x - 48.5) <= 1.0 + NEAR and absf(_middle(far).y - 360.0) <= 1.0 + NEAR
+			and absf(_middle(town).x - 1231.5) < NEAR and absf(_middle(town).y - 360.0) <= 1.0 + NEAR,
 			"%s %s" % [_middle(far), _middle(town)])
-	_check("fit 1280x720: FAR PIER is drawn from x 32, the safe margin; TOWN from x 1224",
-			is_equal_approx(_drawn_from(far).x, 32.0) and is_equal_approx(_drawn_from(town).x, 1224.0),
+	_check("fit 1280x720: FAR PIER is drawn from x 33, 1 px inside the safe margin; TOWN from x 1215",
+			is_equal_approx(_drawn_from(far).x, 33.0) and is_equal_approx(_drawn_from(town).x, 1215.0),
 			"%s %s" % [_drawn_from(far), _drawn_from(town)])
 	_check("fit 1280x720: both are turned to read upward, about their middle", is_equal_approx(far.rotation, -PI / 2.0)
 			and is_equal_approx(town.rotation, -PI / 2.0) and far.pivot_offset.is_equal_approx(far.size / 2.0)
 			and town.pivot_offset.is_equal_approx(town.size / 2.0), "%s %s" % [far.rotation, far.pivot_offset])
-	_check("fit 1280x720: their line is 24 px high: 32 px from the canvas edge, 11 px from the span's end",
-			is_equal_approx(far.size.y, 24.0) and is_equal_approx(town.size.y, 24.0), str(far.size))
+	_check("fit 1280x720: their line is 33 px high: 32 px from the canvas edge, 11 px from the span's end",
+			is_equal_approx(far.size.y, 33.0) and is_equal_approx(town.size.y, 33.0), str(far.size))
 	_close()
 
 
@@ -241,57 +260,60 @@ func _test_numbers_and_strengths() -> void:
 
 
 func _test_other_canvases() -> void:
-	# L3. Taller (1280 x 960): the same x, the deck in the vertical middle (480 +- 95.5).
+	# Taller (1280 x 960): the same x, the deck in the vertical middle (480 -+ 94: y 386 to 574).
 	var screen: PlanningScreen = _open(_readout_def(), Vector2i(1280, 960))
-	_check("fit 1280x960: the corners are at (67, 575.5) and (1213, 384.5)",
-			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(67.0, 575.5))
-			and _near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1213.0, 384.5)),
+	_check("fit 1280x960: the corners are at (76, 574) and (1204, 386)",
+			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(76.0, 574.0))
+			and _near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1204.0, 386.0)),
 			"%s %s" % [_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), _on_canvas(screen, Vector3(2.5, 0.0, 0.0))])
 	var number: Label = _label(screen, "Number1")
 	var strength: Label = _label(screen, "Strength1")
-	# Number1's bottom would be at y 373.5 (its top 349.5: 350); Strength1 at (154.5, 586.5): (154, 586).
-	_check("fit 1280x960: Number1's top is at y 350 and Strength1 at (154, 586), Number1 within 1 px of x 162.5",
-			absf(number.position.y - 350.0) < NEAR and strength.position.is_equal_approx(Vector2(154.0, 586.0))
-			and absf(_middle(number).x - 162.5) <= 1.0 + NEAR, "%s %s" % [number.position, strength.position])
-	_check("fit 1280x960: the end words are on the centre line, y 480, within 1 px along it",
-			absf(_middle(_label(screen, "FarPierWord")).x - 44.0) < NEAR and absf(_middle(_label(screen, "FarPierWord")).y - 480.0) <= 1.0 + NEAR
-			and absf(_middle(_label(screen, "TownWord")).x - 1236.0) < NEAR and absf(_middle(_label(screen, "TownWord")).y - 480.0) <= 1.0 + NEAR)
-	_check("fit 1280x960: every label is drawn from an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
+	# Number1's top would be at y 386 - 11 - 33 = 342: its baseline 367 is odd, so 343. Strength1
+	# would be at (158, 585): its baseline 630 is even, so it stays.
+	_check("fit 1280x960: Number1's top is at y 343 and Strength1 at (158, 585), Number1 within 1 px of x 170",
+			absf(number.position.y - 343.0) < NEAR and strength.position.is_equal_approx(Vector2(158.0, 585.0))
+			and absf(_middle(number).x - 170.0) <= 1.0 + NEAR, "%s %s" % [number.position, strength.position])
+	_check("fit 1280x960: the end words are on the centre line, y 480, within 1 px",
+			absf(_middle(_label(screen, "FarPierWord")).x - 48.5) <= 1.0 + NEAR and absf(_middle(_label(screen, "FarPierWord")).y - 480.0) <= 1.0 + NEAR
+			and absf(_middle(_label(screen, "TownWord")).x - 1231.5) <= 1.0 + NEAR and absf(_middle(_label(screen, "TownWord")).y - 480.0) <= 1.0 + NEAR)
+	_check("fit 1280x960: every label's text starts on an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
 	_close()
-	# Wider (1706 x 720): 1706 - 134 = 1572 px for 30 m: 52.4 px per metre. Section 1 from x 67 to
-	# 329, section 6's town end at x 1639, the deck's edges at y 360 -+ 131: 229 and 491.
+	# Wider (1706 x 720): 1706 - 152 = 1554 px for 30 m: 51.8 px per metre. Section 1 from x 76 to
+	# 335, section 6's town end at x 1630, the deck's edges at y 360 -+ 129.5: 230.5 and 489.5.
 	screen = _open(_readout_def(), Vector2i(1706, 720))
-	_check("fit 1706x720: the corners are at (67, 491) and (1639, 229)",
-			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(67.0, 491.0))
-			and _near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1639.0, 229.0)),
+	_check("fit 1706x720: the corners are at (76, 489.5) and (1630, 230.5)",
+			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), Vector2(76.0, 489.5))
+			and _near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1630.0, 230.5)),
 			"%s %s" % [_on_canvas(screen, Vector3(-2.5, 0.0, -30.0)), _on_canvas(screen, Vector3(2.5, 0.0, 0.0))])
-	_check("fit 1706x720: section 1 ends at x 329", absf(_on_canvas(screen, Vector3(0.0, 0.0, -25.0)).x - 329.0) < NEAR)
+	_check("fit 1706x720: section 1 ends at x 335", absf(_on_canvas(screen, Vector3(0.0, 0.0, -25.0)).x - 335.0) < NEAR)
 	number = _label(screen, "Number1")
 	strength = _label(screen, "Strength1")
-	# Number1 would be centred on x 198 with its bottom at y 218 (its top 194, even already);
-	# Strength1 at (190, 502), even already.
-	_check("fit 1706x720: Number1 is within 1 px of x 198, its top at y 194; Strength1 at (190, 502)",
-			absf(_middle(number).x - 198.0) <= 1.0 + NEAR and absf(number.position.y - 194.0) < NEAR
-			and strength.position.is_equal_approx(Vector2(190.0, 502.0)), "%s %s" % [number.position, strength.position])
-	_check("fit 1706x720: TOWN is centred at (1662, 360), within 1 px along its line",
-			absf(_middle(_label(screen, "TownWord")).x - 1662.0) < NEAR and absf(_middle(_label(screen, "TownWord")).y - 360.0) <= 1.0 + NEAR,
+	# Number1 would be centred on x 205.5 with its top at y 230.5 - 44 = 186.5: its baseline 211.5
+	# goes to 212, so 187. Strength1 would be at (193.5, 500.5): x 194; its baseline 545.5 goes to
+	# 546, so y 501.
+	_check("fit 1706x720: Number1 is within 1 px of x 205.5, its top at y 187; Strength1 at (194, 501)",
+			absf(_middle(number).x - 205.5) <= 1.0 + NEAR and absf(number.position.y - 187.0) < NEAR
+			and strength.position.is_equal_approx(Vector2(194.0, 501.0)), "%s %s" % [number.position, strength.position])
+	_check("fit 1706x720: TOWN is centred at (1657.5, 360), within 1 px",
+			absf(_middle(_label(screen, "TownWord")).x - 1657.5) <= 1.0 + NEAR and absf(_middle(_label(screen, "TownWord")).y - 360.0) <= 1.0 + NEAR,
 			str(_middle(_label(screen, "TownWord"))))
-	_check("fit 1706x720: every label is drawn from an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
+	_check("fit 1706x720: every label's text starts on an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
 	_close()
 
 
 func _test_four_sections() -> void:
-	# AC 13 / L3: 4 sections (20 m) at 1280 x 720: 57.3 px per metre, camera.size 22.3386, section 1
-	# from x 67 to 353.5, the deck's edges at y 360 -+ 143.25: 216.75 and 503.25.
+	# AC 13: 4 sections (20 m) at 1280 x 720: 1128 px for 20 m: 56.4 px per metre, camera.size
+	# 20 x 1280 / 1128 = 22.6950, section 1 from x 76 to 358, the deck's edges at y 360 -+ 141: 219
+	# and 501.
 	var screen: PlanningScreen = _open(_readout_def(4))
 	var camera: Camera3D = _camera(screen)
-	_check("4 sections: the camera sees 22.3386 m across", absf(camera.size - 22.3386) < 0.0001, str(camera.size))
-	_check("4 sections: section 1's left corner at the far pier is at (67, 503.25), its town end at x 353.5",
-			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -20.0)), Vector2(67.0, 503.25))
-			and absf(_on_canvas(screen, Vector3(0.0, 0.0, -15.0)).x - 353.5) < NEAR,
+	_check("4 sections: the camera sees 22.6950 m across", absf(camera.size - 22.6950) < 0.0001, str(camera.size))
+	_check("4 sections: section 1's left corner at the far pier is at (76, 501), its town end at x 358",
+			_near(_on_canvas(screen, Vector3(-2.5, 0.0, -20.0)), Vector2(76.0, 501.0))
+			and absf(_on_canvas(screen, Vector3(0.0, 0.0, -15.0)).x - 358.0) < NEAR,
 			str(_on_canvas(screen, Vector3(-2.5, 0.0, -20.0))))
-	_check("4 sections: section 4's right corner at the town is at (1213, 216.75)",
-			_near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1213.0, 216.75)))
+	_check("4 sections: section 4's right corner at the town is at (1204, 219)",
+			_near(_on_canvas(screen, Vector3(2.5, 0.0, 0.0)), Vector2(1204.0, 219.0)))
 	var strengths: PackedStringArray = []
 	for n: int in range(1, 5):
 		var strength: Label = _label(screen, "Strength%d" % n)
@@ -299,48 +321,50 @@ func _test_four_sections() -> void:
 	_check("4 sections: 4 numbers and 4 strengths: 8, 5, 2, none", screen.find_children("Number*", "Label", false, false).size() == 4
 			and strengths == PackedStringArray(["8", "5", "2", "hidden"]), str(strengths))
 	_check("4 sections: 4 sections drawn", screen.get_node("Plan/SpanView").get_child_count() == 4)
-	# Section 1 of 4 is x 67 to 353.5 (middle 210.25), the deck's edges y 216.75 and 503.25: Strength1
-	# would be at (202.25, 514.25): (202, 514); Number1's top at 216.75 - 11 - 24 = 181.75: 182.
-	_check("4 sections: Strength1 is at (202, 514) and Number1's top at y 182, within 1 px of x 210.25",
-			_label(screen, "Strength1").position.is_equal_approx(Vector2(202.0, 514.0))
-			and absf(_label(screen, "Number1").position.y - 182.0) < NEAR
-			and absf(_middle(_label(screen, "Number1")).x - 210.25) <= 1.0 + NEAR,
+	# Section 1 of 4 is x 76 to 358 (middle 217): Strength1 would be at (205, 512): x 206; its
+	# baseline 557 is odd, so y 513. Number1's top would be at 219 - 11 - 33 = 175: its baseline 200
+	# is even, so it stays.
+	_check("4 sections: Strength1 is at (206, 513) and Number1's top at y 175, within 1 px of x 217",
+			_label(screen, "Strength1").position.is_equal_approx(Vector2(206.0, 513.0))
+			and absf(_label(screen, "Number1").position.y - 175.0) < NEAR
+			and absf(_middle(_label(screen, "Number1")).x - 217.0) <= 1.0 + NEAR,
 			"%s %s" % [_label(screen, "Strength1").position, _label(screen, "Number1").position])
-	_check("4 sections: every label is drawn from an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
+	_check("4 sections: every label's text starts on an even canvas pixel", _off_even(screen).is_empty(), str(_off_even(screen)))
 	_check("4 sections: no fault", screen._faults.total() == 0, str(screen._faults.codes()))
 	_close()
 
 
 func _test_the_canvas_changes_size() -> void:
 	# AC 10: the labels are placed again when the canvas changes size (a window dragged wider under
-	# the `expand` aspect). From 1280 x 720 to 1706 x 720: the wide case of L3.
+	# the `expand` aspect). From 1280 x 720 to 1706 x 720: the wide case above.
 	var screen: PlanningScreen = _open(_readout_def())
 	var number: Label = _label(screen, "Number1")
-	_check("resize: at 1280x720 Number1 is centred within 1 px of x 162.5", absf(_middle(number).x - 162.5) <= 1.0 + NEAR)
+	_check("resize: at 1280x720 Number1 is centred within 1 px of x 170", absf(_middle(number).x - 170.0) <= 1.0 + NEAR)
 	_port.size = Vector2i(1706, 720)
 	var camera: Camera3D = _camera(screen)
-	_check("resize: at 1706x720 the camera sees 30 x 1706 / 1572 m across", absf(camera.size - 30.0 * 1706.0 / 1572.0) < 0.0001,
+	_check("resize: at 1706x720 the camera sees 30 x 1706 / 1554 m across", absf(camera.size - 30.0 * 1706.0 / 1554.0) < 0.0001,
 			str(camera.size))
-	_check("resize: Number1 is within 1 px of x 198, its top at y 194", absf(_middle(number).x - 198.0) <= 1.0 + NEAR
-			and absf(number.position.y - 194.0) < NEAR, str(number.position))
-	# Strength6 is centred on x 1508, 16 px wide: x 1500, even already.
-	_check("resize: Strength6 is at (1500, 502)", _label(screen, "Strength6").position.is_equal_approx(Vector2(1500.0, 502.0)),
+	_check("resize: Number1 is within 1 px of x 205.5, its top at y 187", absf(_middle(number).x - 205.5) <= 1.0 + NEAR
+			and absf(number.position.y - 187.0) < NEAR, str(number.position))
+	# Strength6 is centred on x 76 + 259 x 5.5 = 1500.5, 24 px wide: it would be at (1488.5, 500.5):
+	# x 1488; its baseline 545.5 goes to 546, so y 501.
+	_check("resize: Strength6 is at (1488, 501)", _label(screen, "Strength6").position.is_equal_approx(Vector2(1488.0, 501.0)),
 			str(_label(screen, "Strength6").position))
-	_check("resize: TOWN is centred at (1662, 360), within 1 px along its line",
-			absf(_middle(_label(screen, "TownWord")).x - 1662.0) < NEAR and absf(_middle(_label(screen, "TownWord")).y - 360.0) <= 1.0 + NEAR,
+	_check("resize: TOWN is centred at (1657.5, 360), within 1 px",
+			absf(_middle(_label(screen, "TownWord")).x - 1657.5) <= 1.0 + NEAR and absf(_middle(_label(screen, "TownWord")).y - 360.0) <= 1.0 + NEAR,
 			str(_middle(_label(screen, "TownWord"))))
-	_check("resize: every label is drawn from an even canvas pixel again", _off_even(screen).is_empty(), str(_off_even(screen)))
-	# A canvas no wider than the room at its two ends (2 x 67 px): the camera is left as it is; no
+	_check("resize: every label's text starts on an even canvas pixel again", _off_even(screen).is_empty(), str(_off_even(screen)))
+	# A canvas no wider than the room at its two ends (2 x 76 px): the camera is left as it is; no
 	# division by nothing, no negative size, no error.
 	var before: float = camera.size
-	_port.size = Vector2i(134, 720)
-	_check("resize: a canvas 134 px wide leaves the camera as it was", camera.size == before, str(camera.size))
+	_port.size = Vector2i(152, 720)
+	_check("resize: a canvas 152 px wide leaves the camera as it was", camera.size == before, str(camera.size))
 	_port.size = Vector2i(100, 720)
 	_check("resize: and so does one 100 px wide", camera.size == before and camera.size > 0.0, str(camera.size))
 	_port.size = Vector2i(1280, 720)
-	_check("resize: back at 1280x720 it fits again", absf(camera.size - 30.0 * 1280.0 / 1146.0) < 0.0001
-			and absf(_middle(number).x - 162.5) <= 1.0 + NEAR
-			and _label(screen, "Strength1").position.is_equal_approx(Vector2(154.0, 466.0)), str(camera.size))
+	_check("resize: back at 1280x720 it fits again", absf(camera.size - 30.0 * 1280.0 / 1128.0) < 0.0001
+			and absf(_middle(number).x - 170.0) <= 1.0 + NEAR
+			and _label(screen, "Strength1").position.is_equal_approx(Vector2(158.0, 465.0)), str(camera.size))
 	_close()
 	# Opened on a canvas that narrow: nothing is divided by nothing.
 	screen = _open(_readout_def(), Vector2i(120, 720))
@@ -362,7 +386,7 @@ func _test_read_only() -> void:
 			var click: InputEventMouseButton = InputEventMouseButton.new()
 			click.button_index = button
 			click.pressed = pressed
-			click.position = Vector2(162.0, 360.0)  # on section 1's deck
+			click.position = Vector2(170.0, 360.0)  # on section 1's deck
 			click.global_position = click.position
 			events.append(click)
 	for key: Key in [KEY_E, KEY_TAB, KEY_ESCAPE, KEY_ENTER, KEY_SPACE, KEY_1, KEY_Z]:
@@ -449,7 +473,7 @@ func _test_no_pixel_size_but_the_theme_s() -> void:
 	screen.free()
 	screen = _open(_readout_def())
 	_check("sizes: the screen's root carries the theme", screen.theme != null
-			and screen.theme.get_font_size(&"font_size", &"WatchNumber") == 32)
+			and screen.theme.get_font_size(&"font_size", &"WatchNumber") == 48)
 	var sized: PackedStringArray = []
 	var controls: Array[Node] = screen.find_children("*", "Control", true, false)
 	controls.append(screen)

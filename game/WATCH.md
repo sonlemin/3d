@@ -40,7 +40,7 @@ How to read it:
   and your right rail the top edge.
 - Each section is drawn with its planks where the night has them. Where a plank is missing the
   deck is black.
-- A **standing rail** is a solid line along that edge; a **stripped rail** is a thin dashed line
+- A **standing rail** is a bright solid line along that edge; a **stripped rail** is a dashed line
   in the same place. Each line stops a little short of its section's ends, so every joint between
   two sections shows as a break in both lines.
 - **Above** each section is its number; **below** it is its strength: its planks while it has
