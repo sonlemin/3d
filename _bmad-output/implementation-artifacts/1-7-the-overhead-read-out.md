@@ -393,6 +393,7 @@ Claude Fable 5.2 (claude-fable-5-2), gds-dev-story, 2026-11-26.
   - A 1706×720 and a 1280×960 window (/tmp/claude-1000/-home-sonlm-project-3d/006710ef-5247-4acc-9ce4-2ff2f0ecec56/scratchpad/M1c/readout_wide.png, readout_tall.png): the span fills the width and sits in the vertical middle. The window set from 1280×720 to 1706×720 while the screen was open gives the same picture as one opened at 1706×720 (0 pixels differ).
   - **NOT verified, needs Sonlm:** whether option C reads well in the game itself on the laptop. Sonlm chose it from pictures on a page, not from the game.
 - Agent time for this follow-up: 2026-11-27 00:30 +0700 (the three versions rendered; the questions before it not measured) to 2026-11-27 00:48 +0700, measured by the agent.
+- **Sonlm, 2026-11-27, after option C was pushed (`d33a8c1`):** "Good for now". Sonlm did not say whether this was from the game on the laptop or from the pictures, so option C in the game stays as it was recorded above: not confirmed in so many words. Nothing more is asked for on M1 before the code review; the wider question of sizes and colours is DW-54.
 
 ### File List
 
