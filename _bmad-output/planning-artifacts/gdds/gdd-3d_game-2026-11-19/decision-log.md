@@ -464,3 +464,11 @@ Two rules were found missing while story 1.6 was written, and Sonlm chose from o
 | GD-69 | 2026-11-20 | A section with no planks that has not fallen can be re-laid from the next section; "standing" in the re-lay rule means not fallen. (Declined: a bare section stays open for the night.) | Story 1.6 |
 
 Both are in `gdd.md` (Game Mechanics 2 and 3) and in story 1.6. `gdd.md` stays at draft 0.7 with these two added.
+
+A question from Sonlm's replay of story 1.6 (2026-11-26), "can the player allowed to jump", found no reason written for "no jump". Sonlm chose from options (the facilitator's recommendation; the reason is the facilitator's wording):
+
+| ID | Date | Decision | Closes |
+|---|---|---|---|
+| GD-70 | 2026-11-26 | The warden does not jump. The bridge's rules are weight and gaps: a section's strength is its planks, a 5 m gap is crossed hand over hand in 8 s, an open section is edged round in 4 s. A jump would skip those rules or need new ones (a landing's weight, as a Diver's landing counts 5). (Declined: a hop for feel only that clears nothing; a jump whose landing adds weight.) | Sonlm's question, story 1.6 |
+
+It is in `gdd.md` (Controls). `gdd.md` stays at draft 0.7.

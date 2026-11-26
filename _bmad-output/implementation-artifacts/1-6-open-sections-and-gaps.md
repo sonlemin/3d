@@ -4,7 +4,7 @@ baseline_commit: 64b35b0
 
 # Story 1.6: Open sections and gaps
 
-Status: review
+Status: done
 
 <!-- Created 2026-11-22 by gds-create-story from epics.md draft 0.8 ("Epic 1: story detail"). -->
 
@@ -410,6 +410,11 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-22.
 - **M2 after the review:** partly verified on the same display, `--show=last_plank` (trace: PLANK_STRIPPED and EDGING_STARTED s3 R 2.267 s, EDGING_ENDED 5.467 s (3.2 s), PLANK_RELAID s3 9.167 s). Frame judged: /tmp/claude-1000/-home-sonlm-project-3d-game/d0191b31-4cea-4501-b2be-125df3fcf63b/scratchpad/frames/new-m2/frame00000170.png (on section 4 at the right beam's line, section 3's deck ahead and below). NOT verified, needs Sonlm: how the edging backward reads (DW-45). The short GD-68 edging (the second decision) is not rendered: no show starts within 0.6 m of a section's town end; it is pinned by tests, tick by tick.
 - `tools/ci.sh` after the review's fixes (the pre-commit hook's run): all checks passed; tests 1561 passed, 0 failed, 64 expected; 9 show-me setups, each smoke-run.
 - Agent time for the code review: 2026-11-22 17:26 +0700 (the diff taken) to 18:11 (first fix), and the fixes 18:11 to 18:58 +0700, measured by the agent from file times; the three reviewers ran in parallel inside the first span.
+- **Sonlm ran M1 and M2 after the code review, 2026-11-26** (on the laptop, from a clone of GitHub; Sonlm did not say which commit; GitHub's head was `2d78688`, whose game is the same as `16b65b4`, the review's fixes). What Sonlm reported, in their words:
+  - M1: "isn't this like the previous story". Answered: yes, the same check, run again because the review changed how an edging ends and the short sidestep. "Also feels quite slow. I don't feel stuck. Pretty smooth when land". Sonlm made no separate remark on the difference between 4 s and 8 s, and did not say which move felt slow. Shown the times (walking a section 1.4 s, edging 4 s, crossing 8 s), Sonlm chose to keep them as starting values and judge them at gate 2 (DW-50).
+  - M2: "Feels strange to new player. I already know what's going on so seems fine." (DW-45, second report.) "Also just 1 plank and i can walk on thin air seems strange." (DW-46, second report; Sonlm chose again to keep the rule and leave the look to epic 7.)
+  - "Also can the player allowed to jump". No: the GDD says no jump but gave no reason. Sonlm chose to keep it and have the reason written down (GD-70, decision log).
+  - "everything you said i test is fine".
 
 ### File List
 
@@ -455,3 +460,4 @@ Claude Opus 5.5 (claude-opus-5-5), gds-dev-story, 2026-11-22.
 - 2026-11-22: Sonlm's play of M1 and M2. The edging sidesteps onto the beam in its first 0.5 s, then goes straight along it; the crossing goes hand over hand in 0.5 m reaches (pull, then still). Sliding backward and walking over a 1-plank section kept; DW-45 and DW-46 opened. Status: review.
 - 2026-11-22: Sonlm's replay of M1: one rope stays strung across a gap and the warden crosses hanging under it (DW-47 to write it into the GDD). Status: review.
 - 2026-11-22: Code review (gds-code-review): 2 decisions, 16 patches, all applied. An edging's line runs on to where the feet step off, so no tick jumps; a GD-68 edging shorter than the sidestep keeps the sidestep's pace. Tests for the gaps found, comments and docs corrected, the bot's wait for a fall fixed, DW-49 opened (D4 at gate 2). Status: review, until Sonlm has replayed M1 and M2.
+- 2026-11-26: Sonlm ran M1 and M2 after the code review: the step off an edging lands smoothly and nothing feels stuck. The moves feel slow (kept as starting values, judged at gate 2: DW-50). The backward edging and the 1-plank deck still look strange (DW-45, DW-46; both kept). No jump, reason written down (GD-70). Status done.

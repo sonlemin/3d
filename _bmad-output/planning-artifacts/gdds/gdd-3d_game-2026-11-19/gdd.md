@@ -4,8 +4,8 @@ game_type: tower-defense
 secondary_game_type: horror
 platforms: [Windows, Linux]
 created: 2026-11-19
-updated: 2026-11-20
-status: draft 0.7 (architecture decisions written back; GD-68 and GD-69 added at the readiness check)
+updated: 2026-11-26
+status: draft 0.7 (architecture decisions written back; GD-68 and GD-69 added at the readiness check; GD-70 after story 1.6)
 architecture: ../../../game-architecture.md
 ux_documents: ../../ux-designs/ux-3d_game-2026-11-19/
 ---
@@ -442,7 +442,7 @@ Night, first person:
 
 | Input | Action |
 |---|---|
-| W A S D | Walk at 3.5 m/s. No sprint, no jump. |
+| W A S D | Walk at 3.5 m/s. No sprint, no jump (GD-70). |
 | Mouse | Look |
 | Left mouse (hammer hand) | Strike a pin, a holding rope or a hook (0.5 s); strip a plank (hold 2 s); hammer a wedge (hold 3 s) |
 | Right mouse (rope and lantern hand) | Strip a rail rope (hold 3 s); haul a trapdoor (hold 6 s); re-hang a beam (hold 10 s); pull the bell rope (hold 1 s) |

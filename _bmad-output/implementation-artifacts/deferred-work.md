@@ -441,7 +441,7 @@ origin: Sonlm's M2 of story 1.6, 2026-11-22
 location: game/watch/sim/consequence_rules.gd (`warden_on_beams`), game/watch/night/warden.gd (no view turn)
 owner: epic 2 (sound), epic 4 story 1 (the hands), the dusk lesson (epic 5); judged at gate 2 with newcomers
 severity: low
-reason: GD-68 puts a warden whose last plank goes on its side beam at once, edging toward the town. Facing the far pier (the usual stance for stripping), that edging goes backward to the view. Sonlm: "It work. I slide backward. First time player might not understand." Sonlm chose (2026-11-22) to keep it as built, with no view turn (the view is the player's; the fall's catch stays the only turn), and to let the sound, the hands and the lesson explain it. Check at gate 2 whether newcomers read it.
+reason: GD-68 puts a warden whose last plank goes on its side beam at once, edging toward the town. Facing the far pier (the usual stance for stripping), that edging goes backward to the view. Sonlm: "It work. I slide backward. First time player might not understand." Sonlm chose (2026-11-22) to keep it as built, with no view turn (the view is the player's; the fall's catch stays the only turn), and to let the sound, the hands and the lesson explain it. Check at gate 2 whether newcomers read it. Second report, Sonlm's replay after the code review (2026-11-26): "Feels strange to new player. I already know what's going on so seems fine." Nothing changed.
 status: open
 
 ### DW-46: A section with few planks looks like walking on air
@@ -450,7 +450,7 @@ origin: Sonlm's M2 of story 1.6, 2026-11-22
 location: game/watch/night/section_view.gd (only the planks left are drawn); GDD Game Mechanics 2 (only a section with no planks cannot be stood on)
 owner: epic 7 (the look); checked at gate 2
 severity: low
-reason: By the GDD a section can be stood on over its whole length while it has any plank, but the gray box draws only the planks left (one plank sits mid-section), so walking over a 1-plank section looks like walking on air. Sonlm: "i am at 1 plank and can still walk through still look rather strange like i am walking on air." Sonlm chose (2026-11-22) to keep the rule and leave it to the look (epic 7) to show what holds the warden up on a sparse section; no gray-box change now. If gate 2 newcomers are confused by it, put a gray-box frame (joists between the side beams) back to Sonlm as an option.
+reason: By the GDD a section can be stood on over its whole length while it has any plank, but the gray box draws only the planks left (one plank sits mid-section), so walking over a 1-plank section looks like walking on air. Sonlm: "i am at 1 plank and can still walk through still look rather strange like i am walking on air." Sonlm chose (2026-11-22) to keep the rule and leave it to the look (epic 7) to show what holds the warden up on a sparse section; no gray-box change now. If gate 2 newcomers are confused by it, put a gray-box frame (joists between the side beams) back to Sonlm as an option. Second report, Sonlm's replay after the code review (2026-11-26): "Also just 1 plank and i can walk on thin air seems strange." Offered the frame now, Sonlm chose again to keep the rule and leave it to epic 7.
 status: open
 
 ### DW-47: Write the rope left across a gap into the GDD
@@ -480,4 +480,13 @@ location: game/watch/sim/span_rules.gd (`strength()`), game/watch/sim/span_const
 owner: gate 2, with the dead on the beams (epic 3); a GDD change if it is judged wrong
 severity: low
 reason: By the GDD as written a section's strength is its planks, and an open section's side beams carry 2. So a section at 1 plank is weaker than one with none. D4 kept that and said it would be judged at gate 2; no item tracked it. Sonlm was shown one side when choosing: taking the last plank of a section groaning under 2 stops the groan (test L5). The code review measured the other side: re-laying one plank on an open section that carries 2 makes it groan and fall 2 s later with the plank, and a second re-lay (3 s) cannot save it (`test_hands.gd`, `_test_a_relay_onto_a_loaded_open_section_brings_it_down`). In epic 3 that load is the dead: repairing a section they are edging round drops it. The option declined at D4 was strength never below 2 (`max(planks, 2)`, a GD-19 change). Judge both sides at gate 2.
+status: open
+
+### DW-50: The warden's moves may feel slow
+
+origin: Sonlm's replay of story 1.6 after its code review, 2026-11-26
+location: game/watch/sim/warden_constants.gd (`WALK_SPEED` 3.5, `EDGE_S` 4.0, `CROSS_GAP_S` 8.0); GDD Game Mechanics 2, GD-19, decision log (finalize fix 5)
+owner: gate 2 tuning (story 6.5), with the dead on the bridge (epic 3)
+severity: low
+reason: Sonlm on M1: "Also feels quite slow." Sonlm did not say which move. Walking a 5 m section takes 1.4 s, edging an open section 4 s, crossing a gap 8 s. The 4 s and 8 s come from the validator's fix that let the warden cross at all (the dead take 12 s); no reason for those exact values is written down. Nothing races the warden until epic 3, so "slow" cannot be judged against a threat yet. Sonlm chose (2026-11-26) to keep all three as starting values and judge them at gate 2. Changing them touches the GDD, the epics' 240 and 480 tick criteria and the tests.
 status: open
