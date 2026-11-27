@@ -8,7 +8,7 @@ metadata:
   modified: 2026-11-21T00:00:00.000Z
 ---
 
-At the end of a story, Sonlm wants three steps done automatically, not left as next steps: (1) the manual checks that can be judged from the screen, run on a virtual display (`xvfb-run` + `godot --write-movie` frames, read by the agent); (2) the agent's time written into the story's hours line; (4) a commit on the current branch (never main, never `--no-verify`), and since 2026-11-26 a push of that branch. Encoded for gds-dev-story in `_bmad/custom/gds-dev-story.toml` (`on_complete`).
+At the end of a story, Sonlm wants three steps done automatically, not left as next steps: (1) the manual checks that can be judged from the screen, run on a virtual display (`xvfb-run` + `godot --write-movie` frames, read by the agent); (2) the agent's time written into the story's hours line (no line for Sonlm's own hours since the epic 1 retrospective, 2026-11-27: Sonlm gives one rough number per epic at its retrospective instead, so each retro asks for it); (4) a commit on the current branch (never main, never `--no-verify`), and since 2026-11-26 a push of that branch. Encoded for gds-dev-story in `_bmad/custom/gds-dev-story.toml` (`on_complete`).
 
 **Why:** said 2026-11-20 after story 1.1 ("Do 1 and 2, 4 automatically next time"). Code review stays a separate step Sonlm starts.
 

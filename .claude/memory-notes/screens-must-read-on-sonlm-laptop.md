@@ -5,7 +5,7 @@ metadata:
   type: feedback
 ---
 
-On 2026-11-27 Sonlm ran story 1.7's read-out (built exactly to `DESIGN.md`) with the window filling the laptop's screen and found every part hard to read: section numbers, strengths, planks and the end words, "both" too small and too dim. Shown three versions rendered at 1080p, Sonlm chose the brighter and larger one: strengths 72 px (not 48), labels 40 px (not 28), planks `#8d8982`, rails `#ddd6c8`, labels in `ink`, heavier lines. The laptop's screen size and resolution are not recorded.
+On 2026-11-27 Sonlm ran story 1.7's read-out (built exactly to `DESIGN.md`) with the window filling the laptop's screen and found every part hard to read: section numbers, strengths, planks and the end words, "both" too small and too dim. Shown three versions rendered at 1080p, Sonlm chose the brighter and larger one: strengths 72 px (not 48), labels 40 px (not 28), planks `#8d8982`, rails `#ddd6c8`, labels in `ink`, heavier lines. The laptop's screen is 13 to 14 inch (Sonlm, epic 1 retrospective, 2026-11-27); its resolution is not recorded.
 
 **Why:** `DESIGN.md` was written before anything was seen on Sonlm's screen; its `label` floor of 28 px and its `muted` and `dim` colours did not survive the first look. DW-54 tracks the UX update.
 

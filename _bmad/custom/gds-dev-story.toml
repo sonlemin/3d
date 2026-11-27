@@ -20,7 +20,7 @@ Before the final message to Sonlm, do these four steps in this order.
    - Sound, panning, feel, mouse capture, frame rate and the window title cannot be judged this way. List them for Sonlm as NOT verified. Never report such a check, or any part of one, as verified.
    - Write each result into the story's Completion Notes: "Mn: verified on a virtual display (<frame path>)" or "Mn: NOT verified, needs Sonlm (<why>)".
 
-2. Hours. Run `date '+%Y-%m-%d %H:%M %z'` again. In Completion Notes, write "Agent time: <start> to <end> (<h> h <m> min), measured by the agent." Keep a separate line for Sonlm's own hours, left for Sonlm to fill in.
+2. Hours. Run `date '+%Y-%m-%d %H:%M %z'` again. In Completion Notes, write "Agent time: <start> to <end> (<h> h <m> min), measured by the agent." Do not add a line for Sonlm's own hours: since the epic 1 retrospective (2026-11-27), Sonlm gives one rough number per epic at its retrospective instead.
 
 3. Commit. Stage exactly the files in the story's File List (with their .uid files), plus the story file and sprint-status.yaml, and nothing else. Commit on the current branch with the message "Story <id>: <title>", ending with the attribution lines the session gives. If the current branch is main, create a branch first. The pre-commit hook runs tools/ci.sh: if it fails, fix the cause, rerun, and commit again. Never use --no-verify and never amend an earlier commit.
 
