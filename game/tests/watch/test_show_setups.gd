@@ -257,7 +257,15 @@ func _test_readout_walk_is_what_the_read_out_shows() -> void:
 	# bridge on foot.
 	var readout: NightSim = _sim_with(ShowSetups.def_of(&"readout"), 1)
 	var walk: NightSim = _sim_with(ShowSetups.def_of(&"readout_walk"), 1)
-	_check("show: readout and readout_walk start on the same span", readout.span.values() == walk.span.values())
+	# values() holds what has fallen, creaks, groans and weighs; counts() the planks, the rails and
+	# the parts in hand and lost. Both, or two setups differing in planks or a rail would pass.
+	_check("show: readout and readout_walk start on the same span", readout.span.values() == walk.span.values()
+			and readout.span.counts() == walk.span.counts(), "%s %s" % [readout.span.counts(), walk.span.counts()])
+	# Written out, section by section (planks, LEFT rail, RIGHT rail), so the two cannot be wrong
+	# together: 8, 5 with no LEFT rail, open, fallen (its 8 planks and 2 ropes lost), 1, 4.
+	_check("show: readout_walk's planks and rails are the read-out's, written out",
+			walk.span.counts().slice(0, 18) == [8, 1, 1, 5, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 4, 1, 1],
+			str(walk.span.counts()))
 	# M2's walk: push toward the far pier from the landing. Sections 6 (4 planks) and 5 (1 plank) are
 	# walked, the gap of section 4 is crossed, the open section 3 is edged, and section 2 is reached.
 	var kinds: Array[NightEvent.Kind] = []

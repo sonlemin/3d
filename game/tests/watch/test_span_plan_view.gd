@@ -305,7 +305,8 @@ func _test_the_night_look_is_the_default() -> void:
 	var plank: MeshInstance3D = view.get_node("Section1/Plank1") as MeshInstance3D
 	var material: StandardMaterial3D = (plank.mesh as BoxMesh).material as StandardMaterial3D
 	_check("night look by default: its planks are lit, in the night's own gray",
-			material.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL and material.albedo_color == SpanView.PLANK_COLOR)
+			material.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL
+			and material.albedo_color.is_equal_approx(Color(0.72, 0.72, 0.70)), str(material.albedo_color))
 	# on_tick() is still build, events, reconcile: the same picture through a tick.
 	var ticked: SpanView = SpanView.new()
 	root.add_child(ticked)

@@ -32,9 +32,10 @@ func _test_canvas_px_is_two_thirds_rounded() -> void:
 
 
 func _test_even_px() -> void:
-	# Sonlm, 2026-11-26: a label placed by hand goes on the nearest even canvas pixel, so that it is
-	# on a whole screen pixel in a 1080p window (1.5 times the canvas). (154.5, 466.5) goes to
-	# (154, 466); (345.5, 466.5) to (346, 466).
+	# even_px() moves a place to the nearest even canvas pixel, which is a whole screen pixel in a
+	# 1080p window (1.5 times the canvas): (154.5, 466.5) goes to (154, 466); (345.5, 466.5) to
+	# (346, 466). Sonlm, 2026-11-26. Since 2026-11-27 the place that is moved is not a label's
+	# corner but the start of its text: sharp_px(), the next test, asks this for it.
 	var cases: Dictionary[Vector2, Vector2] = {
 		Vector2(154.5, 466.5): Vector2(154.0, 466.0), Vector2(345.5, 466.5): Vector2(346.0, 466.0),
 		Vector2(190.0, 502.0): Vector2(190.0, 502.0), Vector2(229.5, 349.5): Vector2(230.0, 350.0),
@@ -70,7 +71,7 @@ func _test_sharp_px() -> void:
 		_check("theme: %s with a rise of %s goes to %s" % [case[0], case[1], case[2]], got == case[2], str(got))
 
 
-func _test_tokens_are_design_md_s() -> void:
+func _test_tokens_are_design_md_s_but_for_option_c_s_two_sizes() -> void:
 	# DESIGN.md front matter: typography.number 48px / 600 / 0; typography.label 28px / 600 /
 	# 0.16em; spacing.2 16px; spacing.safe-margin 48px. Sonlm's M1 (2026-11-27, option C): both
 	# sizes were too small on the laptop; the number style is 72 px and the label style 40 px (the

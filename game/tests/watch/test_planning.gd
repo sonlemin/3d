@@ -100,13 +100,19 @@ func _off_even(screen: PlanningScreen) -> PackedStringArray:
 	return off
 
 
-## Every node under `node`, as "path|class|visible|text" lines: the whole picture.
+## Every node under `node`, one line each: its path and class; whether it is shown and where (a
+## control's place, size and turn; a 3D node's transform); a camera's size; a label's text.
 func _picture(node: Node, from: Node) -> PackedStringArray:
 	var out: PackedStringArray = []
 	for child: Node in node.get_children():
 		var line: String = "%s|%s" % [from.get_path_to(child), child.get_class()]
-		if child is CanvasItem:
-			line += "|%s|%s" % [(child as CanvasItem).visible, (child as CanvasItem).position if child is Control else Vector2.ZERO]
+		if child is Control:
+			var control: Control = child as Control
+			line += "|%s|%s|%s|%s" % [control.visible, control.position, control.size, control.rotation]
+		elif child is CanvasItem:
+			line += "|%s" % (child as CanvasItem).visible
+		if child is Camera3D:
+			line += "|%s" % (child as Camera3D).size
 		if child is Node3D:
 			line += "|%s|%s" % [(child as Node3D).visible, (child as Node3D).transform]
 		if child is Label:
@@ -366,10 +372,19 @@ func _test_the_canvas_changes_size() -> void:
 			and absf(_middle(number).x - 170.0) <= 1.0 + NEAR
 			and _label(screen, "Strength1").position.is_equal_approx(Vector2(158.0, 465.0)), str(camera.size))
 	_close()
-	# Opened on a canvas that narrow: nothing is divided by nothing.
+	# Opened on a canvas that narrow: the camera is never fitted, so it keeps the size the engine
+	# gives a new camera (1 m), and every label is still built and placed somewhere real. A fit
+	# without its guard would ask for a size below 0, which the engine refuses with an error: the
+	# file's logger check is what fails then.
 	screen = _open(_readout_def(), Vector2i(120, 720))
-	_check("resize: opened 120 px wide, the screen is built and the camera's size is above 0",
-			_camera(screen) != null and _camera(screen).size > 0.0 and _label(screen, "Number1") != null)
+	var unreal: PackedStringArray = []
+	for node: Node in screen.find_children("*", "Label", true, false):
+		if not (node as Label).position.is_finite():
+			unreal.append(node.name)
+	_check("resize: opened 120 px wide, the camera is left unfitted and all 14 labels have a real place",
+			_camera(screen) != null and _camera(screen).size == 1.0
+			and screen.find_children("*", "Label", true, false).size() == 14 and unreal.is_empty(),
+			"%s %s" % [_camera(screen).size if _camera(screen) != null else -1.0, unreal])
 	_close()
 
 
@@ -406,7 +421,7 @@ func _test_read_only() -> void:
 	_check("read-only: clicks, keys and a pointer move leave the span as it was", screen._sim.span.values() == span_before
 			and screen._sim.checksum() == checksum_before and screen._sim.tick == 0)
 	var picture_after: PackedStringArray = _picture(screen, screen)
-	_check("read-only: and every node, place, label and text of the screen", picture_after == picture_before
+	_check("read-only: and every node, place, size, turn and text of the screen, and the camera's size", picture_after == picture_before
 			and picture_before.size() > 20, str(picture_before.size()))
 	# The labels take no pointer input, and the screen has no input handler at all.
 	var stops: PackedStringArray = []
