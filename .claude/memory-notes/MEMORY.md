@@ -7,11 +7,11 @@
 - [Ear test gate closed](ear-test-gate-closed.md) — gate 1 closed 2026-11-19 on Sonlm's own results; one-night game playtests must re-check direction with newcomers
 - [GDD for the one-night game](gdd-one-night-game.md) — draft 0.7 (2026-11-20, GD-1 to GD-69; epics.md is draft 0.8) in 3d_game@ear-test-prototype; read its decision-log.md first; readiness check done (NEEDS WORK), narrative later
 - [Recommended option is the decision](recommended-option-is-the-decision.md) — Sonlm picks "(Recommended)" nearly every time; recompute sheets and rule interactions before showing them
-- [UX for the one-night game](ux-one-night-game.md) — spines final 2026-11-19 and in step with GDD draft 0.6; architecture is next
+- [UX for the one-night game](ux-one-night-game.md) — updated 2026-11-28 (DW-5, DW-54): scale B, UX-42 to UX-61; GDD wording owed (DW-59), code in story 5.1 (DW-58)
 - [Architecture for the one-night game](architecture-one-night-game.md) — complete 2026-11-20, AD-1 to AD-70 in _bmad-output/game-architecture.md; read summary + validation first; project-context.md refreshed the same day; readiness check done, DW-19 closed
 - [Readiness check result](readiness-check-one-night-game.md) — 2026-11-20 NEEDS WORK, blockers fixed the same day (AD-69, AD-70, epic 1 stories in epics.md draft 0.8); epic 1 can start; owed items are DW-5, DW-18, DW-20 to DW-23
 - [End-of-story chores are automatic](end-of-story-chores-automatic.md) — after a story: Xvfb screen checks, agent time, commit (never main/--no-verify), then push the branch; in _bmad/custom/gds-dev-story.toml
 - [Explain purpose before options](explain-purpose-before-options.md) — before options on a mechanic, say what it is for (GDD/decision log) and name any document gap
 - [Fast test runs and the undo pass](fast-test-runs-and-undo-pass.md) — CI and a game/ commit take 10 min (bot nights 8); run named test files from a scratch runner, undo rules in copies of game/
 - [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin sonlemin/3d is PUBLIC on GitHub (checked 2026-11-25); push the working branch after each commit (since 2026-11-26); token in ~/.config/git/credentials-3d
-- [Screens must read on Sonlm's laptop](screens-must-read-on-sonlm-laptop.md) — DESIGN.md sizes and colours were too small and dim (2026-11-27); for a look choice, render the options and publish them as a page
+- [Screens must read on Sonlm's laptop](screens-must-read-on-sonlm-laptop.md) — 14-inch 1920×1080; scale B chosen 2026-11-28 from Godot renders; for a look choice, render the options and publish them as a page

@@ -2,11 +2,13 @@
 title: 'EXPERIENCE.md — The Mourning Watch (one-night game)'
 status: final
 created: 2026-11-19
-updated: 2026-11-20
+updated: 2026-11-28
 form_factor: 'PC at a desk: monitor, keyboard and mouse, stereo headphones or speakers'
 sources:
   - ../../gdds/gdd-3d_game-2026-11-19/decision-log.md
   - ../../gdds/gdd-3d_game-2026-11-19/gdd.md
+  - ../../gdds/gdd-3d_game-2026-11-19/epics.md
+  - ../../../game-architecture.md
   - .decision-log.md
 ---
 
@@ -16,7 +18,7 @@ How the game's surfaces behave. How they look is in [DESIGN.md](DESIGN.md); toke
 
 ## Foundation
 
-- **Form factor.** Windows and Linux PC at a desk. Monitor at 1080p or 720p, keyboard and mouse only, stereo on headphones or speakers. No gamepad, no couch distance, no handheld in the one-night game (GDD GD-22).
+- **Form factor.** Windows and Linux PC at a desk. Monitor at 1080p or 720p, keyboard and mouse only, stereo on headphones or speakers. No gamepad, no couch distance, no handheld in the one-night game (GDD GD-22). The reference screen for sizes is Sonlm's 13 to 14 inch laptop at 1920×1080 (UX-42).
 - **Engine.** Godot 4.7.2, Forward+. Screen UI is Control nodes under one Theme built from DESIGN.md's tokens. The tokens are sizes at 1080p; the project's canvas is 1280×720 with `canvas_items` stretch, so the Theme holds two thirds of each token (architecture AD-69). Everything the warden reads at night is a 3D object in the scene, not a Control.
 - **Two kinds of surface.** *Screens* (title, first-launch questions, planning, pause, settings, journal, dawn ledger) may draw text. *The night* may not, with one named exception: the ally's caption (UX-1). The dusk lesson is first person but is not night, so it may also show key-prompts (UX-22).
 - **Stakes.** Hobby: a free solo release to a good standard (UX log).
@@ -30,8 +32,8 @@ flowchart LR
   HS --> LRC[Left or right?]
   LRC --> DL[Dusk lesson]
   T -->|Begin the watch, lesson done before| SK{Skip the lesson?}
-  SK -->|No| LRC
-  SK -->|Yes| PL[Planning]
+  SK -->|Take the lesson| LRC
+  SK -->|Skip the lesson| PL[Planning]
   DL --> PL
   PL -->|hold Space| N[The night]
   N -->|12 minutes| D[Dawn and ledger]
@@ -49,8 +51,8 @@ Pause (Esc) is reachable from the dusk lesson, planning, the night and dawn. It 
 |---|---|---|---|
 | Title | Launch; Leave the bridge | Begin the watch · Settings · Credits · Quit | First-launch questions, skip question, Settings, Credits, desktop |
 | Headphones or speakers? | Begin the watch, first launch only | One question, two choices | Left or right? |
-| Left or right? | Headphones or speakers?; Skip the lesson? (No); Settings → Check left and right | One bell stroke, two choices, and a quieter third answer, "I can't hear it". R rings the bell again | Dusk lesson (or back to Settings) |
-| Skip the lesson? | Begin the watch, once the lesson has been finished on this machine | Two menu-items: skip the lesson, or take it | Planning, or Left or right? |
+| Left or right? | Headphones or speakers?; Skip the lesson? (Take the lesson); Settings → Check left and right | One bell stroke; the line "A bell rings on one side."; two choices, and a quieter third answer, "I can't hear it". R rings the bell again | Dusk lesson (or back to Settings) |
+| Skip the lesson? | Begin the watch, once the lesson has been finished on this machine | Two menu-items: "Skip the lesson" (chosen when it opens) and "Take the lesson" | Planning, or Left or right? |
 | Dusk lesson | Left or right? | First person; the ally's captions; key prompts | Planning |
 | Planning | Dusk lesson; lost night; Another night | The span from above; the tool tray; why-line; Journal; Keys | The night |
 | The night | Planning | First person; captions only | Dawn, or lost night |
@@ -60,20 +62,20 @@ Pause (Esc) is reachable from the dusk lesson, planning, the night and dawn. It 
 | Settings | Title; Pause | Sound · Cues · Controls · Display | Back |
 | Journal | Planning (click or J); Pause; lost night | Hints earned so far | Back |
 | Keys | Planning tray; Pause | The key card | Back |
-| Credits | Title | Asset licences; the AI-use disclosure | Back |
+| Credits | Title | Asset licences, the typeface's licence, the AI-use disclosure; in pages (UX-61) | Back |
 
 Notes on four rows:
 
-- **Headphones or speakers?** The answer changes no cue. It is kept in Settings and written to the playtest log. Speakers adds one line: "Best with headphones." (UX-19)
-- **Left or right?** "I can't hear it" offers "Show cues everywhere" and continues (UX-38). After two wrong answers: the swap offer, the single-channel warning, and the same cues offer.
+- **Headphones or speakers?** The answer changes no cue. It is kept in Settings and written to the playtest log. Speakers adds one note-line: "Best with headphones." (UX-19)
+- **Left or right?** "I can't hear it" offers "Show cues everywhere" and continues (UX-38). One wrong answer rings again from a side picked at random, with no word that it was wrong (UX-48). After two wrong answers: the swap offer, the single-channel warning, and the same cues offer. The offers are menu-items.
 - **Skip the lesson?** "Finished on this machine" is a flag kept with the settings, not a save game. First-timers are never asked. Skipping also skips the left/right check (UX-21).
 - **Journal.** It is never carried or opened as an object at night.
 
-Nothing is deeper than two steps from play (Pause → Settings). There is no save and no Continue (GDD: one sitting, no save).
+Nothing is deeper than three steps from play (Pause → Settings → Check left and right). There is no save and no Continue (GDD: one sitting, no save). The paths of a returning player and of Leave the bridge are fixed by this table, GD-52 and GD-58; no Key Flow walks them.
 
 **What the player needs, and where it lives at night** is in HUD & Diegetic UI below.
 
-Mocked in [mockups/key-screens.html](mockups/key-screens.html): Planning, Dawn and ledger, Pause, Settings, Lost night, Journal. Built from the tables alone: Title, the two first-launch questions, Skip the lesson?, the leave question, Keys, Credits, the dusk key-prompt and the night caption (the last two appear in [mockups/directions-1.html](mockups/directions-1.html), direction C).
+Pictures: [mockups/type-scale/index.html](mockups/type-scale/index.html) shows Planning, Title, Settings, Dawn and ledger and Keys at the current scale (B), captured in Godot at 1920×1080. [mockups/key-screens.html](mockups/key-screens.html) shows Planning, Dawn and ledger, Pause, Settings, Lost night and Journal at the scale of 2026-11-20 (DESIGN.md lists where it differs). Built from the tables alone: the two first-launch questions, Skip the lesson?, the leave question, Credits, the dusk key-prompt and the night caption (the last two appear in [mockups/directions-1.html](mockups/directions-1.html), direction C).
 
 ## Voice and Tone
 
@@ -82,13 +84,16 @@ Spare and in-world for anything the warden would say or read; plain and literal 
 | Where | Voice | Examples |
 |---|---|---|
 | Menu entries, tray actions, closing choices | Short quiet declaratives in the warden's register | "Begin the watch" (the title's Start entry) · "Ring the bell" · "Start over" · "Another night" · "Leave the bridge" |
-| Ledger | Counts stated flatly; one line that is not a count | "Sections standing · 3 of 6" · "The fallen will return." |
+| Ledger | Counts stated flatly, label then value on one line; one line that is not a count | "Sections standing · 3 of 6" · "The fallen will return." |
 | Journal hints | One or two plain sentences, written as a note to oneself, about cause and never about score | (the six are written in GDD epic 5) |
 | Why-line | What is needed, then what you have | "Trapdoor needs 2 ropes. You hold 1." · "Nothing can be built on section 6." |
-| Settings, first-launch questions, warnings | Plain and literal, no fiction | "Mouse sensitivity" · "Swap left and right" · "Your sound may be coming from one channel only." |
+| Settings, first-launch questions, warnings | Plain and literal, no fiction | "Mouse sensitivity" · "Swap left and right" · "A bell rings on one side." · "Your sound may be coming from one channel only." |
+| The skip question | Two short entries | "Skip the lesson" · "Take the lesson" |
 | Captions | Exactly the ally's spoken words | "Below!" · "Above!" · "In the walls!" |
 
 Never: exclamation marks outside the ally's lines; "Game over"; "You win"; "Victory"; scores, grades or percentages; second-person coaching ("Try to…") outside the journal.
+
+Terms: "Begin the watch" is the title's Start entry; "Keys" is the tray and pause entry that opens the key card; the why-line is the GDD's "why-not line".
 
 ## Component Patterns
 
@@ -96,10 +101,11 @@ Visual specs are in DESIGN.md, Components, under the same names.
 
 | Component | Behaviour |
 |---|---|
-| **menu-item** | Up/Down or W/S moves the choice; Enter, Space or a click confirms; Esc goes back one step. Pointer hover and keyboard choice are the same state: moving the pointer onto an entry chooses it. The first entry is chosen when a menu opens. Used for the title, pause, the skip question, the leave question and the dawn's two closing choices. |
-| **tool-tray** | Always visible in planning. Parts in hand update the moment a strip, placement or undo happens. |
-| **tray-tool** | 1, 2, 3 or a click chooses trapdoor, swing-beam, lantern. Pressing the chosen tool's number again, or Esc, puts it away (UX-16). A tool that cannot be afforded, or has none left to place, is unavailable but can still be pointed at to read why. |
-| **why-line** | Appears while the pointer is on an unavailable tool, or on a section where the chosen tool cannot go; names the missing thing (UX-15). Empty otherwise. |
+| **menu-item** | Up/Down or W/S moves the choice; Enter, Space or a click confirms; Esc goes back one step. Pointer hover and keyboard choice are the same state: moving the pointer onto an entry chooses it. The first entry is chosen when a menu opens. Used for the title, pause, the skip question, the leave question, the left/right check's offers and the dawn's two closing choices. |
+| **tool-tray** | Always visible in planning, as three lines (UX-44). Parts in hand update the moment a strip, placement or undo happens. |
+| **tray-tool** | 1, 2, 3 or a click chooses trapdoor, swing-beam, lantern. Pressing the chosen tool's number again, or Esc, puts it away (UX-16). A tool that cannot be afforded, or has none left to place, is unavailable but can still be pointed at to read why. Pressing an unavailable tool's number does not choose it; it shows that tool's why-line until the next input (UX-55). |
+| **why-line** | Names the missing thing whenever planning refuses something (UX-15): while the pointer is on an unavailable tool, or after its number is pressed; on a section where the chosen tool cannot go; a strip refused on section 6 at 4 planks; a rig refused on section 6; a rail that holds a swing-beam, which cannot be stripped; an undo that needs a part no longer in hand (GDD Mechanics 10, GD-55); Ring the bell while a lantern is still to place or hang. It stays until the next input or pointer move. Empty otherwise. The exact wording is written in epic 5. |
+| **note-line** | A plain sentence that explains the thing above or below it; shown for as long as that thing is: "Best with headphones." under Speakers, the line under Visual cues, "A bell rings on one side." on the left/right check. Never interactive. |
 | **hold-control** | Acts only after a full 1 s hold of its key (Space for Ring the bell) or of the left mouse button on the entry (Ring the bell, Start over). Ring the bell starts the night (UX-18). Start over restores the whole span to dusk: every plank and rope back, every rig and placed lantern removed (UX-17). Releasing early does nothing. |
 | **span-section** | In planning with no tool chosen, a click anywhere on the deck strips the next plank in the fixed order the night also uses. Which plank is cosmetic: strength is a count (UX-8). A click on a rail strips that rail (UX-16). With a tool chosen, a click places it; for a swing-beam the click is on the rail it will hang from (UX-9). Right click undoes the last choice on that section (UX-17). Section 6 refuses rigs and stops at 4 planks (GDD mechanic 2), each with a why-line. |
 | **rig-mark** | Shows which section the rig covers. Right click on its section, when placing the rig was that section's last choice, removes it and returns its cost (the undo rule of span-section). |
@@ -107,14 +113,15 @@ Visual specs are in DESIGN.md, Components, under the same names.
 | **caption-line** | Shown for every spoken ally line, always, in every cue mode (UX-1, UX-3). It stays on for as long as the line is spoken, and for at least 2 s. One at a time, matching the ally's one-call rule, with at least 0.3 s between two captions. Says only what the voice says (UX-26). |
 | **ledger-page** | Seven lines in the GDD's order (Win/Loss Conditions), written in one at a time, top to bottom, about one per 1.5 s. Any key or click completes the page at once. The line formats are listed below the table. The two closing menu-items appear only when the last line is in; Another night is chosen. |
 | **journal-page** | Opens on the newest hint. Does not exist (no tray entry, no pause entry) until the first hint is written (UX-13). |
-| **key-card** | Read-only. Lists every key under Night, Planning, Always, each with its condition where it has one (for example "1, 2, R: at a section's town-side edge, facing out"). A fourth group, Signs, lists what the world is saying: shaking ropes, swirling fog, falling dust, a leaning flame, bowing planks, a sputtering flame. |
+| **credits-page** | Opens on its first page. A/D, the arrows or a click turn the page; Esc goes back (UX-61). |
+| **key-card** | Read-only, one screen. Lists every key under Night, Planning, Always, each with its condition where it has one (for example "1, 2, R: at a section's town-side edge, facing out"). A fourth group, Signs, lists what the world is saying: shaking ropes, swirling fog, falling dust, a leaning flame, bowing planks, a sputtering flame. The wording must fit DESIGN.md's two columns (measured near full). |
 | **key-prompt** | Dusk lesson only (UX-22). Each prompt stays until its action has been done once, then never returns. A prompt is never shown together with a caption: the caption wins and the prompt waits. |
-| **setting-row** | Left/Right or a click changes the value; changes apply at once and are kept between launches. |
-| **two-choice** | A or Left arrow picks the left word, D or Right arrow the right one, or click either (UX-20). The left/right check adds a third, smaller answer below, "I can't hear it", and R to ring again (UX-38). |
+| **setting-row** | Left/Right or a click changes the value; changes apply at once and are kept between launches. Up/Down moves between rows, through both columns. Check left and right is an action: Enter or a click opens the check, which returns to Settings. |
+| **two-choice** | Opens with nothing chosen. A or Left arrow answers with the left word at once, D or Right arrow with the right one, or click either (UX-20, UX-49). The left/right check adds a third, smaller answer below, "I can't hear it": Down chooses it and Enter or Space confirms it; Enter does nothing while nothing is chosen. R rings again (UX-38). Esc goes back one step: to the title from Headphones or speakers?, to the previous question or to Settings from Left or right?. |
 | **centre-dot** | Off by default; a Settings choice (UX-5). When on, it is visible in first person only. |
 | **town-window** | In the dawn view the twelve windows show the final count. |
 
-Ledger line formats, in order. The "·" separates label from value here; on the page the label sits above its value (DESIGN.md, ledger-page):
+Ledger line formats, in order. The "·" separates label from value here; on the page the label is followed by its value on the same line (DESIGN.md, ledger-page; UX-42):
 
 1. "Sections standing · n of 6"
 2. "Windows lit · n of 12"
@@ -129,37 +136,44 @@ Ledger line formats, in order. The "·" separates label from value here; on the 
 | Surface | State | What happens |
 |---|---|---|
 | Title | Cold start | Reached in 10 s or less (GDD). "Begin the watch" is chosen. |
+| Left or right? | Opening | Dark. The note-line "A bell rings on one side." above the question; neither word chosen; one stroke from a side picked at random (UX-46, UX-49). |
+| Left or right? | Wrong once | No word that it was wrong. The stroke comes again from a side picked at random and the question repeats. A right answer continues (UX-48). |
 | Left or right? | Wrong twice | Offers "Swap left and right", warns that sound may be single-channel (GDD), and offers "Show cues everywhere" (UX-38). Either answer continues. |
 | Dusk lesson | Opening | The first cry starts within 15 s of the lesson opening and is itself the look lesson: the look key-prompt shows while it repeats. Walking is prompted after the first cry is faced. With the two first-launch questions before it, this keeps the GDD's "first cry within 60 s of Start". |
-| Dusk lesson | A cry not yet faced | It repeats until the warden faces within 45°. Each time it plays without being faced, the ally says "listen again". After three, the place shows its cue. The lesson holds the cue back until then (GDD). |
+| Dusk lesson | A cry not yet faced | It repeats until the warden faces within 45°. Each time it plays without being faced, the ally says "listen again". After three, the place shows its cue. The lesson holds the cue back until then (GDD). With Visual cues set to Everywhere, each cry shows its glowing cue from the first playing, with the ally's caption (UX-47; the mode is built in epic 8). |
 | Dusk lesson | Hands-on part | After the three cries: strike a practice pin on the landing, strip a plank, hang and shutter the lantern, raise the forearm, each with a key-prompt (UX-22). |
 | Planning | Fresh span | 48 planks, 12 ropes on the span; nothing in hand; no tool chosen; tools 1 and 2 unavailable until parts are stripped. |
 | Planning | After a lost night | The plan the lost night was started with is restored exactly: stripped parts, rigs, lanterns (UX-40). Start over wipes it. The Journal entry is in the tray. The name and its section are rolled again and the forearm is blank (GDD GD-52). |
+| Planning | After Another night | As Fresh span: a new span at dusk, nothing in hand. The Journal entry stays if it exists; the name and its section are rolled again and the forearm is blank (GD-52). The bell can be rung on an untouched span once both lanterns are hung (GDD Mechanics 10). |
 | Planning | A lantern still to place | Ring the bell is unavailable and says why (GDD mechanic 10). |
-| Planning | Tool unavailable | `{colors.dim}`; the why-line shows while the tool is pointed at. |
+| Planning | Tool unavailable | `{colors.muted}`, name and cost; the why-line shows while the tool is pointed at or after its number is pressed (UX-55). |
 | Planning | Nothing left to undo on a section | Right click does nothing. |
+| Planning | Undo needs a part no longer in hand | Refused; the why-line says which part (GDD Mechanics 10, GD-55). |
 | The night | Usable thing within 2 m | The matching hand moves to its ready pose (UX-5). |
 | The night | Holding | The action is its own progress; no bar (UX-2). |
 | The night | Hold cancelled | The hand lets go and drops back, with a slack or dropped-tool sound (UX-6). Same for mouse and keys. |
 | The night | Action impossible | The hand reaches, stops short and opens empty, with a dull knock (UX-6). Same for mouse and keys. No text: the reason is read from the forearm tallies or the object itself. |
 | The night | Forearm raised | Walk and look; no hand actions until Tab is released; Tab is ignored during a hold (UX-11). |
-| The night | Wounded | Sounds on the wounded side are quieter, cries also dulled, and that side of the view darkens for 20 s (GDD). |
-| The night | Knocked down, hanging, crossing a gap | The view shows it; no input but look until it ends (GDD timings). |
+| The night | Wounded | Sounds on the wounded side are quieter, cries also dulled, and that side of the view darkens for 20 s (GDD). The darkening is an edge gradient on that side only: at most the outer third of the view, at most 60% dark, fading in and out over at least 1 s, always under the caption (UX-52). Epic 4 story 10 picks the exact look from rendered frames. |
+| The night | Knocked down, hanging, edging round an open section, crossing a gap | The view shows it; no input but look until it ends (GDD timings). An edging or a crossing starts after about 0.5 s of pushing straight (within 45°) into the open section or gap at its edge (story 1.6 D1), or at once when the last plank underfoot goes (GD-68). Until it ends, presses and Tab are ignored, a running hold is cancelled and the forearm lowered; it cannot be abandoned, and a run of open and fallen sections is crossed without stopping. The view cuts, it does not pan: at the catch (turned to face the town, level), at the end of the climb back, and at the start and end of a gap crossing (stories 1.5 and 1.6). Edging and walking move smoothly. |
 | The night | Lantern near empty | Flame shrinks and sputters; the reservoir shows low. Look and sound only: the light's reach does not change (UX-7). |
 | The night | Lantern shuttered | Glows through its seams. Empty: dark (UX-7). |
 | The night | Name uncovered and lit | Looking at it within 2 m for about 1 s reads it; the forearm rises once on its own (UX-10). |
-| Lost night | New hint | Cries cut to wind, the view goes dark, the journal page opens on the new hint being written; one action continues (UX-12). Planning is ready within 3 s of that action (GDD). |
-| Lost night | Cause already has its hint | Same beat, but nothing is written: the journal opens on that cause's hint, already there, brightened for a moment (UX-41). |
-| Dawn and ledger | — | Every cry stops. The view rises over the span. After the silence the ally speaks one line, then the ledger is written in, ending on "The fallen will return." (UX-14, GDD GD-53). |
+| Lost night | New hint | Cries cut to wind, the view goes dark, the journal page opens on the new hint being written. Input is ignored until the line has written in; then Enter, Space or a click continues (UX-12, UX-54). Planning is ready within 3 s of that press (GDD). |
+| Lost night | Cause already has its hint | Same beat, but nothing is written: the journal opens on that cause's hint, already there, brightened for a moment, and input is ignored until the brightening ends (UX-41, UX-54). |
+| Dawn and ledger | — | Every cry stops, and every cue glow fades out with them. The view rises over the span. After 4 s of silence (a starting value, tuned in story 5.6) the ally speaks one line, then the ledger is written in, ending on "The fallen will return." (UX-14, UX-57, GDD GD-53). |
 | Pause | Any | Clock, the dead and every sound stop. Resume continues from the same instant. The playtest build writes each pause to its log (UX-24). |
+| Pause | Window loses focus | The lesson and the night pause as with Esc, and the pause is logged with its cause (AD-51, AD-67). On return the pause screen is showing; the click that gives the window its focus back does not reach the hands (DW-33). Planning and dawn open the pause screen too, so a 1 s hold or the ledger's writing freezes rather than running on unseen. |
+| Pause | Resume after a button was let go | A button let go during the pause cancels its hold on the first tick, and Tab let go lowers the forearm (AD-67). With Holds set to Press once, nothing is cancelled. |
+| Pause | Holds changed on the pause screen | The hold that pause froze is cancelled on resume, so a mode always starts with idle hands; nothing is lost. This is the one case where a pause leads to a cancel (UX-53). |
 | Journal | No hints yet | Not offered anywhere. |
-| Settings | Visual cues set to Ears only or Everywhere | One line under the choice says what it changes. |
+| Settings | Visual cues set to Ears only or Everywhere | A note-line under the choice says what it changes. |
 
 ## Interaction Primitives
 
-- **Look decides.** At night the action comes from what the warden looks at within 2 m (GDD). This holds for both mouse hands and for E (UX-36).
-- **Ready pose.** A hand that can act shows it before the input: hammer raised to a pin, rope hand open to a rope, tool taken out at a build spot. No pose means no action there (UX-5, UX-9).
-- **Hold.** Most night actions are holds of 2 to 12 s (GDD key map). A hold cancels on moving more than 0.5 m or on a wound; looking around is free. Parts are spent when the hold completes, not when it starts. Pause freezes a hold and does not cancel it. Progress is the animation and its sound, ending on a distinct final beat (UX-2). With Holds set to Press once, a press starts the hold and a second press stops it (UX-39). Planning's two 1 s holds stay holds.
+- **Look decides.** At night the action comes from what the warden looks at within 2 m (GDD). This holds for both mouse hands and for E (UX-36). Every night target is hit by a grab box larger than what is drawn (a rail's is 0.3 m across, story 1.4 D1); each target's size is set by the story that adds it.
+- **Ready pose.** A hand that can act shows it before the input: hammer raised to a pin, rope hand open to a rope, tool taken out at a build spot, and for E the lantern hand at a pole (hang, take or swap), a plank held to a gap (re-lay) or the lantern held to the flask (refill). No pose means no action there (UX-5, UX-9, UX-50).
+- **Hold.** Most night actions are holds of 2 to 12 s (GDD key map). A hold cancels on moving more than 0.5 m or on a wound; looking around is free. Parts are spent when the hold completes, not when it starts. Pause freezes a hold and does not cancel it, except as State Patterns, Pause, says (AD-67, UX-53). Progress is the animation and its sound, ending on a distinct final beat (UX-2). With Holds set to Press once, a press starts the hold and a second press stops it (UX-39). Planning's two 1 s holds stay holds. Whether a brushed movement key should end a long hold is judged in play in epic 4 (UX-51, DW-60).
 - **Stand, face, look.** 1, 2 and R act on the section ahead when the warden stands at its town-side edge facing out. A swing-beam takes the rail on the side the warden is looking toward when the hold starts (UX-9).
 - **Dwell to read.** About 1 s of looking reads the carved name (UX-10). Nothing else in the game uses dwell.
 - **Raise to read.** Tab held raises the forearm (UX-11).
@@ -174,9 +188,9 @@ The night has no HUD. The table below lists everything the player can know at ni
 | The player needs to know | Carried by | Decision |
 |---|---|---|
 | What a click will do | The hands' ready pose | GDD, UX-5 |
-| What E, F, 1, 2, R will do | Partly practised at dusk, otherwise learned from the key card; the ready pose at a build spot; a "can't" gesture when impossible | UX-4, UX-6, UX-9 |
+| What E, F, 1, 2, R will do | E's ready poses; the ready pose at a build spot; F by look (GDD); partly practised at dusk, otherwise learned from the key card; a "can't" gesture when impossible | UX-4, UX-6, UX-9, UX-50 |
 | Progress of a hold | The action's own animation and sound | UX-2 |
-| Planks and ropes in hand | Tally strokes inked on the forearm (Tab) | GDD, UX-11 |
+| Planks and ropes in hand | Tally strokes inked on the forearm (Tab): planks in a row led by a bar, ropes in a row led by a ring, in fives | GDD, UX-11, story 1.4 D2 |
 | The name, once read | Written on the forearm (Tab) | GDD, UX-10 |
 | A section's strength | Its planks, drawn as planks, in light | UX-8 |
 | A section near breaking | Creak and groan; planks bow, in light | GDD |
@@ -206,11 +220,23 @@ The night has no HUD. The table below lists everything the player can know at ni
 | The ally's calls | Every warning in waves 1 to 3; from wave 4 only warnings the warden has not turned to (GDD) | Every warning, 2 s in, all night; still one call at a time, so a late call can be dropped (UX-38) | As default |
 | Captions, wound darkening, chalk tallies, things seen in the light | On | On | On |
 
-A pointer cue lasts for the whole of its warning, in every mode that shows it.
+A pointer cue lasts for the whole of its warning, in every mode that shows it. At default brightness a cue's glow in the dark can be made out from 15 m, half the span (GDD Mechanics 1, a starting value tuned on the muted night).
 
-**Seen without a lantern.** The warden's hands and forearm keep a minimum brightness, so the ready pose, a hold, a "can't" gesture and the tallies stay readable with the lantern shuttered, empty or hung elsewhere.
+**What a flame's movements mean.** One flame carries several signals, each a different kind of movement:
 
-**Left as the GDD has it, on purpose:** distance has no visual cue of its own; a lull has no signal but quiet; whether the bell would work "now" is heard in the tune and not shown. A hook already shaken once gets no ready pose and answers a strike with the "can't" gesture.
+| Movement | Meaning | Mode |
+|---|---|---|
+| Lean | The nearest cry's side; or the name's section, by the hum, while no cry is sounding | Lean beyond its own light in Cues everywhere |
+| Dip, about 0.8 s, once per stroke of the bell | The toll: which wave (GD-55 item 11) | Cues everywhere only |
+| Shrink and sputter, on the flame itself | Oil running low (UX-7) | All |
+
+The tally board needs no glow of its own: it is always in the town gate's light (UX-29).
+
+**Seen without a lantern.** The warden's hands and forearm keep a minimum brightness, so the ready pose, a hold, a "can't" gesture and the tallies stay readable with the lantern shuttered, empty or hung elsewhere. The gray box draws them unshaded (story 1.4).
+
+**Over the caption band.** The caption is drawn above the wound's darkened side, and the raised forearm stays clear of the band the caption sits in. Checked on a frame when the caption is built (epic 2 story 6).
+
+**Left as the GDD has it, on purpose:** distance has no visual cue of its own; a lull has no signal but quiet. The tune, and so the moment the bell would work, shows only as its rail's ropes swaying in time, in light; nothing else shows it (UX-58). A hook already shaken once gets no ready pose and answers a strike with the "can't" gesture.
 
 ## Input Schemes
 
@@ -218,15 +244,18 @@ Keyboard and mouse only. The bindings are the GDD's key map (Controls and Input)
 
 | Input | Where | Adds to the GDD |
 |---|---|---|
-| E | Night | Acts on what is looked at: a pole (hang the lantern in hand, take the one hanging there, or swap the two; one lantern in hand, GDD GD-49); a standing section with fewer than 8 planks, with a plank in hand (re-lay); the flask at the town pier with a lantern in hand (refill). (UX-36) |
+| E | Night | Acts on what is looked at: a pole (hang the lantern in hand, take the one hanging there, or swap the two; one lantern in hand, GDD GD-49); a standing section with fewer than 8 planks, with a plank in hand (re-lay); the flask at the town pier with a lantern in hand (refill). Each shows its ready pose first. (UX-36, UX-50) |
+| F | Night | The shutter of the hung lantern looked at within 2 m, otherwise that of the lantern in hand. (GDD Controls and Input, GD-55 item 6) |
 | 1, 2, R | Night | Valid only at a section's town-side edge, facing out; the ready pose says so. 2 takes the rail looked toward. (UX-9) |
 | Tab | Night | Walk and look allowed; hands busy; ignored during a hold. (UX-11) |
 | Space | Planning | A 1 s hold, not a tap. (UX-18) |
-| 1, 2, 3 | Planning | Pressing the chosen tool again puts it away. (UX-16) |
+| 1, 2, 3 | Planning | Pressing the chosen tool again puts it away. On an unavailable tool, shows its why-line. (UX-16, UX-55) |
 | J | Planning | Opens the journal, once it exists. (UX-13) |
 | Esc | Planning | Puts a chosen tool away first; with no tool chosen, pauses. (UX-16) |
 | Esc | Everywhere else | Pause; in a menu, back one step. (UX-24) |
-| A / D, Left / Right, click | Two-choice screens | Answer. (UX-20) |
+| A / D, Left / Right, click | Two-choice screens | Answer at once; nothing is chosen when the screen opens. (UX-20, UX-49) |
+| Down, then Enter or Space | Left or right? | Choose and confirm "I can't hear it". (UX-49) |
+| A / D, Left / Right, click | Credits | Turn the page. (UX-61) |
 
 - **No rebinding** in the one-night game (UX-25); keys are bound by physical position. **Holds: Press once** is a setting (UX-39).
 - **No prompts at night** and no key glyphs to adapt: there is one input device. Key names appear only in the dusk key-prompts, the tray, and the key card.
@@ -248,7 +277,7 @@ Feedback is physical and audible; nothing flashes on the screen.
 | Window out | One short, quiet sound from the town side, well under the cries, outside the four-cry limit (UX-30). |
 | Start of the night | The warden's bell under the held Space, then the town's bell answers with one stroke (UX-18). |
 | Lost night | Every cry cuts to wind; dark; the scratch of the hint being written. |
-| Dawn | Silence first. Then the ally's one line. Then the ledger, a line at a time, closing on "The fallen will return." |
+| Dawn | Silence first, about 4 s, with every cue glow fading out. Then the ally's one line. Then the ledger, a line at a time, closing on "The fallen will return." |
 | Planning | A strip, a placement and an undo each have a short dry sound (wood, rope, iron). |
 
 No music anywhere (GDD). No screen shake, no hit-stop, no vignette other than the wound's darkened side, no controller haptics (no controller).
@@ -259,7 +288,7 @@ At hobby stakes the floor is what the GDD promises plus cheap basics.
 
 **Provided**
 
-- A visual cue for every sound (GDD), with three cue modes, including **Cues everywhere** for players who cannot rely on hearing.
+- A visual cue for every sound (GDD), with three cue modes, including **Cues everywhere** for players who cannot rely on hearing. Three sounds are hard to reach by sight; see Known gaps.
 - **Captions always on** for every spoken line, with three sizes.
 - **Left/right check** at first launch, a **Swap left and right** setting, and a single-channel warning; the check can be re-run from Settings.
 - **Stream-safe sound** (GDD: cries lifted 6 dB above everything else).
@@ -269,8 +298,8 @@ At hobby stakes the floor is what the GDD promises plus cheap basics.
 - **Mono sound** for single-ear listeners; choosing it suggests Cues everywhere, since direction by ear is lost.
 - **Keys by position.** Keys are bound by physical position, so WASD and the number row sit in the same place on any layout, and key names are shown as that keyboard prints them.
 - **Full pause** at any time, in every phase.
-- Text never smaller than `{typography.label}`; contrast as stated in DESIGN.md, Colors; no meaning carried by colour alone; every screen readable in greyscale.
-- No full-screen flash and no screen shake. Full-view changes are slow fades only: the wound's darkened side, the lost night's dark, the dawn. Flames, and a town window flickering low, are the only flicker: a sputter stays on the flame itself, nothing repeats faster than 3 times a second, and a stroke's dip takes about 0.8 s.
+- Text never smaller than 42 px at 1080p, chosen on a 14-inch 1920×1080 laptop (UX-42); all text `ink` or brighter unless unavailable (UX-43); contrast as stated in DESIGN.md, Colors; no meaning carried by colour alone; every screen readable in greyscale. No Text size setting: the base scale is the large one (UX-56); Caption size has three sizes.
+- No full-screen flash and no screen shake. Full-view changes are slow fades (the wound's darkened side, the lost night's dark, the dawn) or, for the warden's forced moves, single cuts (the catch, the climb back, the start and end of a gap crossing); never a forced pan. The one forced turn is at the catch, to face the town, level. Flames, and a town window flickering low, are the only flicker: a sputter stays on the flame itself, nothing repeats faster than 3 times a second, and a stroke's dip takes about 0.8 s.
 - No timed reading: the ledger and journal wait for the player; planning is untimed.
 
 **Settings list** (UX-25, UX-39)
@@ -282,13 +311,21 @@ At hobby stakes the floor is what the GDD promises plus cheap basics.
 | Controls | Mouse sensitivity · Invert look · Holds: Hold / Press once |
 | Display | Fullscreen or window · Resolution · Brightness · Field of view · Fog quality · Caption size |
 
+Resolution lists only the window sizes on which text is sharp and that fit the monitor: 1280×720, 1920×1080, 2560×1440, 3840×2160 (UX-60, DW-53). Fullscreen uses the monitor's own size. Slider ranges and steps (Volume, Mouse sensitivity, Brightness, Field of view) are set in story 5.8. On screen the list is two columns, Sound and Cues, then Controls and Display (DESIGN.md, Layout).
+
 **Known gaps, accepted for the one-night game**
 
 - No key rebinding. One-handed play is not served.
-- Without hearing, the hum and the tune are reachable only through the leaning flame and the swaying ropes, and a window going out behind the warden has no cue in view. Calling the name is hard to do by sight alone.
+- Without hearing, the hum and the tune are reachable only through the leaning flame and the swaying ropes, and a window going out behind the warden has no cue in view. Calling the name is hard to do by sight alone. Both are judged on the muted test night in epic 8, with the other accessibility extras (UX-58, UX-59).
 - Cues everywhere has not been played muted. It should pass one muted test night (face each warning within 4 s) before the store page claims deaf-playable.
 - No screen-reader or narrated menus. No localisation; English only.
 - With four warnings at once in waves 5 and 6 the ally can still drop a call (one call at a time, GDD). The glowing cue is the cover for that case.
+
+## Inspiration & Anti-patterns
+
+- The works the GDD names as inspiration (GDD, Background and Rationale) shape the play, not the screens.
+- Three looks were rendered and declined for the screens (UX-32), so they should not be proposed again: **chalk on slate** (A), **ledger paper** (B) and an **engraved plate** (D). "Lantern light" was chosen because it applies the GDD's own palette rule to the interface (warm living, colourless dead, black abyss) and keeps the screens quieter than the night.
+- Anti-patterns for this game: a HUD over the night (bars, rings, markers, key prompts after dusk); text that names a score, a timer or a percentage; red or green for "cannot" and "can"; boxes or cards behind text.
 
 ## Key Flows
 
@@ -303,7 +340,7 @@ Linh plays day/night strategy games and found this on itch.io. Headphones on, ev
 3. A dark screen and one bell stroke. "Left or right?" She presses D. Right.
 4. Dusk, first person. Inside the first minute a whisper comes from the left rail, with a key-prompt for looking; she turns to it and the ally confirms it. A second prompt teaches walking. Two more cries, one per level.
 5. The hands-on part: she strikes, strips a plank, hangs and shutters the lantern, and holds Tab to see one tally stroke on her forearm.
-6. Planning. She strips section 1 and watches its strength number fall. She points at Trapdoor while it is dim: "Trapdoor needs 2 ropes. You hold 1." She strips a rail, places the trapdoor, hangs two lanterns and watches their reach.
+6. Planning. She strips section 1 and watches its strength number fall. She points at Trapdoor while it is grey: "Trapdoor needs 2 ropes. You hold 1." She strips a rail, places the trapdoor, hangs two lanterns and watches their reach.
 7. She holds Space. Her bell, then the town's single stroke.
 8. The night. Wave 1 is calm. By wave 3 she is running between rigs. In wave 5 two windows go out behind her with their small sound; she turns and counts four left. Section 6 groans and falls.
 9. **Failure path.** The cries cut to wind. Dark. The journal opens and a line writes itself in about section 6 carrying too much. One key, and within three seconds she is back above the span, her plan exactly as she left it and "Journal" now in the tray.
@@ -384,12 +421,26 @@ Applied in GDD draft 0.6 on 2026-11-19 (GDD decisions GD-48 to GD-55). The table
 | UX-7, UX-8, UX-37 | New visuals: lantern reservoir and sputtering flame; planks drawn to the count; a window flickering low. |
 | UX-6, UX-7, UX-10, UX-12, UX-30, UX-37, planning | New sounds for the asset list: cancel (slack rope, dropped tool); can't (dull knock); flame sputter; pen-scratch (name inked, hint written); window out; window flicker; planning strip, place and undo. |
 
+**From the update of 2026-11-28, not yet in the GDD** (handed to the next `gds-gdd` run, DW-59). Already in the GDD and only cited here: the shaken hook (Controls and Input), the hum's flame condition (Mechanics 1, GD-55 item 13). The left/right check's keys are in the architecture (AD-70).
+
+| Decision | GDD change or addition |
+|---|---|
+| UX-46, UX-48, UX-49 | Session shape, dusk lesson: the check screen's line "A bell rings on one side."; one wrong answer rings again from a random side with no word; the screen opens with nothing chosen. |
+| UX-47 | Session shape, dusk lesson: in Cues everywhere each lesson cry shows its cue from the first playing. |
+| Story 1.6, GD-68 | Controls and Input: edging and crossing start after 0.5 s of pushing straight in, or when the last plank underfoot goes; only look works until they end; a running hold is cancelled. |
+| Stories 1.5, 1.6 | Art Style (comfort sentence): the warden's forced moves are single cuts, the one forced turn is at the catch; "slow fades only" is narrowed. Architecture line 97 follows. |
+| UX-50 | Controls and Input: the hands show a ready pose for E's actions as well as the clicks. |
+| UX-52 | Mechanics 9: limits on the wound's darkened side. |
+| UX-54 | Win/Loss: the lost-night page waits for the hint to be written before a press continues. |
+| UX-57 | Win/Loss: dawn's silence is about 4 s (starting value). |
+| UX-56, UX-60 | Settings: no Text size; Resolution lists the sharp sizes only. |
+
 ## Assumptions and open items
 
-- [ASSUMPTION] Tuning values introduced here: the flame begins to sputter in the last 60 s of a tank; the name is read after 1 s of looking; hold-to-commit is 1 s; a ledger line is written every 1.5 s.
-- [ASSUMPTION] Gray-box builds at gate 2 use block hands holding a recognisable hammer, rope or lantern shape, and a flat forearm with the same marks.
-- [ASSUMPTION] Journal hints are kept for as long as the game is running and are gone at the next launch (the GDD has no save). Only settings and the "lesson finished" flag are kept on disk.
-- [ASSUMPTION] Godot specifics (physical key codes, key labels by layout, mono downmix on the master bus) are to be confirmed by architecture against 4.7.
+- [ASSUMPTION] Tuning values introduced here: the flame begins to sputter in the last 60 s of a tank; the name is read after 1 s of looking; hold-to-commit is 1 s; a ledger line is written every 1.5 s; dawn's silence is 4 s (UX-57); the wound's darkening is capped at the outer third and 60% (UX-52).
+- [ASSUMPTION] Gray-box builds at gate 2 use block hands holding a recognisable hammer, rope or lantern shape (epic 4). The forearm is already built: a flat light skin plate with dark ink, unshaded (story 1.4 D2).
+- Journal hints last while the game runs, through a return to the title, and are gone when it is closed (GD-58, AD-26). Only settings and the "lesson finished" flag are kept on disk (AD-21).
+- Godot specifics are settled by the architecture: keys by physical position, named through the layout (AD-20; names on other layouts are DW-25), and Mono sound and the swap as one effect on Master, proven by a measurement test in epic 2 (AD-18).
 - [ASSUMPTION] The key card has no key of its own; it is reached from the tray and from Pause.
 - [OPEN] The six names and epitaphs, the six journal hints and the ally's exact lines are written in GDD epic 5. Journal and ledger wording here is illustrative.
 - The playtest build's listening round (GDD ear re-check) has no instruction screen: the person running the session reads the instruction aloud from the session script (GDD, Success Metrics; epic 6 story 2). Closed 2026-11-20.

@@ -52,7 +52,8 @@ location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/revie
 owner: a gds-ux Update run before epic 2's stories are created (auto-assigned 2026-11-20)
 severity: medium
 reason: About 33 medium and 32 low findings were never walked one by one; only the high ones and a handful of others were handled.
-status: open
+status: done 2026-11-28
+resolution: gds-ux update run of 2026-11-27 to 2026-11-28. Every open finding (50, counting the accepted gaps and leftovers) has a disposition in the UX folder's .decision-log.md, "Update run 2026-11-27 to 2026-11-28": 16 decided by Sonlm (UX-46 to UX-61), the rest settled elsewhere, applied as housekeeping, or deferred to a named owner. The cross-check is kept at .working/dw5-triage.md. Follow-ups: DW-58, DW-59, DW-60.
 seen-again: 2026-11-20 (validation-report.md now gives a status per finding: 30 not addressed, 15 partly addressed)
 
 ### DW-6: Settle the flame as a direction-finder (carry height, minimum lean)
@@ -196,6 +197,7 @@ severity: medium
 reason: Epic 2's stories are still one line each. When they are written they must also: say where the tune comes from, or that a stand-in is allowed until epic 5 story 9 (its 3 variations, resolving phrase and hum have no sourcing story); name the mono-and-swap measurement test, the saved settings, `build_info` and the two playtest presets the architecture builds in epic 2; and name the no-threat-before-its-warning invariant, which the architecture builds in epic 3 and no story mentions.
 status: open
 retro-input: epic 1 retrospective, 2026-11-27. When epic 2's stories are written, also: (1) give each sound criterion two checks, one measured by a test (the loudness tool, the mix log, the cry count, the spacing) and one listening check for Sonlm with its own show-me setup, because agents cannot hear and in epic 1 feel was found only in play; (2) any cue about the span's state from more than about 10 m away brings its own cue (DW-31); (3) judge the creak's bow once the creak has its sound (DW-44); (4) add `OFL.txt` to the playtest presets (DW-51); (5) pair the first rule that rolls `sim.rng` with DW-26's "a roll changes the events" test. Sonlm's own items before and during epic 2: DW-11 before story 2.1, DW-10 by the end of epic 2, DW-9 (stand-ins allowed).
+ux-input: gds-ux update, 2026-11-28. Story 2.9 (the left/right check and the dusk lesson) takes UX-46 (the line "A bell rings on one side."), UX-48 (one wrong answer rings again from a random side, no word) and UX-49 (two-choice screens open with nothing chosen; A/D answer at once; Down and Enter for "I can't hear it"); UX-47 (Cues everywhere shows each lesson cue from the first playing) waits for the mode in epic 8. Story 2.6 (the caption): check on a frame that the raised forearm stays clear of the caption band. Screens follow DESIGN.md's scale B (floor 42 px) and colour rule.
 
 ### DW-21: Choose how the screen effects are drawn
 
@@ -382,7 +384,8 @@ location: game/watch/sim/hold_rules.gd, `_set_option()`; game-architecture.md, "
 owner: epic 5, the pause overlay (the Holds row itself is epic 8)
 severity: low
 reason: Since the code review of story 1.4 (Sonlm, 2026-11-21), a change of the Holds option cancels the running hold and lowers the forearm, so a mode always starts from idle hands. The architecture applies a Holds change made on the pause screen as `set_option()` on the first tick after resume, and EXPERIENCE.md says a pause freezes a hold and does not cancel it. The two meet in one case only: a player pauses during a hold, changes Holds, and resumes; that hold is then cancelled (no part moves, nothing is lost). No planning document states the old reading ("a mode change leaves the running hold as it is"); it was the story's own. When the pause overlay is built, confirm with Sonlm that this cancel is wanted, and say so in EXPERIENCE.md or the architecture.
-status: open
+status: done 2026-11-28
+resolution: Decided in the gds-ux update of 2026-11-28 (UX-53): keep the cancel; EXPERIENCE.md, State Patterns, Pause, now names it as the one case where a pause leads to a cancel.
 
 ## Deferred from: Sonlm's play of story 1.4 (2026-11-21)
 
@@ -511,7 +514,8 @@ location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/DESIG
 owner: the `gds-ux` update of DW-5
 severity: low
 reason: Four things the read-out does are in the story and the code but not in the UX documents. (1) D2: a fallen section in the planning view is a dashed outline (`#8d8982` since option C; `dim` when the story was built) that keeps its section number and has no strength (`DESIGN.md` says "a dashed outline only", and only of the dawn view). (2) D3: a rail's line stops 0.15 m short of each end of its section, so each joint shows as a break in both rail lines; the mock draws six squares apart, which the real geometry does not allow. (3) D4: the words FAR PIER and TOWN stand at the two ends in the `label` style, in `ink` since option C (`muted` when the story was built), turned to read upward; `DESIGN.md` names no mark for the ends. (4) The section number's type style is `label`, and both `label` and `number` use lining figures (`number` tabular as well): `DESIGN.md` gives the number's colour but no style, and asks for lining figures only "wherever numbers stack or change". Also not written there: an open section reads 2 (story 1.6 D4, DW-49), and a rail's line lies just outside the deck's edge, since a dashed line over the plank ends cannot be told from them (`dim` over `plank` when the story was built; since option C the dashes and the planks have the same colour). The colours and sizes of this screen are those of DW-54 (Sonlm's option C, 2026-11-27): where this item and DW-54 differ, DW-54 is the later, and the old values must not be written into `DESIGN.md` (code review of story 1.7, 2026-11-27).
-status: open
+status: done 2026-11-28
+resolution: Written into DESIGN.md (span-section, span-end, Typography) by the gds-ux update of 2026-11-28, with option C's colours and sizes as DW-54 settled them.
 
 ### DW-53: Text is on whole screen pixels only at 720p, 1080p, 1440p and 4K windows
 
@@ -531,7 +535,8 @@ location: _bmad-output/planning-artifacts/ux-designs/ux-3d_game-2026-11-19/DESIG
 owner: the `gds-ux` update of DW-5, before epic 5's first screen (story 5.1, the planning view; 5.8, title, pause, key card and settings)
 severity: medium
 reason: The read-out was built to `DESIGN.md`: strengths 48 px and labels 28 px at 1080p, planks `#55534f`, rails `#8d8982`, dashed lines `#5f5d59`, section numbers in `muted`. On Sonlm's laptop, with the window filling the screen, every part was hard to read. Shown three versions rendered at 1080p (as built; brighter; brighter and larger), Sonlm chose the third. The read-out now uses: strengths 72 px (a size `DESIGN.md` does not have), section numbers and end words 40 px (`value`'s size) in `ink`, planks `#8d8982`, standing rails `#ddd6c8`, dashed lines `#8d8982`, a rail line 0.2 m wide and a dashed line 0.1 m (0.12 and 0.05 before). That settles this one screen and leaves `DESIGN.md` wrong about it. Still to decide, for every other screen: whether the whole type scale grows by the same step (the `label` floor of 28 px is used for tray entries, ledger labels and key names; `body` is 32 px), whether `muted` and `dim` are too dim for text anywhere, and what the tray's counts look like beside a 72 px strength. Planks and dashed lines now share a colour, and `plank` and `muted` share a value; the UX update should name them. Sonlm's laptop screen (its size and resolution) is not recorded: ask before choosing sizes. Not yet judged by Sonlm in the game itself: only the rendered pictures. Also out of step (code review of story 1.7, 2026-11-27): AD-69 says "A test checks every theme size against its token", and 72 px is no token of `DESIGN.md`, so `test_watch_theme.gd` checks the `number` style against the number written out. When the type scale is settled, give that size a token (or change the size) and bring AD-69's sentence and the test back into step.
-status: open
+status: done 2026-11-28
+resolution: gds-ux update of 2026-11-28. Sonlm's laptop is 1920x1080 (13 to 14 inch). Five screens were rendered at three scales and captured at 1920x1080 (UX folder, mockups/type-scale/); Sonlm chose B (UX-42: floor 42 px, body 42, value 48, heading 60, title 108, number 72; every size divisible by 3) and all text ink or brighter, with dim retired (UX-43). Option C's planning colours are now DESIGN.md tokens (plank #8d8982, rail #ddd6c8, missing marks muted). Not yet in the code: label 42 (the theme has 40), the label gap from the rail line, AD-69's 720p column and the token test: DW-58. Chosen from pictures; not yet judged in the game.
 retro-input: epic 1 retrospective, 2026-11-27. Sonlm's laptop screen is 13 to 14 inch (Sonlm's answer; the resolution is still not recorded). Option C was accepted to close epic 1; the final sizes and colours are settled here.
 
 
@@ -553,7 +558,8 @@ location: game/watch/planning/planning.gd (`_fit()`); game/watch/sim/span_geomet
 owner: the `gds-ux` update of DW-5, with DW-54
 severity: low
 reason: A section's number stands `spacing.2` (11 canvas px) above the deck's edge and its strength the same below it. The rail's line lies outside that edge, and option C made it 0.2 m wide (0.12 before): at 1280×720 with 6 sections that is 7.5 px of the 11, so 3.5 px are left between the line and a label's box; at 1706×720, under 1 px; with 4 sections the line reaches the boxes. These are the labels' boxes, worked out from the fit's numbers; how near the glyphs themselves come to the line was not measured on a frame. This is how the pictures were drawn that Sonlm chose option C from. Whether the gap should be measured from the line's outer edge is a matter of the look: decide it with DW-54's sizes, and if it changes, the literal places in `test_planning.gd` change with it.
-status: open
+status: done 2026-11-28
+resolution: Decided in the gds-ux update of 2026-11-28 (UX-45): the gap is measured from the rail line's outer edge. The code and test_planning.gd follow in story 5.1 (DW-58).
 
 ### DW-57: `SpanView.show_span()` is not ready for a span that changes between calls
 
@@ -562,4 +568,34 @@ location: game/watch/night/span_view.gd (`show_span()`, `on_tick()`); game/watch
 owner: the first story that shows a changing span through `show_span()` (story 5.1; the result and dawn screens after it)
 severity: low
 reason: Story 1.7 added `show_span()` as the way in for a screen with no night running, and planning calls it once. Three cases of a later call are not handled. (1) A span with another section count: the view keeps the sections it built, draws the first of them and says nothing. (2) A section shown fallen and later shown standing (no case is known yet that would do it): `_gone` is never reset, so the outline stays and the planks are not drawn again; the night look has the same limit, by design, since nothing stands a fallen section up at night. (3) A plan-look view added as a night consumer would run the night's fall on `SECTION_FELL`, with the plan's shapes dropping for 1.5 s under the new outline. Nothing reaches any of them today. When a story first calls `show_span()` more than once, give each case a rule and a test (a setup problem for another count; the outline dropped when a section stands again; no fall in the plan look).
+status: open
+
+
+## Deferred from: the gds-ux update of 2026-11-28
+
+### DW-58: The read-out's code is behind DESIGN.md in three places
+
+origin: gds-ux update, 2026-11-28 (UX-42, UX-45)
+location: game/watch/screens/watch_theme.gd (`LABEL_PX`, `SPACING_2_PX`); game/watch/planning/planning.gd (`_fit()`); game/tests/watch/test_watch_theme.gd; game/tests/watch/test_planning.gd; _bmad-output/game-architecture.md (AD-69); _bmad-output/project-context.md (typeface and theme rule)
+owner: story 5.1 (the planning view), which lays this screen out again with the three-line tray (UX-44), DW-55 and DW-57
+severity: low
+reason: DESIGN.md now holds option C as tokens, so `number` 72 px is a token again and AD-69's "a test checks every theme size against its token" can hold. Three things are still out of step. (1) `label` is 42 px in DESIGN.md and 40 in the theme (28 and 27 canvas px). (2) `spacing.2` is 18 px in DESIGN.md and 16 in the theme, and the gap is measured from the deck's edge where UX-45 measures it from the rail line's outer edge. (3) AD-69 still lists the old 720p column (69, 37, 32, 29, 27, 21, 19; captions 24, 29, 37); the new one is 72, 40, 48, 40, 32, 32, 28, 28, 28. Each change moves the read-out's labels, so the literal places in test_planning.gd change with them, and the label's baseline must be re-checked for sharpness at 1080p (WatchTheme.sharp_px()). Change the theme, the fit and the tests together, put test_watch_theme.gd back to checking every size against its token, update AD-69's sentence, and drop project-context.md's "differs from DESIGN.md on purpose".
+status: open
+
+### DW-59: GDD and architecture wording from the UX update of 2026-11-28
+
+origin: gds-ux update, 2026-11-28 (EXPERIENCE.md, GDD impacts, "From the update of 2026-11-28")
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md (Session shape, dusk lesson; Controls and Input; Mechanics 9; Win/Loss Conditions; Art Style, the comfort sentence at about line 740; the settings list); _bmad-output/game-architecture.md (Project Context, comfort limits, about line 97)
+owner: the next gds-gdd update run, with DW-47; the architecture line with DW-58
+severity: low
+reason: The UX update decided or recorded rules that the GDD does not have yet: the check screen's line, one wrong answer and its opening state (UX-46, UX-48, UX-49); the lesson cue in Cues everywhere (UX-47); the edging and crossing trigger and input lock (story 1.6 D1, GD-68); the warden's forced moves are single cuts with one forced turn at the catch (stories 1.5 and 1.6), which narrows "full-view changes are slow fades only" in the GDD and in the architecture's comfort limits; E's ready poses (UX-50); the wound's limits (UX-52); the lost-night input guard (UX-54); dawn's 4 s silence (UX-57); no Text size and the Resolution list (UX-56, UX-60). EXPERIENCE.md lists each with its GDD section.
+status: open
+
+### DW-60: A brushed movement key ends a long hold
+
+origin: UX review finding M12, decided in the gds-ux update of 2026-11-28 (UX-51)
+location: game/watch/sim/hand_constants.gd (`HOLD_MOVE_LIMIT`); game/watch/sim/hold_rules.gd; GDD Controls and Input ("cancelled by moving more than 0.5 m")
+owner: epic 4 story 4 (the building holds), judged in play by Sonlm
+severity: low
+reason: A hold cancels when the warden moves more than 0.5 m. At 3.5 m/s a 0.14 s brush of W covers that, so a stray key can end a 12 s build. Sonlm chose to judge it in play once building holds exist. If a brush ends builds, the first fix to try is a short time a movement key must be held before it counts (about 0.3 s was suggested), which is a GDD change; DW-40's hold lengths are judged at the same time.
 status: open

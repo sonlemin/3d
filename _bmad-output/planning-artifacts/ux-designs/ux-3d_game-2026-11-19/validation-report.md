@@ -6,6 +6,8 @@
 - **Run at:** 2026-11-20T00:27:45+07:00 (this report; statuses as of this time)
 - **HTML version:** `validation-report.html`
 
+> **Update 2026-11-28.** This report gives each finding's status as of 2026-11-20 and is kept as that record. The update run of 2026-11-27 to 2026-11-28 (DW-5) gave every finding still open here a disposition: decided (UX-42 to UX-61), settled elsewhere, applied as housekeeping, or deferred to a named owner. See `.decision-log.md`, "Update run 2026-11-27 to 2026-11-28", and `.working/dw5-triage.md`. The HTML version is not regenerated.
+
 ## Overall verdict
 
 The pair is a usable contract and close to ready. Mechanically it is clean: all 12 colours carry a hex, all 25 distinct token references in DESIGN.md and both in EXPERIENCE.md resolve, the six stated contrast ratios are correct, the 17 component names match one for one across both spines, both `sources` paths exist, and both spines keep the canonical section order. No critical findings. What stands between it and a clean hand-off is at the edges of the retry loop and the hand-off to the GDD. Two high findings: the "GDD impacts" table leaves out several UX decisions that add to or change the GDD, and the lost-night screen is built around "the new hint being written" with no rule for a loss whose hint is already in the journal. The medium findings are mostly decisions that live only in a Key Flow or only in the mock, five logged decisions that were weakened in distillation, and component frontmatter that is thinner than the component prose.
