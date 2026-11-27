@@ -122,6 +122,7 @@ components:
     typography: '{typography.label}'
     color: '{colors.ink}'
     color-filling: '{colors.warm}'
+    color-unavailable: '{colors.muted}'
   span-section:
     plank: '{colors.plank}'
     rail: '{colors.rail}'
@@ -137,7 +138,8 @@ components:
     color: '{colors.ink}'
   rig-mark:
     stroke: '{colors.ink}'
-    typography: '{typography.label}'
+    typography: '{typography.body}'
+    color: '{colors.ink}'
     tag-background: '{colors.world}'
   lantern-reach:
     stroke: '{colors.warm}'
@@ -167,7 +169,7 @@ components:
     background: '{colors.world}'
     typography: '{typography.body}'
     color: '{colors.ink}'
-    page-count-typography: '{typography.label}'
+    page-count-typography: '{typography.body}'
     page-count-color: '{colors.ink}'
   key-card:
     key-typography: '{typography.label}'
@@ -188,6 +190,9 @@ components:
     value-typography: '{typography.value}'
     value-color: '{colors.ink-bright}'
     value-color-chosen: '{colors.warm}'
+    slider-track: '{colors.ink}'
+    slider-marker: '{colors.ink-bright}'
+    slider-color-chosen: '{colors.warm}'
   two-choice:
     typography: '{typography.heading}'
     color: '{colors.ink}'
@@ -195,6 +200,8 @@ components:
     question-typography: '{typography.body}'
     question-color: '{colors.ink}'
     third-typography: '{typography.body}'
+    third-color: '{colors.ink}'
+    third-color-chosen: '{colors.warm}'
     gap: '{spacing.5}'
   centre-dot:
     color: '{colors.ink}'
@@ -209,7 +216,7 @@ components:
 
 How the screens look. How they behave is in [EXPERIENCE.md](EXPERIENCE.md). Both documents win over any mock on conflict.
 
-Sizes are given as they appear at 1080p and scale with the viewport height (Godot `canvas_items` stretch). The project's canvas is 1280×720, so the Theme holds two thirds of each value, and every size here is divisible by 3 so that each canvas size is a whole pixel (architecture AD-69). The reference screen is Sonlm's 13 to 14 inch laptop at 1920×1080: the sizes and colours were chosen from 1920×1080 captures shown full screen on it (UX-42, UX-43).
+Sizes are given as they appear at 1080p and scale with the viewport height (Godot `canvas_items` stretch). The project's canvas is 1280×720, so the Theme holds two thirds of each value, and every type and spacing size here is divisible by 3 so that each canvas size is a whole pixel (architecture AD-69). Thin marks are given in whole canvas pixels too: the warm rule and the halo's outline are 3 px (2 canvas px), a 1 px rule is 1.5 px (1 canvas px); the centre dot is set in story 5.8. The reference screen is Sonlm's 13 to 14 inch laptop at 1920×1080: the sizes and colours were chosen from 1920×1080 captures shown full screen on it (UX-42, UX-43).
 
 ## Brand & Style
 
@@ -221,7 +228,7 @@ The night itself has no screen UI except the ally's caption (and, by setting, a 
 
 Visual references:
 
-- [mockups/type-scale/index.html](mockups/type-scale/index.html): planning, title, settings, the dawn ledger and the key card, drawn in Godot and captured at 1920×1080. **B** is this document's scale; A is the scale before 2026-11-28 and C the one declined.
+- [mockups/type-scale/index.html](mockups/type-scale/index.html): planning, title, settings, the dawn ledger and the key card, drawn in Godot and captured at 1920×1080. **B** is this document's scale; A is the scale before 2026-11-28 and C the one declined. Its "Dawn ledger with the widest values" section shows the ledger as finally chosen (option 1).
 - [mockups/key-screens.html](mockups/key-screens.html): planning, the dawn ledger, pause, settings, the lost-night page and the journal, drawn to the tokens of 2026-11-20. It predates the current scale and colours; see "Where the mocks differ" below.
 - [mockups/directions-1.html](mockups/directions-1.html): the comparison this look was chosen from (direction C).
 
@@ -243,7 +250,7 @@ Visual references:
 
 Shared values, on purpose (story 1.7, option C): `plank` is `muted`'s value, so a dashed mark for a missing thing is the colour of the planks; that is why a rail's dashed line lies just outside the deck's edge, where it cannot be taken for a plank's end. `rail` is `ink-bright`'s value, so a standing rail stays brighter than the planks.
 
-Contrast on `world`: `ink` 9.8:1, `ink-bright` 13.9:1, `caption` 15.6:1, `warm` 10.9:1, `muted` (and `plank`) 5.8:1. On `dawn-sky`, the top of the dawn gradient: `ink` 5.5:1, `ink-bright` (and `rail`) 7.8:1, `warm` 6.1:1, `muted` (and `plank`) 3.3:1. So every mark that carries a count clears 3:1 anywhere in the dawn view.
+Contrast on `world`: `ink` 9.8:1, `ink-bright` 13.9:1, `caption` 15.6:1, `warm` 10.9:1, `muted` (and `plank`) 5.8:1. On `dawn-sky`, the top of the dawn gradient: `ink` 5.5:1, `ink-bright` (and `rail`) 7.8:1, `warm` 6.1:1, `muted` (and `plank`) 3.2:1. So every mark that carries a count clears 3:1 anywhere in the dawn view.
 
 Available and unavailable differ by colour (`ink` against `muted`, 1.7:1 apart) and by words: an unavailable tool also has the why-line. Warm and ink are close in brightness (1.12:1 against each other), so colour is never the only sign of the chosen state: chosen text also carries the glow and a 2 px `{colors.warm}` rule beneath it (see Elevation & Depth and Shapes).
 
@@ -278,7 +285,7 @@ Rules:
 ## Layout & Spacing
 
 - Spacing steps are `{spacing.1}` to `{spacing.5}` (9, 18, 30, 48 and 81 px at 1080p). A `{spacing.safe-margin}` margin on every edge. Measured room inside it: 1,216 × 656 canvas px.
-- **Menus** (title, pause, the two-choice screens): one centred column, entries stacked with `{spacing.3}` between them. The title sits above with `{spacing.5}` below it.
+- **Menus** (title, pause, the two-choice screens): one centred column, entries stacked with `{spacing.3}` between them; the two words of a two-choice sit side by side on one row of it. The title sits above with `{spacing.5}` below it.
 - **Settings:** two columns, Sound and Cues at the left, Controls and Display at the right, `{spacing.5}` apart, each group under its label. One column does not fit (17 settings). Measured at this scale: 1,022 of 1,216 canvas px wide.
 - **Planning:** the span runs across the full width, far pier at the left, town at the right, centred in the room above the why-line. The tray is a strip of three lines along the bottom inside the safe margin, `{spacing.3}` apart, read bottom up:
   1. Committing: Journal, Keys, Start over at the left; Ring the bell alone at the right.
@@ -286,8 +293,8 @@ Rules:
   3. In hand: the counts of planks and ropes.
 
   Entries are separated by `{spacing.tray-gap}`; a name and its cost or count by `{spacing.2}`. The why-line sits `{spacing.3}` above the tray, centred. Measured: the tools line is 1,080 of 1,216 canvas px. The section numbers and strengths stand `{spacing.2}` clear of the rail lines' outer edges (see span-section).
-- **Dawn:** the span and the town's windows fill the left 58% of the view; the ledger page takes the right 42%, separated by one `{colors.hairline}` rule. Each ledger line has its label and value on one line, `{spacing.2}` apart; the epitaph sits beneath the name; lines are `{spacing.3}` apart; the two closing choices sit at the foot of the page. Measured with a stand-in name and epitaph: 575 of 656 canvas px tall, widest line 471 of 473. The real names and epitaphs (epic 5) must be checked against that width.
-- **Key card:** two columns: Night alone at the left; Planning, Always and Signs at the right. Each column sizes its key names to its own widest. Measured with stand-in wording: 641 of 656 canvas px. The real wording (epic 5) must fit.
+- **Dawn:** the span and the town's windows fill the left 55% of the view; the ledger page takes the right 45%, separated by one `{colors.hairline}` rule (UX-62); the text stands `{spacing.4}` inside the rule. Each ledger line has its label and value on one line, `{spacing.2}` apart, except Names learned: its name sits on the line under the label, with the epitaph under the name. Lines are `{spacing.3}` apart; the two closing choices sit at the foot of the page. Measured with the widest values a night can produce (two-digit counts on every line, a long name): 603 of 656 canvas px tall, widest line 505 of 512. The real names and epitaphs (epic 5) must fit that width; a longer epitaph wraps.
+- **Key card:** two columns: Night alone at the left; Planning, Always and Signs at the right. Each column sizes its key names to its own widest. Measured with stand-in wording: 641 of 656 canvas px with no space between rows, 704 with `{spacing.1}` between rows, which is too tall. So the real wording (story 5.8) must keep most actions to one line, or Signs moves to a page of its own; story 5.8 measures it and chooses.
 - **Journal** and **Credits:** a single centred column no wider than 60 characters. Credits turns in pages, with its page count under the column.
 - **Caption:** bottom centre, its baseline `{spacing.5}` above the bottom safe margin, one line, no wider than 60% of the view.
 - Nothing is anchored to a corner. Nothing overlaps the centre of the night view except the centre dot, when it is switched on.
@@ -296,14 +303,14 @@ Rules:
 
 There are no shadows and no layers of surfaces. Depth is said with light:
 
-- **Glow.** The chosen item has a soft glow of its own colour (`{colors.warm}`, about 0.7 of the text's height in radius) and a 2 px warm rule under it. This is the only "raised" state. How the glow is drawn is open (DW-21).
-- **Halo.** Text drawn over a live 3D view (the caption, dusk key prompts) has a `{colors.abyss}` halo so it reads over lantern light: a solid 4 px outline and a soft 12 px spread at 1080p. No box, no bar.
+- **Glow.** The chosen item has a soft glow of its own colour (`{colors.warm}`, about 0.7 of the text's height in radius) and a 3 px warm rule under it (2 canvas px, so it is sharp at 1080p; UX-66). This is the only "raised" state. How the glow is drawn is open (DW-21).
+- **Halo.** Text drawn over a live 3D view (the caption, dusk key prompts) has a `{colors.abyss}` halo so it reads over lantern light: a solid 3 px outline and a soft 12 px spread at 1080p. No box, no bar.
 - **Pause.** The frozen view is dimmed to about 15% and the menu is drawn on top. Screens replace one another; nothing stacks deeper than pause → settings → the left/right check.
 - **Over the night view,** bottom to top: the scene, the wound's darkened side, the caption line (and the centre dot).
 
 ## Shapes
 
-Square or nothing. Corner radius is `{rounded.DEFAULT}` everywhere; the only round things are the lantern's reach and its lamp dot (`{rounded.full}`), because light is round. Rules are 1 to 2 px hairlines; the only coloured rule is the 2 px warm one under the chosen item. Missing things are drawn dashed (a stripped rail, a fallen section's outline, the edge of a lantern's reach). On the span, line widths are in metres so that they scale with the span: a standing rail's line is 0.2 m wide and a dashed line 0.1 m (story 1.7, option C).
+Square or nothing. Corner radius is `{rounded.DEFAULT}` everywhere; the only round things are the lantern's reach and its lamp dot (`{rounded.full}`), because light is round. Rules are 1.5 px (1 canvas px); the only coloured rule is the 3 px warm one under the chosen item. Missing things are drawn dashed (a stripped rail, a fallen section's outline, the edge of a lantern's reach). On the span, line widths are in metres so that they scale with the span: a standing rail's line is 0.2 m wide and a dashed line 0.1 m (story 1.7, option C).
 
 ## Components
 
@@ -313,24 +320,24 @@ Behaviour for each is in EXPERIENCE.md, Component Patterns, under the same name.
 - **tool-tray** — The unboxed three-line strip at the bottom of the planning view. `{typography.label}` capitals in `{colors.ink}`; the "In hand" group label in `{colors.ink}`; the counts in `{typography.number}`, `{colors.ink-bright}`.
 - **tray-tool** — Key number and name in `{typography.label}` capitals, then the cost or count in `{typography.body}` lower case, `{colors.ink}`: "1 TRAPDOOR 2 ropes". Chosen: `{colors.warm}` with glow and rule. Unavailable (cannot be afforded or placed anywhere): name and cost both `{colors.muted}`, still readable.
 - **why-line** — One sentence in `{typography.body}`, `{colors.ink}`, italic off. Example: "Trapdoor needs 2 ropes. You hold 1."
-- **note-line** — One plain sentence in `{typography.body}`, `{colors.ink}`, under the thing it explains: "Best with headphones." under Speakers; the line under Visual cues; "A bell rings on one side." above the left/right question.
-- **hold-control** — A tray entry that must be held (Ring the bell, Start over). At rest it looks like its neighbours, with "hold" in its wording in `{typography.body}`. While held, a warm rule grows under it from left to right across the entry's width, and the text turns `{colors.warm}`. On release before the end the rule drains back.
+- **note-line** — One plain sentence in `{typography.body}`, `{colors.ink}`, next to the thing it explains (under it, or above a question): "Best with headphones." above the left/right check's line after Speakers is chosen, and under the Settings row while its value is Speakers (UX-64); the line under Visual cues; "A bell rings on one side." above the left/right question.
+- **hold-control** — A tray entry that must be held (Ring the bell, Start over). At rest it looks like its neighbours, with "hold" in its wording in `{typography.body}`. While held, a warm rule grows under it from left to right across the entry's width, and the text turns `{colors.warm}`. On release before the end the rule drains back. Unavailable (Ring the bell with a lantern still to place): `{colors.muted}`, and holding it does not fill; the press shows the why-line instead.
 - **span-section** — One of six sections seen from above.
   - Up to eight `{colors.plank}` planks across the deck; missing ones show `{colors.abyss}`. Planks leave in a fixed order that keeps the rest evenly spaced (GDD GD-54).
   - A standing rail is a solid `{colors.rail}` line 0.2 m wide just outside that edge of the deck. It stops 0.15 m short of each end of its section, so each joint shows as a break in both rail lines. A stripped rail is a `{colors.muted}` dashed line 0.1 m wide, also just outside the edge: over the plank ends it could not be told from them.
-  - The section number above, in `{typography.label}`, `{colors.ink}`; the strength below, in `{typography.number}`, `{colors.ink-bright}`. Each stands `{spacing.2}` clear of the rail line's outer edge (UX-45). An open section (no planks) reads 2, its side beams' strength (story 1.6 D4).
+  - The section number above, in `{typography.label}`, `{colors.ink}`; the strength below, in `{typography.number}`, `{colors.ink-bright}`. Each stands `{spacing.2}` clear of where a standing rail's line's outer edge is, whether that rail is standing, stripped or the section has fallen, so the labels never move with the span's state (UX-45). An open section (no planks) reads 2, its side beams' strength (story 1.6 D4).
   - A fallen section is a `{colors.muted}` dashed outline of its deck, 0.1 m wide. It keeps its section number and has no strength; the same in planning and at dawn.
 - **span-end** — The words FAR PIER and TOWN at the two ends of the span in `{typography.label}` capitals, `{colors.ink}`, turned to read upward, each centred on the deck's centre line and starting at the safe margin.
-- **rig-mark** — Drawn over its section in `{colors.ink}` line work, with its name in `{typography.label}` on a `{colors.world}` tag. Trapdoor: a frame with crossed diagonals. Swing-beam: a frame with a solid bar along the rail it hangs from. The frame is the coverage the GDD asks for.
+- **rig-mark** — Drawn over its section in `{colors.ink}` line work, with its name in `{typography.body}` lower case ("swing-beam"), `{colors.ink}`, on a `{colors.world}` tag centred in the section; in capitals it would be wider than a section (UX-63, measured: 145 of 172 canvas px). Trapdoor: a frame with crossed diagonals. Swing-beam: a frame with a solid bar along the rail it hangs from. The frame is the coverage the GDD asks for.
 - **lantern-reach** — A `{colors.warm}` dot over the middle of its section and a dashed `{colors.warm}` circle of the lantern's reach (the section and about half of each neighbour), filled with a warm glow that fades to nothing at the edge.
 - **caption-line** — One line of `{typography.caption}` (or `caption-small` / `caption-large` by setting) in `{colors.caption}` with the `{colors.abyss}` halo. No speaker name, no box, no arrows. Always drawn above the wound's darkened side.
-- **ledger-page** — `{colors.world}` ground with one `{colors.hairline}` rule on its inner edge. Each line: a `{colors.ink}` capital label followed on the same line by its `{colors.ink-bright}` value. The epitaph sits under the name in italic `{typography.body}`. "The fallen will return." is italic `{typography.heading}` with no label. The lines look written: each fades in from left to right.
+- **ledger-page** — `{colors.world}` ground with one `{colors.hairline}` rule on its inner edge. Each line: a `{colors.ink}` capital label followed on the same line by its `{colors.ink-bright}` value; for Names learned the name sits on the line under its label, and the epitaph under the name in italic `{typography.body}`. "The fallen will return." is italic `{typography.heading}` with no label. The lines look written: each fades in from left to right.
 - **journal-page** — Full-screen `{colors.world}`. Hints in `{typography.body}`, one paragraph each, newest last. The newest hint is `{colors.ink-bright}` and older hints are `{colors.ink}`. A hint being written in for the first time appears left to right.
-- **credits-page** — Full-screen `{colors.world}`. One centred column of `{typography.body}`, `{colors.ink}`, in pages; under it the page count ("1 of 3") in `{typography.label}`.
+- **credits-page** — Full-screen `{colors.world}`. One centred column of `{typography.body}`, `{colors.ink}`, in pages; under it the page count, "1 of 3", in `{typography.body}` (not capitals).
 - **key-card** — Two columns of rows: key names in `{typography.label}` `{colors.ink-bright}`, actions in `{typography.body}` `{colors.ink}`, wrapping within the column. Grouped under four `{colors.ink}` labels: Night, Planning, Always, Signs. In Signs the sign itself ("Shaking ropes") is `{typography.body}` in `{colors.ink-bright}`, not a key name.
 - **key-prompt** — Dusk lesson only. One line in `{typography.body}`, `{colors.caption}` with halo, bottom centre where the caption sits; the key name in capitals. Never shown with a caption at the same moment: the caption wins and the prompt waits.
-- **setting-row** — Label left in `{typography.body}` `{colors.ink}`, value right in `{typography.value}` `{colors.ink-bright}`. Chosen (by keys or by the pointer resting on it): the row turns `{colors.warm}` with glow and the warm rule under the whole row. A slider is a hairline with a small square marker. A choice shows its current value in words, never as a tick box. Check left and right is a row with no value.
-- **two-choice** — Two `{typography.heading}` words side by side with `{spacing.5}` between them (Left / Right; Headphones / Speakers), a one-line question in `{typography.body}` above, and on the left/right check a note-line above the question. The check's third answer, "I can't hear it", sits below in `{typography.body}`. Neither word is warm when the screen opens.
+- **setting-row** — Label left in `{typography.body}` `{colors.ink}`, value right in `{typography.value}` `{colors.ink-bright}`. Chosen (by keys or by the pointer resting on it): the row turns `{colors.warm}` with glow and the warm rule under the whole row. A slider is a 1.5 px `{colors.ink}` track with a small `{colors.ink-bright}` square marker; both turn `{colors.warm}` when the row is chosen. A choice shows its current value in words, never as a tick box. Check left and right is a row with no value.
+- **two-choice** — Two `{typography.heading}` words side by side with `{spacing.5}` between them (Left / Right; Headphones / Speakers), a one-line question in `{typography.body}` above, and on the left/right check a note-line above the question. The check's third answer, "I can't hear it", sits below in `{typography.body}` `{colors.ink}`; chosen, it is `{colors.warm}` with glow and rule like the words. Neither word is warm when the screen opens.
 - **centre-dot** — Optional. A 4 px `{colors.ink}` dot at 60% opacity in the exact centre of the night view. Its size and opacity are chosen again in story 5.8 from frames over lit wood (review finding L2).
 - **town-window** — In the dawn view, a small upright rectangle: lit is solid `{colors.warm}` with glow; out is a `{colors.muted}` outline.
 
@@ -343,9 +350,9 @@ Not screen components: the warden's hands, the forearm, lantern flames and reser
 
 `DESIGN.md` wins on every point below.
 
-- `mockups/key-screens.html` (2026-11-20) uses the older scale (labels 28, body 32, headings 56, strengths 48), `muted` small labels and `dim` unavailable items. It also has a two-line tray and a 36% ledger page with each label above its value.
+- `mockups/key-screens.html` (2026-11-20) uses the older scale (labels 28, body 32, headings 56, strengths 48), `muted` small labels and `dim` unavailable items, planks `#55534f` and rails `#8d8982` (now `#8d8982` and `#ddd6c8`). It also has a two-line tray and a 36% ledger page with each label above its value.
 - `mockups/directions-1.html` sets direction C in weights 300 and 500, has no `muted` role, says layout is not decided, and uses a stand-in name and epitaph.
-- `mockups/type-scale/` draws B with stand-in wording and no glow or italics. Its read-out (planning) uses story 1.7's labels at 40 px and the gap from the deck's edge, which the code still has (DW-58).
+- `mockups/type-scale/` draws B with stand-in wording and no glow or italics. Its first B ledger picture is the 42% page later replaced (UX-62). Its read-out (planning) uses story 1.7's labels at 40 px and the gap from the deck's edge, which the code still has (DW-58).
 
 ## Do's and Don'ts
 
@@ -355,7 +362,7 @@ Not screen components: the warden's hands, the forearm, lantern flames and reser
 - Do keep the planning view clean: flat shapes, no hatching (GDD: the overhead view does not use the woodcut look).
 - Do measure a screen at 1080p with its real text before calling it done; the ledger and the key card are near full.
 - Don't draw a box, bar, card, badge, icon or progress ring anywhere. The one exception is hold-control's warm rule, which grows under the entry while it is held.
-- Don't put anything over the night view except the caption line and, if switched on, the centre dot.
+- Don't put anything over the night view except the caption line, the centre dot if switched on, and the one view effect, the wound's darkened side (UX-52).
 - Don't use colour to carry meaning the words do not also carry.
 - Don't use a second typeface, or any weight lighter than semibold below title size.
 - Don't set text darker than `ink`, unless it is unavailable.
