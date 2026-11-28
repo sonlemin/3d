@@ -472,7 +472,7 @@ Delivers: GDD Game Mechanics 10 (what the view shows), first version. GD-11; UX-
 - Several cries at once: never more than 4, warnings at least 1.5 s apart, ambience at least 6 dB under the quietest a cry can be. A warning that cannot start waits, and its threat with it (GD-57). Cutting and skipping the cries of the dead on the deck is epic 3, where those cries arrive.
 - Enough of the dead to warn: each kind's warning sounds from its place and ends; what they do after arriving is epic 3. A test timetable with the bell's toll; the full six waves are epic 5.
 - The ally's calls, each with a caption at the bottom centre of the view: every warning 2 s in, or only the warnings the player has not turned toward within 4 s.
-- The bridge shows where, inside the carried lantern's light: shaking rope, falling dust, swirling fog, and the flame leaning toward the nearest cry inside its light. A cue lasts for the whole of its warning.
+- The bridge shows where, inside the carried lantern's light and the town gate's light on section 6 and the landing: shaking rope, falling dust, swirling fog, and the flame leaning toward the nearest cry inside its light. A cue lasts for the whole of its warning.
 - The town bell, and a tally chalked at each toll.
 - The dusk lesson, listening part: on a dark screen, one bell stroke to check left and right, answered Left, Right or "I can't hear it", with a key to ring again and a setting to swap the sides (the answer "I can't hear it" is recorded here; its offer of Cues everywhere is wired in epic 5, where that setting is built); then three harmless dead, one per level, the first cry within 15 s and serving as the look lesson, with walking prompted once it is faced; each cry repeats until faced, with "listen again" after each playing not faced and the place's cue shown after three; the ally confirms a right turn. The hands-on part of the lesson is built in epic 5, once the hammer and lantern exist.
 - The listening round: 12 warnings from unpredictable places, 4 from each level, in the dark with no ally; scored for direction (within 45° in 4 s) and place (within 5 m in 15 s). It comes after the lesson, with no lantern and the pointer cues off; each trial ends 15 s after its warning starts. Its instruction is read aloud from the session script.
@@ -498,11 +498,11 @@ Delivers: GDD Game Mechanics 10 (what the view shows), first version. GD-11; UX-
 9. The listening lesson runs from the left/right check to the last cry, with feedback and the look and walk prompts. (Core Gameplay Loop: dusk lesson. GD-8, GD-71, GD-74; UX-20, UX-22, UX-38, UX-46 to UX-49, UX-65)
 10. The listening round runs and scores direction and place. (Success Metrics: the ear re-check. GD-30, GD-46, GD-72 to GD-74; IN-20)
 11. Every warning is logged: turn, dark or lit, called or not; the playtest builds write the log. (Success Metrics: the night log)
-12. The early listen is run and written up. Run by Sonlm. (Success Metrics: the early listen. GD-43)
+12. The early listen is run and written up. Run by Sonlm. (Success Metrics: the early listen. GD-43, GD-77)
 
 Each is written in full under "Epic 2: story detail" below.
 
-**Delivers.** GDD Game Mechanics 1 and 8; the early listen in Success Metrics. Decisions GD-7, GD-8, GD-9 (the carried lantern, and the town gate's light), GD-24, GD-26, GD-39 (the rule), GD-40, GD-43, GD-56, GD-57 (warnings), GD-71 to GD-76; IN-19, IN-20; UX-1, UX-20, UX-22 (the look and walk prompts), UX-26, UX-29 (the gate's light), UX-38 (the left/right check), UX-42, UX-43 (the caption and the check screen), UX-46 to UX-49, UX-65; UX-47 is built for, and switched on in story 5.8. Architecture A1 to A18 (the "Built when" row for epic 2).
+**Delivers.** GDD Game Mechanics 1 and 8; the early listen in Success Metrics. Decisions GD-7, GD-8, GD-9 (the carried lantern, and the town gate's light), GD-24, GD-26, GD-39 (the rule), GD-40, GD-43, GD-56, GD-57 (warnings), GD-71 to GD-77; IN-19, IN-20; UX-1, UX-20, UX-22 (the look and walk prompts), UX-26, UX-29 (the gate's light), UX-38 (the left/right check), UX-42, UX-43 (the caption and the check screen), UX-46 to UX-49, UX-65; UX-47 is built for, and switched on in story 5.8. Architecture A1 to A18 (the "Built when" row for epic 2).
 
 ### Epic 2: what the stories must cover
 
@@ -600,7 +600,7 @@ Every story also follows the build order (AD-46), adds a bot path to its own sit
 
 - **The story numbers stay 2.1 to 2.12,** and the architecture's pieces with no story of their own go to the first story that needs them: the mono and swap test to 2.2; the timetable runner, with its spacing and waiting, to 2.5 (moved from 2.2 in the party-mode round, below); the town gate's light (section 6 and the landing) to 2.7, with the carried lantern, so the tally board is lit from epic 2 (story 4.7 keeps the hung lanterns); the toll to 2.8; `WatchSettings` and `--start=lesson` to 2.9; `--start=round` to 2.10; `build_info` and the two playtest presets, with `OFL.txt` and the cries' `loudness.json` in their include filter, to 2.11.
 - **Epic 2's other sounds are stand-ins Claude makes** with a script, by synthesis, not by AI: the town bell, the straining rope, the wind bed and the tune's warning phrase. Each is a `placeholder_*` file with its credit line, and story 5.9 replaces them with recordings. Only the 13 cries are real in epic 2.
-- **Sonlm records the ally's six stand-in lines** on the laptop from a one-page sheet. The cutting tool trims and levels them. Until they arrive, each line is a short soft tone with its caption, so no story waits on them.
+- **Sonlm records the ally's six stand-in lines** on the laptop from a one-page sheet. A small trim-and-level script prepares them (story 2.6). Until they arrive, each line is a short soft tone with its caption, so no story waits on them.
 - **The creak and the groan get their sounds in story 5.9,** as `epics.md` already had it. DW-44 (judging the bow) moves there, and DW-45's "the sound explains the slide" goes to 5.9 and to the hands (4.1).
 
 **Where each item lands**
@@ -615,9 +615,9 @@ Every story also follows the build order (AD-46), adds a bot path to its own sit
 | 2.6 | FR72 to FR74; NFR18; A6 (waves), A9; UX-1, UX-26, UX-42, UX-43; the caption band |
 | 2.7 | FR28, FR31, FR56 (part); NFR17; A7, A8 (`CueRules`); the gate's light; DW-31 |
 | 2.8 | FR30, FR93; A6 (the toll), A10 |
-| 2.9 | FR2, FR3; NFR11, NFR22; A11, A12 (the lesson), A15, A18 (the lesson's ending); UX-20, UX-22, UX-38, UX-46 to UX-49, UX-65 |
+| 2.9 | FR2, FR3; NFR11, NFR22; A11, A12 (the lesson), A15, A18 (the lesson's ending); UX-20, UX-22, UX-38, UX-42, UX-43, UX-46 to UX-49, UX-65 |
 | 2.10 | FR110; A12 (the round), A13 (the round's scores), A18 (the round's ending); DW-26 |
-| 2.11 | FR109; NFR16; A13, A14, A17; DW-51 |
+| 2.11 | FR109; NFR16; A13, A14, A17 (A17 may become 2.11a); DW-51 |
 | 2.12 | FR112; DW-10 |
 
 Retro A3 (two checks for every sound criterion) applies to 2.1 to 2.10. DW-9's recordings feed 2.6 and 2.9.
@@ -625,7 +625,7 @@ Retro A3 (two checks for every sound criterion) applies to 2.1 to 2.10. DW-9's r
 **Added after an elicitation pass** (pre-mortem, assumption audit, second-order effects, edge cases, epic 1's lessons; applied by Sonlm on 2026-11-28 as a set). Each goes into the story named:
 
 - **2.1** builds the pipeline (library, bus layout, slots, loudness tool) on the 13 clips in hand, copied into the game's folder; the re-cut from the original downloads (DW-11) is its last step and replaces those files, so the epic does not wait on the downloads. The offline tools (the cutting tool, the stand-in script) run through `uv` with numpy, which this server lacks as a system package.
-- **2.2** carries the architecture's fallback for the swap (mirror every source across the span's centre line in `CryMix`) in case the measurement test shows `pan_pullout` −1 does not swap cleanly (AD-18).
+- **2.2** carries the architecture's fallback for the swap (one shared function mirrors every placed sound across the listener's own forward line, used by `CryMix` and `SfxAudio`) in case the measurement test shows `pan_pullout` −1 does not swap cleanly (AD-18).
 - **2.4, 2.5, 2.8 and 5.9:** every stand-in is measured like the sound it stands for: the tune's phrase is a cry and has its `loudness.json` entry under the 1 LU rule; the wind is what the ambience rule is measured against. Story 5.9 measures again when it replaces them.
 - **2.5:** when several warnings wait, the first due starts first; the 1.5 s gap counts from the last warning that started. Whether a warning still waiting may start in a lull is settled in step 3.
 - **2.6:** the test night has at least four waves, so the ally's fade from wave 4 is reached.
@@ -646,7 +646,7 @@ Retro A3 (two checks for every sound criterion) applies to 2.1 to 2.10. DW-9's r
 **Rules settled for the lesson and the round** (Sonlm, 2026-11-28, each the recommended option; the GDD did not say):
 
 - **The lesson's playing** (2.9): one 4.3 s clip of that level's kind from its place. The warden starts mid-span facing the town. The three cries come from the far pier (sobs, straight behind; the first playing 5 s in), from under the left rail of section 5 (whispers), and from over section 2 (shrieks). Faced means within 45° at any moment from the playing's start to 1 s after it ends. Faced: the confirming word, and the next cry 3 s after it ends. Not faced: 1.5 s of quiet, "Listen again", and the cry again 1 s after the line ends. After three unfaced playings the place's cue shows, self-lit, until faced.
-- **The round's trials** (2.10): the round starts with the warden mid-span facing the far pier, and the warden is never moved. There are 3 s of quiet between trials. Each place is drawn with `sim.rng` from all of its level's places more than 5 m along the span from the warden (strictly, so a neighbouring section's centre at exactly 5 m, which would earn the place mark standing still, is not drawn; tightened after the final validation); if none is, the farthest is taken. The levels are shuffled, 4 each, never three of one in a row. Each trial records whether its place started within 45° of the facing ("ahead"); direction is reported overall and for the other trials apart. *Corrected the same day:* the rule first approved ("more than 45° from the facing and at least 10 m along") leaves no place on a 5 m wide span, because anything 10 m or more ahead is at most 14° off the facing; from mid-span facing the far pier it left no rail or deck, from the landing nothing. The facilitator had not checked it; Sonlm chose again from options. A player who never moves would score about 60% on direction under the new rule.
+- **The round's trials** (2.10): the round starts with the warden mid-span facing the far pier, and the warden is never moved. There are 3 s of quiet between trials. Each place is drawn with `sim.rng` from all of its level's places more than 5 m along the span from the warden (strictly, so a neighbouring section's centre at exactly 5 m, which would earn the place mark standing still, is not drawn; tightened after the final validation); if none is, the farthest is taken. The levels are shuffled, 4 each, never three of one in a row. Each trial records whether its place started within 45° of the facing ("ahead"); direction is reported overall and for the other trials apart. *Corrected the same day:* the rule first approved ("more than 45° from the facing and at least 10 m along") leaves no place on a 5 m wide span, because anything 10 m or more ahead is at most 14° off the facing; from mid-span facing the far pier it left no rail or deck, from the landing nothing. The facilitator had not checked it; Sonlm chose again from options. A player who never moves would score about 60% on direction under the new rule, which is why direction must reach 80% both over all trials and over the trials that did not start ahead (GD-77, chosen after the final check: about 7 of 12 trials start ahead, so 80% overall could be reached with only about 60% of the trials that need a turn).
 - **The place mark** (2.10): it counts if, before the trial ends, the warden has stood still (no move wish) for 1 s with the feet within 5 m along the span of the arrival point. For a rail or a deck that point is the section's centre; for a pier, the span's end. Raw positions are logged, so a stricter rule can be scored later, and the score is reported per level.
 - **Facing, wherever the GDD says "within 45°"** (the lesson, the round, the ally from wave 4, the log): measured flat, by turning only, to the point on the span at or under the source. Within 1.5 m of that point the warden counts as facing it.
 - **When facing counts for a warning** (the ally from wave 4, the round's direction mark, the log's "turned"): the warden faces it at the 4 s mark, tick T + 240, as the GDD's ally rule reads ("4 s after it starts"). A cry that starts ahead counts only if the warden keeps facing it, so turning away from a cry in front is caught. (The lesson keeps its own window, below.)
@@ -676,6 +676,7 @@ Stories 2.2, 2.9 and 2.11 are the largest. If one is too big for one dev session
 - R9. After the lesson the round opens on a dark page with one entry, "Begin the round". The person running the session reads the instruction aloud and then the newcomer chooses it. This is the session script's cue, not an instruction screen.
 - R10. A `StartState` can give each warning it places a start tick, so a show-me setup can play warnings one after another before the timetable exists.
 - R11. In the default cue mode the ally speaks only the lesson's three lines in the lesson, never a level call: the lesson teaches the level from the kind of cry. In Cues everywhere (from story 5.8) each lesson cry is also called, with its caption, from the first playing, as UX-47 says ("with the ally's caption"); 2.9 builds the switch.
+- R12. "A cue lasts for the whole of its warning" is read as: on every tick of the warning that its place is lit. Walking the lantern away hides it; the cue is not held on once seen.
 
 #### Story 2.1: The cries are re-cut at full quality and re-measured
 
@@ -767,7 +768,7 @@ Delivers: GDD Game Mechanics 1 (level, side, behind, room sounds). FR13, FR15, F
 **Then** with −1 the right channel carries at least 20 dB more than the left, and the reverse for a hard-right source (swap)
 **And** with 0 the two channels are within 0.5 dB (mono)
 **And** with the default, 1, the left channel carries at least 20 dB more (nothing changed)
-**And** if the swap fails, the architecture's fallback is built instead: one shared function mirrors every placed sound across the span's centre line while the swap is on, used by `CryMix` and by `SfxAudio` alike (so the rope, the toll and the check's stroke swap too), and the same tool passes against it.
+**And** if the swap fails, the architecture's fallback is built instead: one shared function mirrors every placed sound across the listener's own forward line (left of the head becomes right, whatever way the warden faces) while the swap is on, used by `CryMix` and by `SfxAudio` alike, so the rope, the toll and the check's stroke (placed left or right of the head) swap too; the same tool passes against it, with a source on the span's centre line and the warden facing a rail among its cases.
 
 **Given** bot nights on `NightDef`s whose `StartState` places warnings, walking and turning through them
 **When** every tick is checked
@@ -888,6 +889,10 @@ Delivers: GDD Game Mechanics 1 (during the night: the limit, warnings first, spa
 **Then** never more than 4 cries sound (the tune counts; the hum, the tune's resolving phrase, falling cries, the ally and ambience do not)
 **And** a warning always sounds its whole length. (Cutting and skipping the cries of the dead on the deck is epic 3.)
 
+**Given** a night, a lesson or a round
+**When** it runs
+**Then** the wind bed plays on `Ambience` from its first tick, looped, and stops with the scene.
+
 **Given** the wind bed on `Ambience`
 **When** `measure_watch_loudness --verify` measures it
 **Then** it is at least 23 LU under the cries' measured loudness straight ahead at 0 m (the GDD's arithmetic: 6 dB under the quietest cry, far by 15 and behind by 2); the check fails at 22.9
@@ -941,7 +946,7 @@ Delivers: GDD Game Mechanics 8. FR72 to FR74; NFR18. GD-7, GD-26, GD-39; UX-1, U
 **When** Sonlm's recordings are not yet in
 **Then** each is a `placeholder_<line id>.wav`, a short soft tone of the line's length, with its caption
 **And** a one-page sheet `game/audio/watch/ally/RECORDING.md` lists the six lines to record, with how to name and hand them over
-**And** when the recordings arrive, the cutting tool trims and levels them and they replace the tones as `<line id>.wav`; the `placeholder_` name is for the tones only.
+**And** when the recordings arrive, a small trim-and-level script in `game/tools/` (the cutting tool cuts fixed 4.3 s stretches, so it does not fit spoken lines) trims each one's silence, evens their loudness with each other, and they replace the tones as `<line id>.wav`; the `placeholder_` name is for the tones only.
 
 **Given** the sim, which reads no files
 **When** it times a line (its caption, the lesson's next step)
@@ -977,7 +982,7 @@ Delivers: GDD Game Mechanics 1 (every sound has a visual cue; the cue modes); Ga
 **Then** the warden carries one lantern, lit, whose light reaches 4 m (oil, the shutter and hung lanterns are epic 4)
 **And** `light_rules` answers whether a place is lit, flat, by R3: within 4 m of the carried lantern, or on section 6 or the landing (the town gate's light, which cannot be moved or shuttered).
 
-**Given** `CueRules.is_shown(cue_class, lit, cue_mode, hold)`, where `hold` is the cue's lesson state (`NONE` at night; `HELD` or `REVEALED` from the lesson, story 2.9)
+**Given** `CueRules.is_shown(cue_class, lit, cue_mode, lesson_cue)`, where `lesson_cue` is the cue's lesson state (`NONE` at night; `HELD` or `REVEALED` from the lesson, story 2.9)
 **When** it is asked for every class, mode and state
 **Then** `HELD` is never shown and `REVEALED` is always shown, self-lit; with `NONE` it gives the architecture's table: `POINTER` where lit in In the light, everywhere (self-lit) in Everywhere, never in Ears only; `PHYSICAL` where lit; `PHYSICAL_GLOW` where lit, and also self-lit in Everywhere; `ALWAYS` always; `EVERYWHERE_ONLY` only in Everywhere
 **And** it is the only place that table becomes yes or no
@@ -991,13 +996,13 @@ Delivers: GDD Game Mechanics 1 (every sound has a visual cue; the cue modes); Ga
 
 **Given** cries sounding
 **When** the carried flame is drawn
-**Then** it leans toward the nearest cry whose place is inside the lantern's own 4 m light, by the flat bearing the sim gives, and stands straight when there is none
+**Then** it leans toward the nearest cry whose place is inside the lantern's own 4 m light and whose lesson state is not `HELD` (a `REVEALED` lesson cry counts), by the flat bearing the sim gives, and stands straight when there is none
 **And** in Everywhere (from story 5.8) it leans to the nearest cry anywhere; `light_rules` already answers both.
 
 **Given** the cue effects and the flame
 **When** they move
 **Then** nothing flashes, nothing flickers faster than 3 times a second, and a self-lit glow does not pulse (NFR17)
-**And** a test reads every cue view's brightness constants and finds none that changes brightness more than 3 times a second, and the manual check below looks for it.
+**And** a test reads every cue view's brightness constants and finds none that changes brightness more than 3 times a second; it cannot see a shader or a noise-driven flame, so the manual check below is the real safeguard.
 
 **Given** DW-31
 **When** this story's cues are judged
@@ -1180,6 +1185,10 @@ Delivers: GDD Success Metrics (the ear re-check: the listening round). FR110. GD
 **When** the round's draws are compared
 **Then** the same seed gives the same levels and places, and different seeds give different ones: a test that fails if the rolls stop changing the events.
 
+**Given** the round's screens
+**When** they are drawn, from the editor or a playtest build
+**Then** no aim aid is drawn (DW-41).
+
 **Given** the launch-switch test
 **When** it runs
 **Then** it also starts the game with `--start=round` for 120 frames.
@@ -1269,7 +1278,7 @@ Delivers: GDD Success Metrics (the early listen). FR112. GD-43. DW-10. Run by So
 **Then** it reports only the counts, the newcomers' own words and which sounds were stand-ins (bell, rope, wind, tune), with no claim about what anyone heard beyond what they did
 **And** it gives Sonlm's own round score (story 2.10's check) as a baseline, marked as Sonlm's
 **And** it says which of the GDD's assumptions the early listen tested and which it did not: it tests a walking listener with the wind and one cry at a time (assumption 1 in part) and distance (assumption 3), not four cries at once (assumption 2), which rests on gate 2's night log (DW-61)
-**And** it says whether direction over all trials is under 80%. If it is, the design is rethought before epic 3 (GD-43), with options put to Sonlm. If not, epic 3 may start. Epic 3's stories may be written before then, but epic 3 starts only when the early listen is scored.
+**And** it says whether direction reaches 80% both over all trials and over the trials that did not start ahead, pooled across the newcomers (GD-77). If either is under 80%, the design is rethought before epic 3 (GD-43), with options put to Sonlm. If not, epic 3 may start. Epic 3's stories may be written before then, but epic 3 starts only when the early listen is scored.
 
 **Manual check for Sonlm:** run the sessions. If Sonlm's own voice worked for the ally, say so in the write-up: it may become the final voice (GD-26) and close DW-9.
 
@@ -1328,7 +1337,7 @@ Delivers: GDD Success Metrics (the early listen). FR112. GD-43. DW-10. Run by So
 - The wedge: 3 s of hammering, 1 plank, a nest shut for the wave.
 - Striking a hook: one blow restarts the haul, once per Grappler.
 - Dismantling a rig: planks return, one rope is lost.
-- Lanterns: three; one pole on each section; the lantern held over the centre of the section; one lantern in hand, hung, taken or swapped at a pole with one press, and kept lit in hand through holds and wounds; 4 m and 5 m of light; cues wherever light falls, which includes the town gate's light on section 6.
+- Lanterns: three; one pole on each section; the lantern held over the centre of the section; one lantern in hand, hung, taken or swapped at a pole with one press, and kept lit in hand through holds and wounds; 4 m and 5 m of light; cues wherever light falls, which includes the town gate's light on section 6 (built in story 2.7).
 - Oil: 6-minute tanks; one spare flask that stays at the town pier and refills the lantern in hand, once; the shutter (carried and hung); the level read from the lantern's glass, a shrinking, sputtering flame in the last 60 s, and a seam glow when shuttered.
 - E acts on what the warden looks at: a pole or the flask (re-laying a plank is already in epic 1). F acts on the hung lantern looked at, otherwise on the lantern in hand.
 - Divers pick their section by the light rule, at the start of the warning. An open section cannot be picked, and a redirected Diver lands within sections 1 to 5 when it can. A trapdoor sprung during a Diver's 1 s drop catches it (GD-60); a Diver landing in a beam's sweep is swept off.
@@ -1515,12 +1524,12 @@ Every mechanic in the GDD lands in an epic:
 | GDD mechanic | Epic |
 |---|---|
 | Listening: cries, side, distance, loudness, room sounds, warnings, limits | 2 |
-| Visual cues for every sound | 2 (carried lantern), 3 (windows), 4 (hung lanterns, the gate's light, oil, wound), 5 (the hum; the three cue modes), 8 (the Cues everywhere extras) |
+| Visual cues for every sound | 2 (carried lantern, the gate's light), 3 (windows), 4 (hung lanterns, oil, wound), 5 (the hum; the three cue modes), 8 (the Cues everywhere extras) |
 | The span: strength, load, creak, collapse, open sections, gaps | 1 |
 | Stripping and re-laying; carried parts | 1 |
 | Rigs: trapdoor, swing-beam; what each spring spends; night building | 4 |
 | The wedge; striking a hook | 4 |
-| Lanterns and light; Divers and light | 2 (carried), 4 (hung, oil, shutter, Divers) |
+| Lanterns and light; Divers and light | 2 (carried, the gate's light), 4 (hung, oil, shutter, Divers) |
 | The bell and the name; the wrong ring; the one who keeps coming back | 5 |
 | The ally | 2 (calls, captions, listening lesson), 5 (the fade by wave), 8 (every warning in Cues everywhere) |
 | Wounds | 4 |

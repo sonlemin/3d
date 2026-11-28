@@ -614,3 +614,12 @@ owner: the next gds-gdd update run, with DW-47 and DW-59
 severity: low
 reason: The Assumptions table says assumption 2 ("a player can tell 4 cries apart when they sound at once") and assumption 1 (several cries, a walking player, ambience) are tested at the early listen. The early listen is the lesson and the listening round, which play one cry at a time (GD-46). Story 2.12's write-up says which assumptions it tested. The table should say that assumption 2 rests on gate 2's night log, or the early listen should gain a crowded part; that is a GDD choice for Sonlm.
 status: open
+
+### DW-62: GDD and architecture wording owed from epic 2's stories
+
+origin: gds-create-epics-and-stories for epic 2, 2026-11-28
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md (Core Gameplay Loop, dusk lesson; Game Mechanics 1 and 8; Success Metrics, the listening round and the early listen); _bmad-output/game-architecture.md (Built when; the sound-and-cue table's `CueRules.is_shown`; AD-18)
+owner: the next gds-gdd update run (with DW-47, DW-59, DW-61); the architecture lines with DW-58
+severity: low
+reason: Epic 2's stories settled rules the documents do not yet say. GDD: GD-71 to GD-77 (the lesson's playing and places, the round's draw and start, the place mark, facing judged flat and at 4 s, a warning waiting into a lull, the lesson lines, the 80% mark over both sets of trials), and the round's length (about 4 minutes, not "about 5"). Architecture: `CueRules.is_shown` takes a fourth input, the lesson's cue state (story 2.7); AD-18's fallback mirrors every placed sound across the listener's own forward line in one shared function, not across the span's centre line in `CryMix` only (story 2.2); `CueRules.is_shown`'s new input is named `lesson_cue`; the town gate's light is built in epic 2 (story 2.7), not epic 4; the early listen runs from the editor with `--log`, so "the early listen needs a build" no longer holds, though the playtest presets are still built in epic 2; a `NightDef` holds its wave length and lull (story 2.5).
+status: open

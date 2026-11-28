@@ -16,7 +16,7 @@ The update run of 2026-11-27 to 2026-11-28 closed DW-5, DW-52, DW-54, DW-56 and 
 
 **How to apply:**
 - The GDD's wording is owed to the next gds-gdd run (DW-59, with DW-47). The code's label size and label gap follow in story 5.1 (DW-58).
-- Epic 2's story 2.9 needs UX-46, UX-48 and UX-49; they are written into DW-20.
+- Epic 2's story 2.9 carries UX-46 to UX-49 and UX-65 (epics.md draft 0.9, 2026-11-28; DW-20 is done).
 - Cues everywhere has not been played muted; do not claim deaf-playable until the muted night in epic 8 passes.
 
 Related: [[gdd-one-night-game]], [[architecture-one-night-game]].
