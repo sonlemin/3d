@@ -17,5 +17,6 @@ In the 2026-11-19 GDD session Sonlm chose the option marked "(Recommended)" in e
 - After a later choice, re-check earlier approved values it touches, and say so if one no longer holds.
 - Run an adversarial validator before calling a design document ready, and run it again after large fixes.
 - Tell Sonlm plainly when every choice in a session was Claude's recommendation, and when an approved value has to change because of Claude's own mistake.
+- A rule about places or angles is a sheet of numbers too: compute it against the real geometry before recommending it. On 2026-11-28 the listening round's draw rule ("more than 45° off and at least 10 m away") was approved and then found empty on the 5 m wide span; a five-line script would have shown it (GD-72).
 
 Related: [[user-prefers-option-lists]], [[tests-must-isolate-the-real-cue]], [[gdd-one-night-game]].

@@ -15,3 +15,4 @@
 - [Fast test runs and the undo pass](fast-test-runs-and-undo-pass.md) — CI and a game/ commit take 10 min (bot nights 8); run named test files from a scratch runner, undo rules in copies of game/
 - [Memory notes mirrored in the repo](memory-notes-mirrored-in-repo.md) — copies live in 3d_game/.claude/memory-notes/; change both together; origin sonlemin/3d is PUBLIC on GitHub (checked 2026-11-25); push the working branch after each commit (since 2026-11-26); token in ~/.config/git/credentials-3d
 - [Screens must read on Sonlm's laptop](screens-must-read-on-sonlm-laptop.md) — 14-inch 1920×1080; scale B chosen 2026-11-28 from Godot renders; for a look choice, render the options and publish them as a page
+- [Epics for the one-night game](epics-one-night-game.md) — draft 0.9 (2026-11-28): epic 2's 12 stories in full, GD-71 to GD-76; next sprint planning, then story 2.1 (Sonlm owes DW-11, six recorded lines, newcomers)

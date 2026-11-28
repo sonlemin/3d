@@ -177,6 +177,7 @@ reason: epics.md has only its dependency line changed. The setup story (main sce
 status: open (epic level done 2026-11-20)
 resolution-so-far: epics.md draft 0.7 has the setup story, epic 2's additions and new hours (GD-63). Draft 0.8 (2026-11-20) has epic 1's seven stories in full with acceptance criteria. Still owed: the same for epics 2 to 8, each before its epic starts, and a re-guess of epics 2 to 5 for the test paths and show-me setups every story now carries, once epic 1's hours are logged.
 retro-input: epic 1 retrospective, 2026-11-27. Sonlm's hours were never logged per story (blank in all seven). Since the retrospective, Sonlm gives one rough number per epic at its retrospective, and the per-story line is gone from the dev-story override. Epic 1's number was not given. When epics.md is next revised, change its "hours are logged from epic 1" line to match. The re-guess of epics 2 to 5 uses the per-epic numbers once there are some.
+progress-2026-11-28: epic 2's stories are written in full (epics.md, gds-create-epics-and-stories). The "hours are logged from epic 1" line now says one rough number per epic at its retrospective. Still owed: epics 3 to 8 in full, each before it starts, and the re-guess of epics 2 to 5 once per-epic hours exist.
 
 ### DW-19: Architecture's second round of validation fixes was not re-read
 
@@ -195,7 +196,8 @@ location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md, 
 owner: gds-create-epics-and-stories, when epic 1 is nearly done and after the UX update of DW-5
 severity: medium
 reason: Epic 2's stories are still one line each. When they are written they must also: say where the tune comes from, or that a stand-in is allowed until epic 5 story 9 (its 3 variations, resolving phrase and hum have no sourcing story); name the mono-and-swap measurement test, the saved settings, `build_info` and the two playtest presets the architecture builds in epic 2; and name the no-threat-before-its-warning invariant, which the architecture builds in epic 3 and no story mentions.
-status: open
+status: done 2026-11-28
+resolution: gds-create-epics-and-stories, 2026-11-28. Epic 2's twelve stories are written in full in epics.md ("Epic 2: story detail"), with the requirements inventory and story map above them. The tune is a stand-in until story 5.9 (2.4). The mono-and-swap measurement (2.2), the saved settings (2.9), `build_info` and the playtest presets (2.11) and epic 2's half of the fairness invariant (2.5) are named. Retro inputs: two checks per sound criterion (every story), DW-31 (2.7, 2.8), DW-44 moved to 5.9, `OFL.txt` in the playtest presets (2.11), DW-26's roll test (2.10). UX inputs: UX-46 to UX-49 and UX-65 (2.9), UX-47 built for in 2.9 and switched on in 5.8, the caption band (2.6), scale B. New rules GD-71 to GD-76 in the GDD's decision log; new item DW-61.
 retro-input: epic 1 retrospective, 2026-11-27. When epic 2's stories are written, also: (1) give each sound criterion two checks, one measured by a test (the loudness tool, the mix log, the cry count, the spacing) and one listening check for Sonlm with its own show-me setup, because agents cannot hear and in epic 1 feel was found only in play; (2) any cue about the span's state from more than about 10 m away brings its own cue (DW-31); (3) judge the creak's bow once the creak has its sound (DW-44); (4) add `OFL.txt` to the playtest presets (DW-51); (5) pair the first rule that rolls `sim.rng` with DW-26's "a roll changes the events" test. Sonlm's own items before and during epic 2: DW-11 before story 2.1, DW-10 by the end of epic 2, DW-9 (stand-ins allowed).
 ux-input: gds-ux update, 2026-11-28. Story 2.9 (the left/right check and the dusk lesson) takes UX-46 (the line "A bell rings on one side."), UX-48 (one wrong answer rings again from a random side, no word) and UX-49 (two-choice screens open with nothing chosen; A/D answer at once; Down and Enter for "I can't hear it"); UX-47 (Cues everywhere shows each lesson cue from the first playing): story 2.9 builds the lesson so the cue can be shown at once, and story 5.8 switches it on when it builds the setting. Story 2.6 (the caption): check on a frame that the raised forearm stays clear of the caption band. Screens follow DESIGN.md's scale B (floor 42 px) and colour rule.
 
@@ -433,7 +435,7 @@ resolution: story 1.6. `SpanRules.strength()` is `SpanConstants.SIDE_BEAM_LOAD` 
 
 origin: Sonlm's M1 and M2 of story 1.5, 2026-11-22
 location: game/watch/night/section_view.gd (`CREAK_BOW` 0.05 m, `GROAN_BOW` 0.25 m)
-owner: epic 2 (the creak gets its sound)
+owner: story 5.9, where the creak and the groan get their sounds (moved from epic 2 by Sonlm, 2026-11-28, gds-create-epics-and-stories)
 severity: low
 reason: Story 1.5's decision D4 bows a creaking deck 5 cm at mid-section (`CREAK_BOW` in `game/watch/night/section_view.gd`) until the creak has a sound. On a virtual display the creak moved the planks 5 to 7 pixels. In play on 2026-11-22 Sonlm reported "i can see it sag a bit" and "You can feel the fall is coming", without saying after which strip, so whether the creak alone can be seen is not known. When epic 2 gives the creak its sound, judge whether the bow is still needed and at what depth.
 status: open
@@ -444,7 +446,7 @@ status: open
 
 origin: Sonlm's M2 of story 1.6, 2026-11-22
 location: game/watch/sim/consequence_rules.gd (`warden_on_beams`), game/watch/night/warden.gd (no view turn)
-owner: epic 2 (sound), epic 4 story 1 (the hands), the dusk lesson (epic 5); judged at gate 2 with newcomers
+owner: story 5.9 (sound; moved from epic 2 by Sonlm, 2026-11-28), epic 4 story 1 (the hands), the dusk lesson (epic 5); judged at gate 2 with newcomers
 severity: low
 reason: GD-68 puts a warden whose last plank goes on its side beam at once, edging toward the town. Facing the far pier (the usual stance for stripping), that edging goes backward to the view. Sonlm: "It work. I slide backward. First time player might not understand." Sonlm chose (2026-11-22) to keep it as built, with no view turn (the view is the player's; the fall's catch stays the only turn), and to let the sound, the hands and the lesson explain it. Check at gate 2 whether newcomers read it. Second report, Sonlm's replay after the code review (2026-11-26): "Feels strange to new player. I already know what's going on so seems fine." Nothing changed.
 status: open
@@ -506,6 +508,7 @@ owner: the story that adds the playtest presets (epic 2), then story 8.6
 severity: medium
 reason: Cormorant Garamond is under the SIL Open Font License 1.1, which asks that the copyright notice and the licence go with every copy of the font. `OFL.txt` is not a Godot resource, so no preset exports it unless it is in the preset's `include_filter`. The game has no presets of its own yet. When the playtest presets are made (epic 2) and the public ones (epic 8), add `fonts/OFL.txt` to each one's include filter, and name the typeface, its designer and its licence in the credits (story 8.6). The ear test's two presets export all resources and so carry the `.ttf` from now on; they are closed and were not edited (one of the ear test's tests counts their filter line). The font file's own metadata holds the copyright and the licence text, and the ear test builds are private. Decide at epic 2 whether that is enough for them or whether they are rebuilt with the licence beside them.
 status: open
+decided: 2026-11-28 (gds-create-epics-and-stories, Sonlm chose the recommended option): the ear test's private builds are left as they are; the font's own metadata carries its licence. Still owed: `OFL.txt` in the playtest presets (story 2.11) and the public presets and credits (story 8.6).
 
 ### DW-52: `DESIGN.md`'s span-section does not say what story 1.7 settled
 
@@ -590,6 +593,7 @@ owner: the next gds-gdd update run, with DW-47; the architecture lines with DW-5
 severity: low
 reason: The UX update decided or recorded rules that the GDD does not have yet: the check screen's line, one wrong answer and its opening state (UX-46, UX-48, UX-49); the lesson cue in Cues everywhere (UX-47); the edging and crossing trigger and input lock (story 1.6 D1, GD-68); the warden's forced moves are single cuts with one forced turn at the catch (stories 1.5 and 1.6), which narrows "full-view changes are slow fades only" in the GDD and in the architecture's comfort limits; E's ready poses (UX-50); the wound's limits (UX-52); the lost-night input guard (UX-54); dawn's 4 s silence (UX-57); no Text size and the Resolution list (UX-56, UX-60); UX-53, UX-55, UX-64 and UX-65. EXPERIENCE.md lists each with its GDD section. The architecture also gets: losing focus in planning and at dawn opens the pause screen too (EXPERIENCE.md, State Patterns, Pause), beside AD-51 and AD-67. **And `epics.md`** (draft 0.8) cites none of UX-42 to UX-66: add each to the decision list of the story that builds it (epic 4 stories 1, 4 and 10: UX-50, UX-51, UX-52; story 5.1: UX-44, UX-45, UX-55, UX-63; 5.6: UX-57, UX-62; 5.7: UX-54; 5.8: UX-47's switch, UX-49 to UX-65's settings and check-screen rules, UX-56, UX-60, UX-61, UX-64, UX-65; 5.12: UX-42, UX-43, UX-66 in place of UX-34's floors). That can be done by gds-create-epics-and-stories when it writes epics 2 to 5 in full (DW-20, DW-22).
 status: open
+progress-2026-11-28: the epics part is done. gds-create-epics-and-stories cited UX-42 to UX-66 in epics.md: epic 2's stories carry UX-42, UX-43, UX-46 to UX-49 and UX-65, and the one-line stories 4.1, 4.4, 4.10, 5.1, 5.6, 5.7, 5.8 and 5.12 carry the rest as listed above. Still owed: the GDD wording (next gds-gdd run) and the architecture lines (with DW-58).
 
 ### DW-60: A brushed movement key ends a long hold
 
@@ -598,4 +602,15 @@ location: game/watch/sim/hand_constants.gd (`HOLD_MOVE_LIMIT`); game/watch/sim/h
 owner: epic 4 story 4 (the building holds), judged in play by Sonlm
 severity: low
 reason: A hold cancels when the warden moves more than 0.5 m. At 3.5 m/s a 0.14 s brush of W covers that, so a stray key can end a 12 s build. Sonlm chose to judge it in play once building holds exist. If a brush ends builds, the first fix to try is a short time a movement key must be held before it counts (about 0.3 s was suggested), which is a GDD change; DW-40's hold lengths are judged at the same time.
+status: open
+
+## Deferred from: gds-create-epics-and-stories for epic 2 (2026-11-28)
+
+### DW-61: The GDD says the early listen tests four cries at once; it does not
+
+origin: elicitation on epic 2's written stories (challenge from a critical view), 2026-11-28
+location: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/gdd.md, Assumptions (rows 1 and 2)
+owner: the next gds-gdd update run, with DW-47 and DW-59
+severity: low
+reason: The Assumptions table says assumption 2 ("a player can tell 4 cries apart when they sound at once") and assumption 1 (several cries, a walking player, ambience) are tested at the early listen. The early listen is the lesson and the listening round, which play one cry at a time (GD-46). Story 2.12's write-up says which assumptions it tested. The table should say that assumption 2 rests on gate 2's night log, or the early listen should gain a crowded part; that is a GDD choice for Sonlm.
 status: open

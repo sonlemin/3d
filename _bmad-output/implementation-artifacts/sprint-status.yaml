@@ -1,14 +1,15 @@
 # generated: 2026-11-20
-# last_updated: 2026-11-22
+# last_updated: 2026-11-28
 # project: 3d_game
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: "{project-root}/_bmad-output/implementation-artifacts"
-# epics_source: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md (draft 0.8)
+# epics_source: _bmad-output/planning-artifacts/gdds/gdd-3d_game-2026-11-19/epics.md (draft 0.9)
 #
 # Keys are short forms of the story lines in epics.md: story N-M is line M of epic N's
-# Stories list. Epic 1's stories are written in full there ("Epic 1: story detail");
-# epics 2 to 8 have one line each until their stories are written (DW-18).
+# Stories list. Epics 1 and 2 are written in full there ("Epic 1: story detail",
+# "Epic 2: story detail"); epics 3 to 8 have one line each until written (DW-18).
+# If story 2.2 or 2.9 is split, its first part is 2-2a / 2-9a, just before it.
 
 # STATUS DEFINITIONS:
 # ==================
@@ -40,7 +41,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-11-20
-last_updated: 2026-11-27
+last_updated: 2026-11-28
 project: 3d_game
 project_key: NOKEY
 tracking_system: file-system
